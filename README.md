@@ -9,9 +9,8 @@ npm install
 
 .env.local set up
 ```
-NEXT_PUBLIC_SUPABASE_URL=your-project-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb-publishable-or-anon-key
-NEXT_PUBLIC_SUPABASE_SECRET_KEY=sb-secret-key
+SUPABASE_URL=https://your-supabase-url.supabase.co
+SUPABASE_SECRET_KEY=your-anon-key
 ```
 
 ## Getting Started
