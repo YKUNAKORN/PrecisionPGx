@@ -2,8 +2,15 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 # SET UP
+install package
 ```
 npm install
+```
+
+.env.local set up
+```
+SUPABASE_URL=https://your-supabase-url.supabase.co
+SUPABASE_SECRET_KEY=your-anon-key
 ```
 
 ## Getting Started
