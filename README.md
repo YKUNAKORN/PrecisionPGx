@@ -10,7 +10,7 @@ npm install
 .env.local set up
 ```
 SUPABASE_URL=https://your-supabase-url.supabase.co
-SUPABASE_SECRET_KEY=your-anon-key
+SUPABASE_KEY=your-api-key
 ```
 
 ## Getting Started
