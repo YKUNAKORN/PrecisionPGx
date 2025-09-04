@@ -2,8 +2,15 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 # SET UP
+install package
 ```
 npm install
+```
+
+.env.local set up
+```
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_or_anon_key
 ```
 
 ## Getting Started
