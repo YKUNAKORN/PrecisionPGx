@@ -3,23 +3,30 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function POST(request) {
-  const requestUrl = new URL(request.url)
-  const formData = await request.formData()
-  const email = formData.get('email')
-  const password = formData.get('password')
-  const cookieStore = cookies()
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+  const { email, password, ...otherData } = await request.json()
+  const supabase = createRouteHandlerClient({ cookies })
 
-  await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: {
-      emailRedirectTo: `${requestUrl.origin}/auth/callback`,
-    },
   })
 
-  return NextResponse.redirect(requestUrl.origin, {
-    // moved permanently
-    status: 301,
-  })
+  if (data.user && !error) {
+    const { error: insertError } = await supabase
+      .from('user')
+      .insert([
+        {
+          id: data.user.id,
+          email: data.user.email,
+          created_at: new Date().toISOString(),
+        }
+      ])
+    
+    if (insertError) {
+      console.error('Error inserting user profile:', insertError)
+      return NextResponse.json({ error: 'Failed to create user profile' }, { status: 500 })
+    }
+  }
+
+  return NextResponse.json({ data, error })
 }

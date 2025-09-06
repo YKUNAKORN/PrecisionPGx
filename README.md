@@ -10,7 +10,7 @@ npm install
 .env.local set up
 ```
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_or_anon_key
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb-publishable-or-anon-key
 ```
 
 ## Getting Started
