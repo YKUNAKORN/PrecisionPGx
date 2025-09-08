@@ -1,8 +1,8 @@
-import { Create, GetAll, GetById, Update, Delete, UpdateRow} from "../../../../lib/supabase/crud";
+import { Create, GetAll, GetById, Update, Delete } from "../../../../lib/supabase/crud";
 import { Note } from "../../../../lib/model/Note";
-import { CreateClientBrowser } from "../../../../lib/supabase/client";
 import { ResponseModel } from "../../../../lib/model/Response";
 import { NextResponse } from "next/server";
+import { CreateClientBrowser } from "../../../../lib/supabase/client";
 
 
 const db = CreateClientBrowser();
@@ -70,7 +70,7 @@ export async function GetNoteById(query) {
     return Note;
 }
 export async function UpdateNoteByID(id, row) {
-    const data = await UpdateRow(db, "note", id, row);
+    const data = await Update(db, "note", id, row);
     if (!data) {
         ResponseModel.status = 404;
         ResponseModel.message = "data not found";

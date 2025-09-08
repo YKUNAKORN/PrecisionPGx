@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { CreateNote, GetAllNotes, UpdateNoteByID, DeleteNoteByID } from "../service/note_service";
 import { ResponseModel } from "../../../../lib/model/Response";
+import { Note } from "../../../../lib/model/Note";
 
 
 export async function POST(req) {
@@ -40,6 +41,8 @@ export async function PUT(req) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
     const row = await req.json();
+    Note.method = row.method
+    Note.id = id
     if (!id) {
         ResponseModel.status = '400';
         ResponseModel.message = 'ID is required';
@@ -49,7 +52,7 @@ export async function PUT(req) {
         });
     }
     try{
-        const response = await UpdateNoteByID(id, row)
+        const response = await UpdateNoteByID(id, Note)
         ResponseModel.status = '200'
         ResponseModel.message = 'Update Successful'
         ResponseModel.data = response
@@ -61,7 +64,7 @@ export async function PUT(req) {
     }
 }
 
-export async function Delete(req) {
+export async function DELETE(req) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
     if (!id) {

@@ -2,7 +2,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { ResponseModel } from '../../../../lib/model/Response'
-export async function SignUp() {
+export async function SignUp(email , password) {
     const supabase = createRouteHandlerClient({ cookies })
     const { data, error } = await supabase.auth.signUp({
     email,
