@@ -1,32 +1,28 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+
+// import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { UserModel } from '../../../../lib/model/User'
+// import { SignUp } from 'app/api/auth/service/login'
+// import { UserModel } from '../../../../lib/model/User'
 
 export async function POST(request) {
-  const { email, password, ...otherData } = await request.json()
-  const supabase = createRouteHandlerClient({ cookies })
-
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  })
-
-  if (data.user && !error) {
-    const { error: insertError } = await supabase
-      .from('user')
-      .insert([
-        {
-          id: data.user.id,
-          email: data.user.email,
-          created_at: new Date().toISOString(),
-        }
-      ])
-    
-    if (insertError) {
-      console.error('Error inserting user profile:', insertError)
-      return NextResponse.json({ error: 'Failed to create user profile' }, { status: 500 })
-    }
+  console.log("Register route called") // Debug log
+  try {
+  const { email, password, confirmPassword, fullName, position } = await request.json()
+  if (password !== confirmPassword) {
+    return NextResponse.json({ error: 'Passwords do not match' }, { status: 400 })
   }
+  UserModel.email = email
+  UserModel.position = position
+  UserModel.fullname = fullName
+  console.log("UserModel from request:", UserModel) // Debug log
+  } catch (error) {
+    return NextResponse.json({ 
+      error: 'Invalid request payload' + error.message,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: 400 })
+  }
+  
 
-  return NextResponse.json({ data, error })
+  return NextResponse.json(UserModel)
 }
