@@ -1,27 +1,16 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { ResponseModel } from '../../../../lib/model/Response'
+import  { Logout } from '../service/Logout'
 
 export async function POST(request) {
-  try {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.signOut()
-
-    if (error) {
-      return NextResponse.json(
-        { error: 'Logout failed' },
-        { status: 500 }
-      )
+    const result = await Logout()
+    console.log("Logout result", result)
+    if (result) {
+      ResponseModel.status = '500'
+      ResponseModel.message = 'Logout Unsuccessful'
+        return NextResponse.json(ResponseModel, { status: 500 })
     }
-
     return NextResponse.redirect(new URL('/login', request.url), {
       status: 302,
     })
   } 
-  
-  catch (error) {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}

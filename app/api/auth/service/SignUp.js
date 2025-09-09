@@ -1,31 +1,32 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
-import { ResponseModel } from '../../../../lib/model/Response'
-export async function SignUp(email , password) {
-    const supabase = createRouteHandlerClient({ cookies })
-    const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  })
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { Create } from "../../../../lib/supabase/crud";
+import { CreateClientBrowser } from "../../../../lib/supabase/client";
+const db = CreateClientBrowser();
+// import { NextResponse } from 'next/server'
 
-  if (data.user && !error) {
-    const { error: insertError } = await supabase
-      .from('user')
-      .insert([
-        {
-          id: data.user.id,
-          email: data.user.email,
-          created_at: new Date().toISOString(),
-        }
-      ])
-    
-    if (insertError) {
-      console.error('Error inserting user profile:', insertError)
-      ResponseModel.status = '500'
-      ResponseModel.message = 'Failed to create user profile' + insertError
-      return NextResponse.json(ResponseModel, { status: 500 })
+export async function SignUp(InsertUserModel, password) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies });
+    const { data, error } = await supabase.auth.signUp({
+      email: InsertUserModel.email,
+      password,
+      options: {
+        emailRedirectTo: `http://localhost:3000/auth/callback`,
+      },
+    });
+
+    if (error) {
+      console.error("SignUp failed: ", error);
+      return { user: null, error: error };
     }
+    InsertUserModel.id = data.user.id;
+
+    const Profile = Create(db, "user", InsertUserModel)
+
+    return Profile
+  } catch (error) {
+    console.error("SignUp failed: Internal server error: ", error.message);
+    return { user: null, error: "Internal server error: " + error.message };
   }
-  return { data, error }
 }

@@ -32,6 +32,7 @@ export async function GET() {
     {
         ResponseModel.status = '200'
         ResponseModel.message = 'Query Successful'
+        ResponseModel.data = notes
         console.error("Query Successful") //for Debug
         return NextResponse.json(ResponseModel, { status: 200 }) //for User
     }

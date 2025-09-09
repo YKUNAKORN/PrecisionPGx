@@ -2,10 +2,10 @@ import { Create, GetAll, GetById, Update, Delete } from "../../../../lib/supabas
 import { Note } from "../../../../lib/model/Note";
 import { ResponseModel } from "../../../../lib/model/Response";
 import { NextResponse } from "next/server";
-import { CreateClientBrowser } from "../../../../lib/supabase/client";
+import {  CreateClientSecret } from "../../../../lib/supabase/client";
 
 
-const db = CreateClientBrowser();
+const db = CreateClientSecret();
 
 export async function CreateNote(row) {
     const data = await Create(db, "note", row);
@@ -16,9 +16,9 @@ export async function CreateNote(row) {
         return NextResponse.json(ResponseModel, { status: 404 }); //for User
     }
     try {
-        Note.id = data[0].id;
-        Note.method = data[0].method;
-        Note.created_at = data[0].created_at;
+        Note[0].id = data[0].id;
+        Note[0].method = data[0].method;
+        Note[0].created_at = data[0].created_at;
     } catch (err) {
         ResponseModel.status = "500";
         ResponseModel.message = "Failed to parse data" + err;
@@ -37,9 +37,12 @@ export async function GetAllNotes() {
         return NextResponse.json(ResponseModel, { status: 400 }); //for User
     }
     try {
-        Note.id = data.id;
-        Note.method = data.method;
-        Note.created_at = data.created_at;
+        for (let i = 0; i < data.length; i++) {
+            Note[i] = {};
+            Note[i].id = data[i].id;
+            Note[i].method = data[i].method;
+            Note[i].created_at = data[i].created_at;
+        }
     } catch (err) {
         ResponseModel.status = "500";
         ResponseModel.message = "Failed to parse data" + err;
@@ -58,9 +61,9 @@ export async function GetNoteById(query) {
         return NextResponse.json(ResponseModel, { status: 404 }); //for User
     }
     try {
-        Note.id = data[0].id;
-        Note.method = data[0].method;
-        Note.created_at = data[0].created_at;
+        Note[0].id = data[0].id;
+        Note[0].method = data[0].method;
+        Note[0].created_at = data[0].created_at;
     } catch (err) {
         ResponseModel.status = "500";
         ResponseModel.message = "Failed to parse data" + err;
@@ -78,9 +81,12 @@ export async function UpdateNoteByID(id, row) {
         return NextResponse.json(ResponseModel, { status: 404 });
     }
     try {
-        Note.id = data.id;
-        Note.method = data.method;
-        Note.created_at = data.created_at;
+        for (let i = 0; i < data.length; i++) {
+            Note[i] = {};
+            Note[i].id = data[i].id;
+            Note[i].method = data[i].method;
+            Note[i].created_at = data[i].created_at;
+        }
     } catch (err) {
         ResponseModel.status = "500";
         ResponseModel.message = "Failed to parse data" + err;
@@ -98,14 +104,15 @@ export async function DeleteNoteByID(id) {
         return NextResponse.json(ResponseModel, { status: 404 });
     }
     try {
-        Note.id = data[0].id;
-        Note.method = data[0].method;
-        Note.created_at = data[0].created_at;
+        Note[0].id = data[0].id;
+        Note[0].method = data[0].method;
+        Note[0].created_at = data[0].created_at;
     } catch (err) {
         ResponseModel.status = "500";
         ResponseModel.message = "Failed to parse data" + err;
         console.error("Failed to parse data"); //for Debug
         return NextResponse.json(ResponseModel, { status: 500 }); //for User
     }
-    return Note;
+    consolee.log(data)
+    return data;
 }
