@@ -1,40 +1,30 @@
 import { Create, GetAll, GetById, Update, Delete } from "../../../../lib/supabase/crud";
 import { Note } from "../../../../lib/model/Note";
-import { ResponseModel } from "../../../../lib/model/Response";
-import { NextResponse } from "next/server";
-import {  CreateClientSecret } from "../../../../lib/supabase/client";
+import { CreateClientSecret } from "../../../../lib/supabase/client";
 
 
 const db = CreateClientSecret();
 
 export async function CreateNote(row) {
-    const data = await Create(db, "note", row);
-    if (!data) {
-        ResponseModel.status = "404";
-        ResponseModel.message = "error data not found";
-        console.error("error data not found"); //for Debug
-        return NextResponse.json(ResponseModel, { status: 404 }); //for User
+    const { data, error } = await Create(db, "note", row);
+    if (error) {
+        return { data: null, error: error }; //for User
     }
     try {
         Note[0].id = data[0].id;
         Note[0].method = data[0].method;
         Note[0].created_at = data[0].created_at;
     } catch (err) {
-        ResponseModel.status = "500";
-        ResponseModel.message = "Failed to parse data" + err;
-        console.error("Failed to parse data"); //for Debug
-        return NextResponse.json(ResponseModel, { status: 500 }); //for User
+        console.error("Failed to parse data" + err); //for Debug
+        return { data: null, error: "Failed to parse data" + err };
     }
-    return Note;
+    return { data: Note, error: null };
 }
 
 export async function GetAllNotes() {
-    const data = await GetAll(db, "note");
-    if (!data) {
-        ResponseModel.status = "400";
-        ResponseModel.message = "error data not found";
-        console.error("error data not found"); //for Debug
-        return NextResponse.json(ResponseModel, { status: 400 }); //for User
+    const { data, error } = await GetAll(db, "note");
+    if (error) {
+        return { data: null, error: error }; //for User
     }
     try {
         for (let i = 0; i < data.length; i++) {
@@ -44,41 +34,31 @@ export async function GetAllNotes() {
             Note[i].created_at = data[i].created_at;
         }
     } catch (err) {
-        ResponseModel.status = "500";
-        ResponseModel.message = "Failed to parse data" + err;
-        console.error("Failed to parse data"); //for Debug
-        return NextResponse.json(ResponseModel, { status: 500 }); //for User
+        console.error("Failed to parse data" + err); //for Debug
+        return { data: null, error: "Failed to parse data" + err };
     }
-    return Note;
+    return { data: Note, error: null };
 }
 
 export async function GetNoteById(query) {
-    const data = await GetById(db, "note", query);
-    if (!data) {
-        ResponseModel.status = "404";
-        ResponseModel.message = "error data not found";
-        console.error("error data not found: No Current Id"); //for Debug
-        return NextResponse.json(ResponseModel, { status: 404 }); //for User
+    const { data, error } = await GetById(db, "note", query);
+    if (error) {
+        return { data: null, error: error }; //for User
     }
     try {
         Note[0].id = data[0].id;
         Note[0].method = data[0].method;
         Note[0].created_at = data[0].created_at;
     } catch (err) {
-        ResponseModel.status = "500";
-        ResponseModel.message = "Failed to parse data" + err;
-        console.error("Failed to parse data"); //for Debug
-        return NextResponse.json(ResponseModel, { status: 500 }); //for User
+        console.error("Failed to parse data" + err); //for Debug
+        return { data: null, error: "Failed to parse data" + err };
     }
-    return Note;
+    return { data: Note, error: null };
 }
 export async function UpdateNoteByID(id, row) {
-    const data = await Update(db, "note", id, row);
-    if (!data) {
-        ResponseModel.status = 404;
-        ResponseModel.message = "data not found";
-        console.error("error data not found");
-        return NextResponse.json(ResponseModel, { status: 404 });
+    const { data, error } = await Update(db, "note", id, row);
+    if (error) {
+        return { data: null, error: error }; //for User
     }
     try {
         for (let i = 0; i < data.length; i++) {
@@ -88,31 +68,24 @@ export async function UpdateNoteByID(id, row) {
             Note[i].created_at = data[i].created_at;
         }
     } catch (err) {
-        ResponseModel.status = "500";
-        ResponseModel.message = "Failed to parse data" + err;
-        console.error("Failed to parse data"); //for Debug
-        return NextResponse.json(ResponseModel, { status: 500 }); //for User
+        console.error("Failed to parse data" + err); //for Debug
+        return { data: null, error: "Failed to parse data" + err };
     }
-    return Note;
+    return { data: Note, error: null };
 }
 export async function DeleteNoteByID(id) {
-    const data = await Delete(db, "note", id);
-    if (!data) {
-        ResponseModel.status = 404;
-        ResponseModel.message = "data not found";
-        console.error("error data not found");
-        return NextResponse.json(ResponseModel, { status: 404 });
+    const { data, error } = await Delete(db, "note", id);
+    console.log(data);
+    if (error) {
+        return { data: null, error: error }; //for User
     }
     try {
         Note[0].id = data[0].id;
         Note[0].method = data[0].method;
         Note[0].created_at = data[0].created_at;
     } catch (err) {
-        ResponseModel.status = "500";
-        ResponseModel.message = "Failed to parse data" + err;
-        console.error("Failed to parse data"); //for Debug
-        return NextResponse.json(ResponseModel, { status: 500 }); //for User
+        console.error("Failed to parse data" + err); //for Debug
+        return { data: null, error: "Failed to parse data" + err };
     }
-    consolee.log(data)
-    return data;
+    return { data: Note, error: null };
 }

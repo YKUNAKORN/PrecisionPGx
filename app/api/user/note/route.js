@@ -12,28 +12,29 @@ export async function POST(req) {
         console.error("Invalid Data") //for Debug
         return NextResponse.json(ResponseModel, { status: 400 }) //for User
     }
-    const response = await CreateNote(row)
-    {
-        ResponseModel.status = '201'
-        ResponseModel.message = 'Created Successful'
-        ResponseModel.data = response
-        return NextResponse.json(ResponseModel, { status: 201 })
+    const { data, error } = await CreateNote(row)
+    if (error) {
+        ResponseModel.status = '500'
+        ResponseModel.message = 'Created Failed' + error
+        return NextResponse.json(ResponseModel, { status: 500 })
     }
+    ResponseModel.status = '201';
+    ResponseModel.message = 'Created Successful';
+    ResponseModel.data = data;
+    return NextResponse.json(ResponseModel, { status: 201 })
 }
 
 export async function GET() {
-    const notes = await GetAllNotes();
-    if (!notes) {
-        ResponseModel.status = '400'
-        ResponseModel.message = 'Data Not Found'
-        console.error("Data Not Found Endpoint") //for Debug
-        return NextResponse.json(ResponseModel, { status: 400 }) //for User
+    const { data, error } = await GetAllNotes();
+    if (error) {
+        ResponseModel.status = '500'
+        ResponseModel.message = 'Failed to retrieve notes' + error
+        return NextResponse.json(ResponseModel, { status: 500 }) //for User
     }
     {
-        ResponseModel.status = '200'
-        ResponseModel.message = 'Query Successful'
-        ResponseModel.data = notes
-        console.error("Query Successful") //for Debug
+        ResponseModel.status = '200';
+        ResponseModel.message = 'Query Successful';
+        ResponseModel.data = data;
         return NextResponse.json(ResponseModel, { status: 200 }) //for User
     }
 }
@@ -53,10 +54,15 @@ export async function PUT(req) {
         });
     }
     try{
-        const response = await UpdateNoteByID(id, Note)
-        ResponseModel.status = '200'
-        ResponseModel.message = 'Update Successful'
-        ResponseModel.data = response
+        const { data, error } = await UpdateNoteByID(id, Note)
+        if (error) {
+            ResponseModel.status = '500'
+            ResponseModel.message = 'Update Failed' + error
+            return NextResponse.json(ResponseModel, { status: 500 })
+        }
+        ResponseModel.status = '200';
+        ResponseModel.message = 'Update Successful';
+        ResponseModel.data = data;
         return NextResponse.json(ResponseModel, { status: 200 })
     } catch (err) {
         ResponseModel.status = '500'
@@ -77,9 +83,14 @@ export async function DELETE(req) {
         });
     }
 
-    const response = await DeleteNoteByID(id);
+    const { data, error } = await DeleteNoteByID(id);
+    if (error) {
+        ResponseModel.status = '500';
+        ResponseModel.message = 'Delete Failed' + error;
+        return NextResponse.json(ResponseModel, { status: 500 });
+    }
     ResponseModel.status = '200';
     ResponseModel.message = 'Delete Successful';
-    ResponseModel.data = response;
+    ResponseModel.data = data;
     return NextResponse.json(ResponseModel, { status: 200 });
 }

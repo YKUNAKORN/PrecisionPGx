@@ -11,17 +11,17 @@ export async function GET(req,{ params }) {
       return NextResponse.json(ResponseModel, { status: 400 });
     }
     console.log(id)
-    const notes = await GetNoteById(id);
-    if (!notes) {
-        ResponseModel.status = '400'
-        ResponseModel.message = 'Data Not Found'
-        console.error("Data Not Found Endpoint") //for Debug
-        return NextResponse.json(ResponseModel, { status: 400 }) //for User
+    const { data, error } = await GetNoteById(id);
+    if (error) {
+        
+        ResponseModel.status = '500'
+        ResponseModel.message = 'Error retrieving note' + error
+        return NextResponse.json(ResponseModel, { status: 500 }) //for User
     }
     {
         ResponseModel.status = '200'
         ResponseModel.message = 'Query Successful'
-        ResponseModel.data = notes
+        ResponseModel.data = data
         console.error("Query Successful") //for Debug
         return NextResponse.json(ResponseModel, { status: 200 }) //for User
     }
