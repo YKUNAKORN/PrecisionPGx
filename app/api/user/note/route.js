@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { CreateNote, GetAllNotes, UpdateNoteByID, DeleteNoteByID } from "../service/note_service";
 import { ResponseModel } from "../../../../lib/model/Response";
-import { Note } from "../../../../lib/model/Note";
+import { UpdateNote } from "../../../../lib/model/Note";
 
 
 export async function POST(req) {
@@ -53,8 +53,7 @@ export async function PUT(req) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
     const row = await req.json();
-    Note.method = row.method
-    Note.id = id
+    UpdateNote.method = row.method
     if (!id) {
         ResponseModel.status = '400';
         ResponseModel.message = 'ID is required';
@@ -65,7 +64,7 @@ export async function PUT(req) {
         });
     }
     try {
-        const { data, error } = await UpdateNoteByID(id, Note)
+        const { data, error } = await UpdateNoteByID(id, UpdateNote)
         if (!data || data.length === 0) {
             ResponseModel.status = '404'
             ResponseModel.message = 'Note Not Found with ID: ' + id
