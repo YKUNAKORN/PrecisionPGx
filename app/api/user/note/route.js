@@ -9,6 +9,7 @@ export async function POST(req) {
     if (!row.method) {
         ResponseModel.status = '400'
         ResponseModel.message = 'Invalid Data'
+        ResponseModel.data = null;
         console.error("Invalid Data") //for Debug
         return NextResponse.json(ResponseModel, { status: 400 }) //for User
     }
@@ -16,6 +17,7 @@ export async function POST(req) {
     if (error) {
         ResponseModel.status = '500'
         ResponseModel.message = 'Created Failed' + error
+        ResponseModel.data = null;
         return NextResponse.json(ResponseModel, { status: 500 })
     }
     ResponseModel.status = '201';
@@ -26,9 +28,17 @@ export async function POST(req) {
 
 export async function GET() {
     const { data, error } = await GetAllNotes();
+    if (!data || data.length === 0) {
+        ResponseModel.status = '404'
+        ResponseModel.message = 'Note Not Found with ID: ' + id
+        ResponseModel.data = null;
+        console.error("Note Not Found with ID: " + id) //for Debug
+        return NextResponse.json(ResponseModel, { status: 404 }) //for User
+    }
     if (error) {
         ResponseModel.status = '500'
         ResponseModel.message = 'Failed to retrieve notes' + error
+        ResponseModel.data = null;
         return NextResponse.json(ResponseModel, { status: 500 }) //for User
     }
     {
@@ -48,16 +58,25 @@ export async function PUT(req) {
     if (!id) {
         ResponseModel.status = '400';
         ResponseModel.message = 'ID is required';
+        ResponseModel.data = null;
         return new Response(JSON.stringify(ResponseModel), {
             status: 400,
             headers: { 'Content-Type': 'application/json' },
         });
     }
-    try{
+    try {
         const { data, error } = await UpdateNoteByID(id, Note)
+        if (!data || data.length === 0) {
+            ResponseModel.status = '404'
+            ResponseModel.message = 'Note Not Found with ID: ' + id
+            ResponseModel.data = null;
+            console.error("Note Not Found with ID: " + id) //for Debug
+            return NextResponse.json(ResponseModel, { status: 404 }) //for User
+        }
         if (error) {
             ResponseModel.status = '500'
             ResponseModel.message = 'Update Failed' + error
+            ResponseModel.data = null;
             return NextResponse.json(ResponseModel, { status: 500 })
         }
         ResponseModel.status = '200';
@@ -77,6 +96,7 @@ export async function DELETE(req) {
     if (!id) {
         ResponseModel.status = '400';
         ResponseModel.message = 'ID is required';
+        ResponseModel.data = null;
         return new Response(JSON.stringify(ResponseModel), {
             status: 400,
             headers: { 'Content-Type': 'application/json' },
@@ -84,9 +104,17 @@ export async function DELETE(req) {
     }
 
     const { data, error } = await DeleteNoteByID(id);
+    if (!data || data.length === 0) {
+        ResponseModel.status = '404'
+        ResponseModel.message = 'Note Not Found with ID: ' + id
+        ResponseModel.data = null;
+        console.error("Note Not Found with ID: " + id) //for Debug
+        return NextResponse.json(ResponseModel, { status: 404 }) //for User
+    }
     if (error) {
         ResponseModel.status = '500';
         ResponseModel.message = 'Delete Failed' + error;
+        ResponseModel.data = null;
         return NextResponse.json(ResponseModel, { status: 500 });
     }
     ResponseModel.status = '200';
