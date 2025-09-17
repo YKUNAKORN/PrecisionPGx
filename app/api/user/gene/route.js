@@ -18,7 +18,7 @@ export async function GET(req) {
     const { data, error } = await QueryRule(ruleID, parseInt(index));
     if (error) {
         ResponseModel.status = '500'
-        ResponseModel.message = 'Query Failed' + error
+        ResponseModel.message = 'Query Failed: ' + error
         ResponseModel.data = null;
         return NextResponse.json(ResponseModel, { status: 500 })
     }
