@@ -12,7 +12,7 @@ export async function QueryRule(ruleID, index) {
         }
         RuleResult.id = response.data[0].id;
         RuleResult.location = response.data[0].location;
-        RuleResult.result_location = response.data[0].result_location[index];
+        RuleResult.result_location = response.data[0].result_location[index].split(',');
         RuleResult.predicted_genotype = response.data[0].predicted_genotype[index];
         RuleResult.predicted_phenotype = response.data[0].predicted_phenotype[index];
         RuleResult.recommendation = response.data[0].recommend[index];
