@@ -1,13 +1,12 @@
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createSupabaseServerClient } from "../../../../lib/supabase/server";
 import { Create } from "../../../../lib/supabase/crud";
-import { CreateClientBrowser } from "../../../../lib/supabase/client";
-const db = CreateClientBrowser();
-// import { NextResponse } from 'next/server'
+import { CreateClientPublic } from "../../../../lib/supabase/client";
 
 export async function SignUp(InsertUserModel, password) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createSupabaseServerClient();
+    const db = CreateClientPublic();
+    
     const { data, error } = await supabase.auth.signUp({
       email: InsertUserModel.email,
       password,
