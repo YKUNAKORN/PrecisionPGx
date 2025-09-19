@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server'
 import { ResponseModel } from '../../../../lib/model/Response'
-import { createSupabaseServerClient } from '../../../../lib/supabase/server'
+import { createSupabaseServerClientForAuth } from '../../../../lib/supabase/server'
+import { generateToken } from '../../../../lib/auth/jwt'
 
 export async function Login(email, password) {
   try {
-    const supabase = await createSupabaseServerClient()
+    const supabase = await createSupabaseServerClientForAuth()
     
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
 
     if (error) {
       const errorResponse = { ...ResponseModel }
@@ -22,20 +26,27 @@ export async function Login(email, password) {
       successResponse.message = 'Login successful'
       successResponse.data = data.user
       
+      // Generate JWT token with claims (async)
+      const jwtToken = await generateToken({
+        userId: data.user.id,
+        position: data.user.user_metadata?.position || 'user',
+        email: data.user.email
+      })
+      
       const response = NextResponse.json(successResponse)
-
-      response.cookies.set('supabase-auth-token', data.session.access_token, {
+      
+      response.cookies.set('supabase-auth-token', jwtToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'develoment',
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7
+        maxAge: 60 * 60 * 24 * 7 
       })
 
       response.cookies.set('supabase-refresh-token', data.session.refresh_token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'develoment',
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 30
+        maxAge: 60 * 60 * 24 * 30 
       })
 
       return response
