@@ -9,7 +9,7 @@ export async function QueryRule(ruleID, index) {
         if (!response.data || response.data.length === 0) {
             return { data: null, error: "No rule found with the given ID." };
         }
-        if(index < 0 || index >= response.data[0].predicted_genotype.length) {
+        if (index < 0 || index >= response.data[0].predicted_genotype.length) {
             return { data: null, error: "Index out of bounds." };
         }
         if (response.error) {
