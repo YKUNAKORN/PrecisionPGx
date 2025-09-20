@@ -13,7 +13,7 @@ NEXT_PUBLIC_SUPABASE_URL=your-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_or_anon_key
 NEXT_PUBLIC_SUPABASE_SECRET_KEY=sb-secret-key
 SUPABASE_JWT_SECRET=sb-jwt-secret-key
-NODE_ENV=development
+NODE_ENV=your-status
 ```
 
 ## Getting Started

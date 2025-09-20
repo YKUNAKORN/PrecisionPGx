@@ -6,10 +6,10 @@ export async function SignUp(InsertUserModel, password) {
   try {
     const supabase = await createSupabaseServerClient();
     const db = CreateClientPublic();
-    
     const { data, error } = await supabase.auth.signUp({
       email: InsertUserModel.email,
       password,
+      position: InsertUserModel.position,
       options: {
         emailRedirectTo: `http://localhost:3000/auth/callback`,
       },
@@ -20,9 +20,7 @@ export async function SignUp(InsertUserModel, password) {
       return { user: null, error: error };
     }
     InsertUserModel.id = data.user.id;
-
     const Profile = Create(db, "user", InsertUserModel)
-
     return Profile
   } catch (error) {
     console.error("SignUp failed: Internal server error: ", error.message);

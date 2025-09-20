@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { verifyToken } from './lib/auth/jwt'
 import { checkPermission } from './lib/auth/permission'
+import { ResponseModel } from './lib/model/Response'
 
 export async function middleware(request) {
   const { pathname, search } = request.nextUrl
@@ -19,22 +20,20 @@ export async function middleware(request) {
   console.log('Raw token from cookie:', token?.substring(0, 50) + '...')
 
   if (!token) {
-    return NextResponse.json(
-      { 
+    return NextResponse.json({ 
         status: '401',
         message: 'Authentication required',
         data: null 
       }, { status: 401 }
     )
   }
-
+  
   // Use async verifyToken
   const decoded = await verifyToken(token)
   console.log('Decoded token:', decoded)
   
   if (!decoded) {
-    return NextResponse.json(
-      { 
+    return NextResponse.json({ 
         status: '401',
         message: 'Invalid or expired token',
         data: null 
@@ -42,11 +41,9 @@ export async function middleware(request) {
     )
   }
 
-  const { userId, role } = decoded
-
-  if (!userId || !role) {
-    return NextResponse.json(
-      { 
+  const { userId, position } = decoded
+  if (!userId || !position) {
+    return NextResponse.json({ 
         status: '401',
         message: 'Invalid token claims',
         data: null 
@@ -54,11 +51,9 @@ export async function middleware(request) {
     )
   }
 
-  const hasPermission = checkPermission(role, method, pathname)
-  
+  const hasPermission = checkPermission(position, method, pathname)
   if (!hasPermission) {
-    return NextResponse.json(
-      { 
+    return NextResponse.json({ 
         status: '403',
         message: 'Insufficient permissions',
         data: null 
@@ -68,13 +63,14 @@ export async function middleware(request) {
 
   const response = NextResponse.next()
   response.headers.set('x-user-id', userId)
-  response.headers.set('x-user-role', role)
+  response.headers.set('x-user-role', position)
 
   return response
 }
 
 export const config = {
   matcher: [
-    '/api/user/:path*'
+    '/api/user/:path*',
+    '/api/auth/:path*'
   ]
 }
