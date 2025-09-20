@@ -4,73 +4,50 @@ import { checkPermission } from './lib/auth/permission'
 import { ResponseModel } from './lib/model/Response'
 
 export async function middleware(request) {
-  const { pathname, search } = request.nextUrl
+  const { pathname } = request.nextUrl
   const method = request.method
-
   if (!pathname.startsWith('/api/')) {
     return NextResponse.next()
   }
-
   if (pathname.startsWith('/api/auth/')) {
     return NextResponse.next()
   }
-
   const token = request.cookies.get('supabase-auth-token')?.value
-  console.log('Environment JWT_SECRET exists:', !!process.env.JWT_SECRET)
-  console.log('Raw token from cookie:', token?.substring(0, 50) + '...')
-
   if (!token) {
-    return NextResponse.json({ 
-        status: '401',
-        message: 'Authentication required',
-        data: null 
-      }, { status: 401 }
-    )
+    ResponseModel.status = '401'
+    ResponseModel.message = 'Authentication required'
+    ResponseModel.data = null
+    console.error("Authentication required") //for Debug
+    return NextResponse.json(ResponseModel, { status: 401 }) //for User
   }
-  
-  // Use async verifyToken
-  const decoded = await verifyToken(token)
-  console.log('Decoded token:', decoded)
-  
+  const decoded = await verifyToken(token) 
   if (!decoded) {
-    return NextResponse.json({ 
-        status: '401',
-        message: 'Invalid or expired token',
-        data: null 
-      }, { status: 401 }
-    )
+    ResponseModel.status = '401'
+    ResponseModel.message = 'Invalid or expired token'
+    ResponseModel.data = null
+    console.error("Invalid or expired token") //for Debug
+    return NextResponse.json(ResponseModel, { status: 401 }) //for User
   }
-
   const { userId, position } = decoded
   if (!userId || !position) {
-    return NextResponse.json({ 
-        status: '401',
-        message: 'Invalid token claims',
-        data: null 
-      }, { status: 401 }
-    )
+    ResponseModel.status = '401'
+    ResponseModel.message = 'Invalid token claims'
+    ResponseModel.data = null
+    console.error("Invalid token claims") //for Debug
+    return NextResponse.json(ResponseModel, { status: 401 }) //for User
   }
-
   const hasPermission = checkPermission(position, method, pathname)
   if (!hasPermission) {
-    return NextResponse.json({ 
-        status: '403',
-        message: 'Insufficient permissions',
-        data: null 
-      }, { status: 403 }
-    )
+    ResponseModel.status = '403'
+    ResponseModel.message = 'Insufficient permissions'
+    ResponseModel.data = null
+    console.error("Insufficient permissions") //for Debug
+    return NextResponse.json(ResponseModel, { status: 403 }) //for User
   }
-
   const response = NextResponse.next()
   response.headers.set('x-user-id', userId)
   response.headers.set('x-user-role', position)
-
   return response
 }
 
-export const config = {
-  matcher: [
-    '/api/user/:path*',
-    '/api/auth/:path*'
-  ]
-}
+export const config = { matcher: ['/api/user/:path*'] }

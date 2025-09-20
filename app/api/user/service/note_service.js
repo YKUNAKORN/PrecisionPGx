@@ -4,7 +4,6 @@ import { CreateClientSecret } from "../../../../lib/supabase/client";
 
 
 const db = CreateClientSecret();
-
 export async function CreateNote(row) {
     const { data, error } = await Create(db, "note", row);
     if (error) {
@@ -46,7 +45,7 @@ export async function GetAllNotes() {
 export async function GetNoteById(id) {
     const { data, error } = await GetById(db, "note", id);
     if (data.length === 0){
-return { data: [], error: new Error ("Data Not Found : " + id)};
+        return { data: [], error: new Error ("Data Not Found : " + id)};
     }
     if (error) {
         return { data: null, error: error, status: 500 }; //for User
@@ -61,6 +60,7 @@ return { data: [], error: new Error ("Data Not Found : " + id)};
     }
     return { data: Note, error: null };
 }
+
 export async function UpdateNoteByID(id, row) {
     const { data, error } = await Update(db, "note", id, row);
     if (data.length === 0){
@@ -82,6 +82,7 @@ export async function UpdateNoteByID(id, row) {
     }
     return { data: Note, error: null };
 }
+
 export async function DeleteNoteByID(id) {
     const { data, error } = await Delete(db, "note", id);
     if (data.length === 0){

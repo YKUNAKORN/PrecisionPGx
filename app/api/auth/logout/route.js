@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { ResponseModel } from '../../../../lib/model/Response'
-import  { Logout } from '../service/Logout'
+import { Logout } from '../service/Logout'
 
 export async function POST(request) {
     const result = await Logout()
