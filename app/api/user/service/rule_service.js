@@ -22,6 +22,11 @@ export async function QueryRule(ruleID, index) {
         RuleResult.predicted_genotype = response.data[0].predicted_genotype[index];
         RuleResult.predicted_phenotype = response.data[0].predicted_phenotype[index];
         RuleResult.recommendation = response.data[0].recommend[index];
+        if (response.data[0].phenotype == null || response.data[0].phenotype == undefined) {
+            RuleResult.phenotype = [];
+        } else {
+            RuleResult.phenotype = response.data[0].phenotype[index];
+        }
         return { data: RuleResult, error: null };
     } catch (error) {
         console.error("Error fetching rule:", error);
@@ -43,6 +48,11 @@ export async function InsertRule(InsertRuleModel) {
         RuleBased.predicted_phenotype = response.data[0].predicted_phenotype;
         RuleBased.recommendation = response.data[0].recommend;
         RuleBased.created_at = response.data[0].created_at;
+        if (response.data[0].phenotype == null || response.data[0].phenotype == undefined) {
+            RuleBased.phenotype = [];
+        } else {
+            RuleBased.phenotype = response.data[0].phenotype;
+        }
         return { data: RuleBased, error: null }; //for User
     } catch (error) {
         console.error("Error inserting rule:", error);

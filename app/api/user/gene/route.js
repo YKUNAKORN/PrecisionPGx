@@ -49,6 +49,7 @@ export async function POST(req) {
     RuleModel.predicted_genotype = body.predicted_genotype;
     RuleModel.predicted_phenotype = body.predicted_phenotype;
     RuleModel.recommend = body.recommend;
+    RuleModel.phenotype = body.phenotype || [];
 
     const response = await InsertRule(RuleModel);
     if (response.error) {
