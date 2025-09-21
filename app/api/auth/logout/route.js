@@ -1,16 +1,60 @@
 import { NextResponse } from 'next/server'
 import { ResponseModel } from '../../../../lib/model/Response'
 import { Logout } from '../service/Logout'
+import { deleteToken } from '../../../../lib/auth/jwt'
 
 export async function POST(request) {
-    const result = await Logout()
-    console.log("Logout result", result)
-    if (result) {
-      ResponseModel.status = '500'
-      ResponseModel.message = 'Logout Unsuccessful'
+    try {
+        const tokenCookie = request.cookies.get('token')
+        const supabaseAuthToken = request.cookies.get('supabase-auth-token')
+        const supabaseRefreshToken = request.cookies.get('supabase-refresh-token')
+        const hasTokenBefore = !!tokenCookie?.value
+        const hasSupabaseTokens = !!(supabaseAuthToken?.value || supabaseRefreshToken?.value)
+        const response = NextResponse.json({ 
+            status: '200', 
+            message: 'Logout successful',
+            data: {
+                jwtTokenExistedBefore: hasTokenBefore,
+                supabaseTokensExistedBefore: hasSupabaseTokens,
+                allTokensDeleted: true,
+                timestamp: new Date().toISOString()
+            }
+        })
+        response.cookies.set('token', '', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            expires: new Date(0),
+            path: '/'
+        })
+        response.cookies.set('supabase-auth-token', '', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            expires: new Date(0),
+            path: '/'
+        })
+        response.cookies.set('supabase-refresh-token', '', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            expires: new Date(0),
+            path: '/'
+        })
+        const logoutResult = await Logout()
+        if (logoutResult) {
+            console.error("Supabase logout error:", logoutResult)
+        }
+        deleteToken()
+        console.log("Logout completed successfully") // for debug
+        console.log("JWT Token existed before logout:", hasTokenBefore) // for debug
+        console.log("Supabase tokens existed before logout:", hasSupabaseTokens) // for debug
+        console.log("All cookies deleted") // for debug
+        return response
+    } catch (error) {
+        console.error('Logout process failed:', error)
+        ResponseModel.status = '500'
+        ResponseModel.message = 'Logout failed'
         return NextResponse.json(ResponseModel, { status: 500 })
     }
-    return NextResponse.redirect(new URL('/login', request.url), {
-      status: 302,
-    })
-  } 
+}
