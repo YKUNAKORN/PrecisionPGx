@@ -20,6 +20,7 @@ export async function QueryRule(ruleID, index) {
         RuleResult.id = response.data[0].id;
         RuleResult.location = response.data[0].location;
         RuleResult.result_location = response.data[0].result_location[index].split(',');
+        RuleBased.phenotype = response.data[0].phenotype[index] || null; // phenotype added
         RuleResult.predicted_genotype = response.data[0].predicted_genotype[index];
         RuleResult.predicted_phenotype = response.data[0].predicted_phenotype[index];
         RuleResult.recommendation = response.data[0].recommend[index];
@@ -40,6 +41,7 @@ export async function InsertRule(InsertRuleModel) {
         RuleBased.id = response.data[0].id;
         RuleBased.location = response.data[0].location;
         RuleBased.result_location = response.data[0].result_location;
+        RuleBased.phenotype = response.data[0].phenotype || null; // phenotype added
         RuleBased.predicted_genotype = response.data[0].predicted_genotype;
         RuleBased.predicted_phenotype = response.data[0].predicted_phenotype;
         RuleBased.recommendation = response.data[0].recommend;

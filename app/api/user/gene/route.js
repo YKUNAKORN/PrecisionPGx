@@ -39,7 +39,7 @@ export async function GET(request) {
 
 export async function POST(request) {
     const body = await request.json();
-    if (!body || !body.location || !body.result_location || !body.predicted_genotype || !body.predicted_phenotype || !body.recommend) {
+    if (!body || !body.location || !body.result_location || !body.phenotype || !body.predicted_genotype || !body.predicted_phenotype || !body.recommend) {
         ResponseModel.status = '400'
         ResponseModel.message = 'Invalid Data'
         ResponseModel.data = null;
@@ -48,6 +48,7 @@ export async function POST(request) {
     }
     RuleModel.location = body.location;
     RuleModel.result_location = body.result_location;
+    RuleModel.phenotype = body.phenotype || null; // phenotype added
     RuleModel.predicted_genotype = body.predicted_genotype;
     RuleModel.predicted_phenotype = body.predicted_phenotype;
     RuleModel.recommend = body.recommend;
