@@ -1,4 +1,4 @@
-import { getByArray } from "@/supabase/crud";
+import { getByArray } from "../../../../lib/supabase/crud";
 import { CreateClientSecret } from "../../../../lib/supabase/client";
 import { RuleBase as RuleBaseTemplate } from "../../../../lib/model/RuleBase";
 

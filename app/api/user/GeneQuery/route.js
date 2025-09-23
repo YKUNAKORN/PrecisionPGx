@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
-import { getRuleBaseByEnzymeAndGene } from "../../../service/rulebase_service";
-import { ResponseModel } from "@/model/Response";
+import { getRuleBaseByEnzymeAndGene } from "../service/rulebase_service";
+import { ResponseModel } from "../../../../lib/model/Response";
 
-export async function GET(req, { params }) {
-    const { enzyme } = params;
-    console.log("params:", params);
-    // console.log("enzyme:", params.enzyme);
-    // console.log("gene raw:", params.gene);
+export async function GET(req) {
+    const { searchParams } = new URL(req.url);
+    const enzyme = searchParams.get('enzyme');
+    const geneParam = searchParams.get('gene');
+    const gene = geneParam ? geneParam.split(',') : null;
+    console.log("enzyme:", enzyme);
+    console.log("gene raw:", gene);
     if (!enzyme) {
         ResponseModel.status = '400';
         ResponseModel.message = 'enzyme parameter is required';
