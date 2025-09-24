@@ -6,6 +6,7 @@ const db = CreateClientSecret();
 
 function mergeGeneArray(arr) {
   const merged = [];
+  // parse gene array เช่น ["C","T","A","A"] → ["C/T","A/A"]
   for (let i = 0; i < arr.length; i += 2) {
     merged.push(arr[i] + "/" + arr[i + 1]);
   }
@@ -13,7 +14,7 @@ function mergeGeneArray(arr) {
 }
 
 export async function getRuleBaseByEnzymeAndGene(enzyme, geneArray = []) {
-  // parse gene array เช่น ["C","T","A","A"] → ["C/T","A/A"]
+  
   const parsedGene = mergeGeneArray(geneArray);
 
   const { data, error } = await getByArray(db, "TestRuleBaseBaitoey", enzyme, parsedGene);

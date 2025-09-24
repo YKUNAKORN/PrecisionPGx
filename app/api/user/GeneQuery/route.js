@@ -5,8 +5,8 @@ import { ResponseModel } from "../../../../lib/model/Response";
 export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const enzyme = searchParams.get('enzyme');
-    const geneParam = searchParams.get('gene');
-    const gene = geneParam ? geneParam.split(',') : null;
+    const geneParam = searchParams.get('gene'); //"C/T/A/A"
+    const gene = geneParam ? geneParam.split('/') : null; //["C", "T", "A", "A"]
     console.log("enzyme:", enzyme);
     console.log("gene raw:", gene);
     if (!enzyme) {
