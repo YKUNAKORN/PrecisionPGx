@@ -3,8 +3,8 @@ import { Button } from "../ui/button";
 
 const Register = () => {
   return (
-    <Button size="sm" asChild>
-      <Link href="/" className="text-2xl">
+    <Button size="sm" asChild variant="outline">
+      <Link href="/Register" className="text-2xl">
         Register
       </Link>
     </Button>

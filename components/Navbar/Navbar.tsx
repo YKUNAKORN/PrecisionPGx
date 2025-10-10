@@ -8,30 +8,27 @@ import Register from "./Register"
 import Samples from "./Samples"
 
 
-const Navbar = () => {
+// components/Navbar/Navbar.tsx
+export default function Navbar() {
   return (
-    <aside className="flex flex-col justify-between items-center h-screen w-20 border-r">
+    <aside
+      className="shrink-0 sticky top-0 h-dvh w-20 border-r border-white/10 bg-zinc-900/50
+                 flex flex-col justify-between items-center p-3"
+    >
+      <nav aria-label="Primary" className="flex flex-col items-center gap-6">
+        <Logo/>
+        <Home/>
+        <Register/>
+        <Interpret/>
+        <Quality/>
+        <Samples/>
+      </nav>
 
-    <nav  className="flex flex-col justify-between gap-6">
-        <div>
-            <Logo/>
-            <Home/>
-            <Register/>
-            <Interpret/>
-            <Quality/>
-            <Samples/>
-            
-
-        </div>
-    </nav>
-    <nav className="mb-6 flex flex-col items-center gap-1">
+      <nav aria-label="Utilities" className="mb-2 flex flex-col items-center gap-2">
         <Darkmode/>
         <Account/>
-        
       </nav>
-    
-
+      
     </aside>
-  )
+  );
 }
-export default Navbar

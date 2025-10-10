@@ -3,8 +3,8 @@ import { Button } from "../ui/button";
 
 const Account = () => {
   return (
-    <Button size="sm" asChild>
-      <Link href="/" className="text-2xl">
+    <Button size="sm" asChild variant="outline">
+      <Link href="/Account" className="text-2xl">
          <span className="text-xs text-">
           Account
           </span>

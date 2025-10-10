@@ -3,8 +3,8 @@ import { Button } from "../ui/button";
 
 const Logo = () => {
   return (
-    <Button size="sm" asChild>
-      <Link href="/" className="text-2xl">
+    <Button size="sm" asChild variant="outline">
+      <Link href="/Home" className="text-2xl">
         Logo 
       </Link>
     </Button>

@@ -270,3 +270,11 @@
 @layer utilities {
   /* custom utility classes */
 }
+
+@layer interpret_table {
+  /* custom interpret table styles */
+  body {
+   
+  }
+  
+}

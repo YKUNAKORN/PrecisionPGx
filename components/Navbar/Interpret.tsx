@@ -3,10 +3,10 @@ import { Button } from "../ui/button"
 
 const Interpret = () => {
   return (
-    <Button size='sm' asChild >
-        <Link href ="/" className = "text-2xl">
+    <Button size='sm' asChild variant='outline'>
+        <Link href ="/Interpret1" className = "text-2xl">
         Interpret
-        </Link> 
+        </Link>
     </Button>
   )
 }
