@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased `}>
         <Providers>
           {/* ทำเป็น 2 คอลัมน์: ซ้าย (80px) | ขวา (ยืด) */}
           <div className="flex justify grid-cols text-zinc-100">
