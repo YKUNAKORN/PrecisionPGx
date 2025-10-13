@@ -1,6 +1,12 @@
-const page = () => {
+import { SignedIn } from '@clerk/nextjs'
+
+export default function Page() {
   return (
-    <div>page</div>
+    <>
+      <SignedIn>
+        <div>You are signed in.</div>
+      </SignedIn>
+      <p>This content is always visible.</p>
+    </>
   )
 }
-export default page

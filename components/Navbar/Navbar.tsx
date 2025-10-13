@@ -12,8 +12,8 @@ import Samples from "./Samples"
 export default function Navbar() {
   return (
     <aside
-      className="shrink-0 sticky top-0 h-dvh w-20 border-r border-white/10 bg-zinc-900/50
-                 flex flex-col justify-between items-center p-3"
+        className="shrink-0 sticky top-0 h-dvh w-20 border-r border-white/10 bg-zinc-900/50
+                  flex flex-col justify-between items-center p-3"
     >
       <nav aria-label="Primary" className="flex flex-col items-center gap-6">
         <Logo/>
