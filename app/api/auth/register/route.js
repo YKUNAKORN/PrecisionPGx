@@ -1,11 +1,7 @@
-
-// import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { InsertUserModel } from '../../../../lib/model/User'
 import { SignUp } from '../service/SignUp'
 import { ResponseModel } from '../../../../lib/model/Response'
-// import { SignUp } from 'app/api/auth/service/login'
-// import { UserModel } from '../../../../lib/model/User'
 
 export async function POST(request) {
   const { email, password, confirmPassword, fullname, position } = await request.json()
@@ -20,9 +16,9 @@ export async function POST(request) {
   } catch (error) {
     return NextResponse.json({
       error: 'Invalid request payload' + error.message,
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    }, { status: 400 })
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined }, { status: 400 })
   }
+
   const data = await SignUp(InsertUserModel, password)
   if (data.error) {
     console.error('Error during SignUp:', data.error) // Debug log

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { ResponseModel } from '../../../../../lib/model/Response'; 
 
 
-export async function GET(req,{ params }) {
+export async function GET(req, { params }) {
     const { id } = await params;
     if (!id) {
       ResponseModel.status = '400';

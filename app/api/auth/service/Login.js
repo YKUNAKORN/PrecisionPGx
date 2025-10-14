@@ -1,53 +1,58 @@
 import { NextResponse } from 'next/server'
 import { ResponseModel } from '../../../../lib/model/Response'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createSupabaseServerClientForAuth } from '../../../../lib/supabase/server'
+import { generateToken } from '../../../../lib/auth/jwt'
+import { GetById } from '../../../../lib/supabase/crud'
+import { CreateClientSecret } from '../../../../lib/supabase/client'
+
 export async function Login(email, password) {
-  const supabase = createRouteHandlerClient({ cookies })
   try {
-    let response = NextResponse.json(ResponseModel)
-
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-
+    const supabase = await createSupabaseServerClientForAuth()
+    const db = CreateClientSecret()
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
     if (error) {
-      ResponseModel.status = '500'
-      ResponseModel.message = 'Login failed: ' + error.message
-      ResponseModel.data = null
-      return NextResponse.json(ResponseModel, { status: 500 })
+      const errorResponse = { ...ResponseModel }
+      errorResponse.status = '500'
+      errorResponse.message = 'Login failed: ' + error.message
+      errorResponse.data = null
+      return NextResponse.json(errorResponse, { status: 500 })
     }
-
     if (data.session) {
-      ResponseModel.status = '200'
-      ResponseModel.message = 'Login successful'
-      ResponseModel.data = data.user
-      response = NextResponse.json(ResponseModel)
-
-      response.cookies.set('supabase-auth-token', data.session.access_token, {
+      const successResponse = { ...ResponseModel }
+      successResponse.status = '200'
+      successResponse.message = 'Login successful'
+      successResponse.data = data.user
+      const userProfile = await GetById(db, 'user', data.user.id)      
+      const jwtToken = await generateToken({
+        userId: data.user.id,
+        position: userProfile.data[0].position,
+        email: data.user.email
+      })
+      const response = NextResponse.json(successResponse)
+      response.cookies.set('supabase-auth-token', jwtToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7
+        maxAge: 60 * 60 * 24 * 7 
       })
-
       response.cookies.set('supabase-refresh-token', data.session.refresh_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 30
+        maxAge: 60 * 60 * 24 * 30 
       })
-
       return response
     }
-
     return NextResponse.json({ data, error })
-
-  }
-
-  catch (error) {
-    ResponseModel.status = '500'
-    ResponseModel.message = 'Login failed: Internal server error:  ' + error.message
-    ResponseModel.data = null
-    console.error(process.env.NODE_ENV === 'development' ? error.message : undefined ,error)
-    return NextResponse.json(ResponseModel, { status: 500 })
+  } catch (error) {
+    const errorResponse = { ...ResponseModel }
+    errorResponse.status = '500'
+    errorResponse.message = 'Login failed: Internal server error: ' + error.message
+    errorResponse.data = null
+    console.error(process.env.NODE_ENV === 'development' ? error.message : undefined, error)
+    return NextResponse.json(errorResponse, { status: 500 })
   }
 }
