@@ -2,8 +2,8 @@ import { Create, GetAll, GetById, Update, Delete } from "../../../../lib/supabas
 import { Note } from "../../../../lib/model/Note";
 import { CreateClientSecret } from "../../../../lib/supabase/client";
 
-
 const db = CreateClientSecret();
+
 export async function CreateNote(row) {
     const { data, error } = await Create(db, "note", row);
     if (error) {
