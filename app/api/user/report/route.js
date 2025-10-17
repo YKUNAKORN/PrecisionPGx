@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server'
 import { ResponseModel } from '@/lib/model/Response'
-import { GetAllPatient, CreatePatient } from '@/app/api/user/service/patient_service'
+import { GetAllReports, CreateReport } from '@/app/api/user/service/report_service'
 
 export async function GET() {
     try {
-        const patients = await GetAllPatient()
+        const reports = await GetAllReports()
 
         ResponseModel.status = '200'
         ResponseModel.message = 'Success'
-        ResponseModel.data = patients
+        ResponseModel.data = reports
 
         return NextResponse.json(ResponseModel, { status: 200 })
     } catch (error) {
-        console.error('Error fetching patients:', error)
+        console.error('Error fetching reports:', error)
 
         ResponseModel.status = '500'
         ResponseModel.message = 'Internal server error'
@@ -25,16 +25,16 @@ export async function GET() {
 export async function POST(req) {
     try {
         const body = await req.json()
-        const { name, phone, age, gender, Ethnicity } = body
+        const { name, phone, age, gender, Ethnlecity } = body
         
-        if (!name || !phone || !age || !gender || !Ethnicity) {
+        if (!name || !phone || !age || !gender || !Ethnlecity) {
             ResponseModel.status = '400'
             ResponseModel.message = 'Missing required fields'
             ResponseModel.data = null
             return NextResponse.json(ResponseModel, { status: 400 })
         }
 
-        const { data, error } = await CreatePatient(body)
+        const { data, error } = await CreateReport(body)
 
         if (error) {
             ResponseModel.status = '400'
@@ -44,12 +44,12 @@ export async function POST(req) {
         }
 
         ResponseModel.status = '201'
-        ResponseModel.message = 'Patient created successfully'
+        ResponseModel.message = 'Report created successfully'
         ResponseModel.data = data
 
         return NextResponse.json(ResponseModel, { status: 201 })
     } catch (error) {
-        console.error('Error creating patient:', error)
+        console.error('Error creating report:', error)
 
         ResponseModel.status = '500'
         ResponseModel.message = 'Internal server error'

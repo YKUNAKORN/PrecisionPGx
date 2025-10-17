@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server'
 import { ResponseModel } from '@/lib/model/Response'
-import { GetAllPatient, CreatePatient } from '@/app/api/user/service/patient_service'
+import { GetAllRules, CreateRule } from '@/app/api/user/service/rule_service'
 
 export async function GET() {
     try {
-        const patients = await GetAllPatient()
+        const rules = await GetAllRules()
 
         ResponseModel.status = '200'
         ResponseModel.message = 'Success'
-        ResponseModel.data = patients
+        ResponseModel.data = rules
 
         return NextResponse.json(ResponseModel, { status: 200 })
     } catch (error) {
-        console.error('Error fetching patients:', error)
+        console.error('Error fetching rules:', error)
 
         ResponseModel.status = '500'
         ResponseModel.message = 'Internal server error'
@@ -25,16 +25,16 @@ export async function GET() {
 export async function POST(req) {
     try {
         const body = await req.json()
-        const { name, phone, age, gender, Ethnicity } = body
+        const { genotype, phenotype, active_score, recommendation, gene_location, enzyme } = body
         
-        if (!name || !phone || !age || !gender || !Ethnicity) {
+        if (!genotype || !phenotype || !active_score || !recommendation || !gene_location || !enzyme) {
             ResponseModel.status = '400'
             ResponseModel.message = 'Missing required fields'
             ResponseModel.data = null
             return NextResponse.json(ResponseModel, { status: 400 })
         }
 
-        const { data, error } = await CreatePatient(body)
+        const { data, error } = await CreateRule(body)
 
         if (error) {
             ResponseModel.status = '400'
@@ -44,12 +44,12 @@ export async function POST(req) {
         }
 
         ResponseModel.status = '201'
-        ResponseModel.message = 'Patient created successfully'
+        ResponseModel.message = 'Rule created successfully'
         ResponseModel.data = data
 
         return NextResponse.json(ResponseModel, { status: 201 })
     } catch (error) {
-        console.error('Error creating patient:', error)
+        console.error('Error creating rule:', error)
 
         ResponseModel.status = '500'
         ResponseModel.message = 'Internal server error'
