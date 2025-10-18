@@ -1,13 +1,18 @@
 import Link from "next/link"
 import { Button } from "../ui/button"
+import InterpretIcon from "../Icon/InterpretIcon"
 
 const Interpret = () => {
   return (
-    <Button size='sm' asChild variant='outline'>
-        <Link href ="/Interpret1" className = "text-2xl">
-        Interpret
+    <div className="flex flex-col items-center gap-1">
+
+    <Button size='sm' asChild variant='outline' className="size-12 w-12 h-12">
+        <Link href ="/Dashboard/Interpret1" className = "text-2xl">
+        <InterpretIcon/>
         </Link>
     </Button>
+        Interpret
+    </div>
   )
 }
 export default Interpret

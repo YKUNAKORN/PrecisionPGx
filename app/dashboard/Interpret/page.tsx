@@ -25,76 +25,76 @@ export default function Interpret() {
           className="mb-6 flex flex-wrap items-center gap-4"
         >
           <div className="flex items-center gap-2">
-            <div className="h-10 w-10  inline-grid place-items-center rounded-full border border-dashed border-white/10 bg-white/5">
+            <div className="h-10 w-10  inline-grid place-items-center rounded-full border border-dashed ">
               {" "}
               1
             </div>
-            <div className="h-10 w-fit p-2 inline-flex items-center   rounded-xl border border-dashed border-white/10 bg-white/5">
+            <div className="h-10 w-fit p-2 inline-flex items-center   rounded-xl border border-dashed ">
               {" "}
               Patient
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="h-10 w-10  inline-grid place-items-center rounded-full border border-dashed border-white/10 bg-white/5">
+            <div className="h-10 w-10  inline-grid place-items-center rounded-full border border-dashed ">
               {" "}
               2
             </div>
-            <div className="h-10 w-fit p-2 inline-flex items-center   rounded-xl border border-dashed border-white/10 bg-white/5">
+            <div className="h-10 w-fit p-2 inline-flex items-center   rounded-xl border border-dashed ">
               Raw Data
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="h-10 w-10  inline-grid place-items-center rounded-full border border-dashed border-white/10 bg-white/5">
+            <div className="h-10 w-10  inline-grid place-items-center rounded-full border border-dashed ">
               {" "}
               3
             </div>
-            <div className="h-10 w-fit p-2 inline-flex items-center   rounded-xl border border-dashed border-white/10 bg-white/5">
+            <div className="h-10 w-fit p-2 inline-flex items-center   rounded-xl border border-dashed ">
               {" "}
               Genotype
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="h-10 w-10  inline-grid place-items-center rounded-full border border-dashed border-white/10 bg-white/5">
+            <div className="h-10 w-10  inline-grid place-items-center rounded-full border border-dashed ">
               {" "}
               4
             </div>
-            <div className="h-10 w-fit p-2 inline-flex items-center   rounded-xl border border-dashed border-white/10 bg-white/5">
+            <div className="h-10 w-fit p-2 inline-flex items-center   rounded-xl border border-dashed ">
               {" "}
               Phenotype
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="h-10 w-10  inline-grid place-items-center rounded-full border border-dashed border-white/10 bg-white/5">
+            <div className="h-10 w-10  inline-grid place-items-center rounded-full border border-dashed ">
               {" "}
               5
             </div>
-            <div className="h-10 w-fit p-2 inline-flex items-center   rounded-xl border border-dashed border-white/10 bg-white/5">
+            <div className="h-10 w-fit p-2 inline-flex items-center   rounded-xl border border-dashed ">
               {" "}
               Recomendationm
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="h-10 w-10  inline-grid place-items-center rounded-full border border-dashed border-white/10 bg-white/5">
+            <div className="h-10 w-10  inline-grid place-items-center rounded-full border border-dashed ">
               {" "}
               6
             </div>
-            <div className="h-10 w-fit p-2 inline-flex items-center   rounded-xl border border-dashed border-white/10 bg-white/5">
+            <div className="h-10 w-fit p-2 inline-flex items-center   rounded-xl border border-dashed ">
               {" "}
               Quality
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="h-10 w-10  inline-grid place-items-center rounded-full border border-dashed border-white/10 bg-white/5">
+            <div className="h-10 w-10  inline-grid place-items-center rounded-full border border-dashed ">
               {" "}
               7
             </div>
-            <div className="h-10 w-fit p-2 inline-flex items-center   rounded-xl border border-dashed border-white/10 bg-white/5">
+            <div className="h-10 w-fit p-2 inline-flex items-center   rounded-xl border border-dashed ">
               {" "}
               Approval
             </div>
@@ -113,7 +113,7 @@ export default function Interpret() {
           data-section="toolbar"
           className="mb-4 flex flex-wrap items-center gap-3"
         >
-          {/* <div data-element="search" className="h-10 grow rounded-xl border border-dashed border-white/10 bg-white/5" >
+          {/* <div data-element="search" className="h-10 grow rounded-xl border border-dashed " >
           </div> */}
 
           <div>
@@ -122,7 +122,7 @@ export default function Interpret() {
 
           {/* <div
             data-element="clear-all"
-            className="h-10 w-48 rounded-xl border border-dashed border-white/10 bg-white/5"
+            className="h-10 w-48 rounded-xl border border-dashed "
           >
           </div> */}
             <Button variant="outline" className=""  >
@@ -130,7 +130,7 @@ export default function Interpret() {
             </Button>
           {/* <div
             data-element="reset-data"
-            className="h-10 w-36 rounded-xl border border-dashed border-white/10 bg-white/5"
+            className="h-10 w-36 rounded-xl border border-dashed "
           ></div> */}
           <Button variant="outline" className="">
             Reset Data

@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { Button } from "../ui/button";
+import { HomeIcon } from "lucide-react";
 
 const Home = () => {
   return (
-    <Button size="sm" asChild variant="outline">
-      <Link href="/Home" className="text-2xl">
-        Home
+    <div className="flex flex-col items-center gap-1">
+
+    <Button size="sm" asChild variant="outline" className="size-12 w-12 h-12">
+      <Link href="/Dashboard/Home" className="text-2xl">
+        <HomeIcon/>
       </Link>
     </Button>
+        Home
+    </div>
   );
 };
 export default Home;
