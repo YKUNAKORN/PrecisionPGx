@@ -2,6 +2,24 @@ import { NextResponse } from 'next/server'
 import { ResponseModel } from '@/lib/model/Response'
 import { GetAllRules, CreateRule } from '@/app/api/user/service/rule_service'
 
+/**
+ * @swagger
+ * /api/user/rule:
+ *   get:
+ *     description: Get All Rules
+ *     tags:[RuleBased]
+ *     summary: Retrieve all rules from the database
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *         content:
+ *           application/json:
+ *             status: 200
+ *             message: Success
+ *             data:
+ *               type: array
+ *               items:
+ */
 export async function GET() {
     try {
         const rules = await GetAllRules()
