@@ -23,6 +23,7 @@ import { Login } from '../service/Login'
  *               password:
  *                 type: string
  *                 format: password
+ * 
  *     responses:
  *       200:
  *         description: Successful login
@@ -40,6 +41,7 @@ import { Login } from '../service/Login'
  *                 data:
  *                   type: object
  */
+
 export async function POST(request) {
   const { email, password } = await request.json()
 

@@ -51,14 +51,17 @@ export async function GetNoteById(id) {
         return { data: null, error: error, status: 500 }; //for User
     }
     try {
-        Note[0].id = data[0].id;
-        Note[0].method = data[0].method;
-        Note[0].created_at = data[0].created_at;
+        // Create a new array with only the single note data
+        const noteResult = [{
+            id: data[0].id,
+            method: data[0].method,
+            created_at: data[0].created_at
+        }];
+        return { data: noteResult, error: null };
     } catch (err) {
         console.error("Failed to parse data" + err); //for Debug
         return { data: null, error: "Failed to parse data" + err, status: 500 };
     }
-    return { data: Note, error: null };
 }
 
 export async function UpdateNoteByID(id, row) {

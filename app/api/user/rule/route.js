@@ -6,20 +6,120 @@ import { GetAllRules, CreateRule } from '@/app/api/user/service/rule_service'
  * @swagger
  * /api/user/rule:
  *   get:
- *     description: Get All Rules
- *     tags:[RuleBased]
- *     summary: Retrieve all rules from the database
+ *     summary: Read All Rules
+ *     description: Retrieve all rules from the database
+ *     tags:
+ *       - RuleBased
  *     responses:
  *       200:
- *         description: Successful response
+ *         description: Query Successful
  *         content:
  *           application/json:
- *             status: 200
- *             message: Success
- *             data:
- *               type: array
- *               items:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "200"
+ *                 message:
+ *                   type: string
+ *                   example: Success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     gene_location:
+ *                       type: string
+ *                     genotype:
+ *                       type: string
+ *                     phenotype:
+ *                       type: string
+ *                     active_scrore:
+ *                       type: string
+ *                     recommendation:
+ *                       type: string
+ *                     created_at:
+ *                       type: string
+ *                       format: date-time
+ *                     enzyme:
+ *                       type: string
+ * 
+ *   post:
+ *     summary: Create a new Rule
+ *     description: Create a new rule in the database
+ *     tags:
+ *       - RuleBased
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - genotype
+ *               - phenotype
+ *               - active_score
+ *               - recommendation
+ *               - gene_location
+ *               - enzyme
+ *             properties:
+ *               gene_location:
+ *                 type: string
+ *                 example: This is gene_location
+ *               genotype:
+ *                 type: string
+ *                 example: This is genotype
+ *               phenotype:
+ *                 type: string
+ *                 example: This is phenotype
+ *               active_score:
+ *                 type: float
+ *                 example: 0.37
+ *               recommendation:
+ *                 type: string
+ *                 example: This is recommendation
+ *               enzyme:
+ *                 type: string
+ *                 example: This is enzyme
+ *     responses:
+ *       201:
+ *         description: Rule created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "201"
+ *                 message:
+ *                   type: string
+ *                   example: Rule created successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     gene_location:
+ *                       type: string
+ *                     genotype:
+ *                       type: string
+ *                     phenotype:
+ *                       type: string
+ *                     active_scrore:
+ *                       type: string
+ *                     recommendation:
+ *                       type: string
+ *                     created_at:
+ *                       type: string
+ *                       format: date-time
+ *                     enzyme:
+ *                       type: string
  */
+
 export async function GET() {
     try {
         const rules = await GetAllRules()

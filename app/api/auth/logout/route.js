@@ -28,6 +28,7 @@ import { deleteToken } from '../../../../lib/auth/jwt'
  *                 data:
  *                   type: object
  */
+
 export async function POST(request) {
     try {
         const tokenCookie = request.cookies.get('token')

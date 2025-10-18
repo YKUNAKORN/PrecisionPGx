@@ -3,6 +3,190 @@ import { CreateNote, GetAllNotes, UpdateNoteByID, DeleteNoteByID } from "../serv
 import { ResponseModel } from "../../../../lib/model/Response";
 import { UpdateNote } from "../../../../lib/model/Note";
 
+/**
+ * @swagger
+ * /api/user/note:
+ *   get:
+ *     summary: Read All Notes
+ *     description: Retrieve all notes from the database
+ *     tags:
+ *       - Note
+ *     responses:
+ *       200:
+ *         description: Query Successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "200"
+ *                 message:
+ *                   type: string
+ *                   example: Query Successful
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                         example: c39ba4bb-e684-4b52-a66e-9084f9ef4c3e
+ *                       method:
+ *                         type: string
+ *                         example: 37 Kobbie Mainoo
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: 2025-10-17T14:13:18.592258+00:00
+ * 
+ *   post:
+ *     summary: Create a new Note
+ *     description: Create a new note in the database
+ *     tags:
+ *       - Note
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - method
+ *             properties:
+ *               method:
+ *                 type: string
+ *                 example: 37 Kobbie Mainoo
+ *                 description: Note content or method description
+ *     responses:
+ *       201:
+ *         description: Note created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "201"
+ *                 message:
+ *                   type: string
+ *                   example: Created Successful
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       method:
+ *                         type: string
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *       
+ *   put:
+ *     summary: Update a Note by ID
+ *     description: Update an existing note using query parameter
+ *     tags:
+ *       - Note
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The unique identifier of the note to update
+ *         example: c39ba4bb-e684-4b52-a66e-9084f9ef4c3e
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - method
+ *             properties:
+ *               method:
+ *                 type: string
+ *                 example: 1 David De Gea
+ *                 description: Updated note content or method description
+ *     responses:
+ *       200:
+ *         description: Note updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "200"
+ *                 message:
+ *                   type: string
+ *                   example: Update Successful
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       method:
+ *                         type: string
+ *                         example: 1 David De Gea
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ * 
+ *   delete:
+ *     summary: Delete a Note by ID
+ *     description: Delete an existing note using query parameter
+ *     tags:
+ *       - Note
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The unique identifier of the note to delete
+ *         example: c39ba4bb-e684-4b52-a66e-9084f9ef4c3e
+ *     responses:
+ *       200:
+ *         description: Note deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "200"
+ *                 message:
+ *                   type: string
+ *                   example: Delete Successful
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       method:
+ *                         type: string
+ *                         example: 1 David De Gea
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ */
 
 export async function POST(req) {
     const row = await req.json()
