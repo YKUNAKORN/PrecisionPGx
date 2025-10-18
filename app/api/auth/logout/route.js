@@ -3,6 +3,31 @@ import { ResponseModel } from '../../../../lib/model/Response'
 import { Logout } from '../service/Logout'
 import { deleteToken } from '../../../../lib/auth/jwt'
 
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout User
+ *     description: Logout a user and invalidate their session
+ *     tags:
+ *       - Auth
+ *     responses:
+ *       200:
+ *         description: Successful logout
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: Successful login
+ *                 data:
+ *                   type: object
+ */
 export async function POST(request) {
     try {
         const tokenCookie = request.cookies.get('token')

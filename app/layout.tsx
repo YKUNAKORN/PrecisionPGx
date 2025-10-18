@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
 import Providers from "./Providers";
-import Navbar from "@/components/Navbar/Navbar";
-import LayoutWrapper from "./LayoutWrapper"; // Import the LayoutWrapper to manage Navbar visibility
+import LayoutWrapper from "./LayoutWrpper";// Import the LayoutWrapper to manage Navbar visibility
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,8 +30,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased `}
       >
         <Providers>
+          {/* // Use LayoutWrapper to conditionally render Navbar */}
           <div className="flex text-foreground">
-            {/* <Navbar /> */}
             <LayoutWrapper>
             <main className="min-h-dvh overflow-y-auto">
               <div className="mx-auto w-full  p-6">
@@ -42,11 +40,6 @@ export default function RootLayout({
             </main>
             </LayoutWrapper>
           </div>
-          {/* <LayoutWrapper>
-            <main>
-              {children}
-            </main>
-          </LayoutWrapper> */}
         </Providers>
       </body>
     </html>
