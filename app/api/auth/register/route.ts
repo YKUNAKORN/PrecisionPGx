@@ -1,0 +1,100 @@
+import { NextResponse, type NextRequest } from 'next/server'
+import { InsertUserModel } from '@/lib/model/User'
+import { SignUp } from '@/app/api/auth/service/SignUp'
+import { ResponseModel } from '@/lib/model/Response'
+
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Register new user
+ *     description: Register a new user and return authentication data
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - confirmPassword
+ *               - fullname
+ *               - position
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user.example@gmail.com
+ *                 description: User email address
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: "string"
+ *                 description: User password
+ *               confirmPassword:
+ *                 type: string
+ *                 format: password
+ *                 example: "string"
+ *                 description: Password confirmation (must match password)
+ *               fullname:
+ *                 type: string
+ *                 example: Firstname Lastname
+ *                 description: User's full name
+ *               position:
+ *                 type: string
+ *                 example: string
+ *                 description: User's position or role
+ *     responses:
+ *       200:
+ *         description: Successful registration
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "200"
+ *                 message:
+ *                   type: string
+ *                   example: SignUp Successful
+ *                 data:
+ *                   type: object
+ *                   description: User authentication data
+ */
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const { email, password, confirmPassword, fullname, position } = await request.json()
+  if (password !== confirmPassword) {
+    return NextResponse.json({ error: 'Passwords do not match' }, { status: 400 })
+  }
+  try {
+    InsertUserModel.email = email
+    InsertUserModel.position = position
+    InsertUserModel.fullname = fullname
+    console.log("UserModel from request:", InsertUserModel) // Debug log
+  } catch (error) {
+    return NextResponse.json({
+      error: 'Invalid request payload' + (error as Error).message,
+      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined }, { status: 400 })
+  }
+
+  const data = await SignUp(InsertUserModel, password)
+  if (data.error) {
+    console.error('Error during SignUp:', data.error) // Debug log
+    const errorResponse = { ...ResponseModel }
+    errorResponse.status = '500'
+    errorResponse.message = 'SignUp failed: ' + data.error
+    errorResponse.data = null
+    return NextResponse.json(errorResponse, { status: 500 })
+  }
+  console.log("data", data)
+  const successResponse = { ...ResponseModel }
+  successResponse.status = '200'
+  successResponse.message = 'SignUp Successful'
+  successResponse.data = data
+  return NextResponse.json(successResponse)
+}
