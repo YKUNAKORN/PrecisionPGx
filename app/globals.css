@@ -1,12 +1,16 @@
 @import "tailwindcss";
 
-/* Tokens (light) */
+/* ============================
+   THEME TOKENS — LIGHT (GLOBAL)
+   ============================ */
 @theme {
+  /* Radius tokens */
   --radius: 0.65rem;
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
+  /* Core colors */
   --color-background: oklch(1 0 0);
   --color-foreground: oklch(0.141 0.005 285.823);
 
@@ -35,10 +39,14 @@
   --color-input: oklch(0.92 0.004 286.32);
   --color-ring: oklch(0.606 0.25 292.717);
 
-  /* charts & sidebar … (คงไว้ได้ตามเดิม) */
+  /* Chart & sidebar (ถ้าต้องใช้ก็ใส่ได้) */
+  /* --color-chart-1: ... */
+  /* --color-sidebar: ... */
 }
 
-/* Tokens (dark) — scope ด้วย .dark */
+/* ============================
+   THEME TOKENS — DARK (SCOPED)
+   ============================ */
 .dark {
   @theme {
     --color-background: oklch(0.141 0.005 285.823);
@@ -68,23 +76,42 @@
     --color-border: oklch(1 0 0 / 10%);
     --color-input: oklch(1 0 0 / 15%);
     --color-ring: oklch(0.541 0.281 293.009);
-
-    /* charts & sidebar … (คงไว้ได้ตามเดิม) */
   }
 }
 
-/* แนะให้เลิกใช้ alias :root -> var(--color-...) เพื่อลดสับสน
-   แล้วใช้คลาสจาก token โดยตรง เช่น bg-background, text-foreground */
+/* ให้ UI native (เช่น input/scrollbar) ใช้โทนตามธีม */
 :root { color-scheme: light; }
 .dark { color-scheme: dark; }
 
+/* ============================
+   BASE STYLES
+   ============================ */
 @layer base {
+  /* ให้เส้นขอบทุก element ดึงสีตามธีม */
   * { @apply border-border; }
+
+  /* ผูกพื้นหลัง/ตัวอักษรกับธีม */
   body { @apply bg-background text-foreground; }
+
+  /* วงแหวนโฟกัสมาตรฐานของโปรเจกต์ */
   :focus-visible { @apply outline-none ring-2 ring-ring; }
 }
 
+/* ============================
+   REUSABLE COMPONENT CLASSES
+   ============================ */
 @layer components {
   .card { @apply bg-card text-card-foreground border border-border rounded-lg; }
   .popover { @apply bg-popover text-popover-foreground border border-border rounded-md; }
+
+  /* ตัวอย่างเพิ่มเติม */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md px-3 py-2 border border-border bg-primary text-primary-foreground;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-md px-3 py-2 border border-transparent bg-transparent text-foreground;
+  }
+  .input {
+    @apply w-full rounded-md border border-border bg-background text-foreground px-3 py-2;
+  }
 }
