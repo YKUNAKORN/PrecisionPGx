@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { ResponseModel } from '../../../../lib/model/Response'
-import { Login } from '../service/Login'
+import { ResponseModel } from '@/lib/model/Response'
+import { Login } from '@/app/api/auth/service/Login'
 
 /**
  * @swagger

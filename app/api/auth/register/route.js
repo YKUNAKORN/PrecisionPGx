@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { InsertUserModel } from '../../../../lib/model/User'
-import { SignUp } from '../service/SignUp'
-import { ResponseModel } from '../../../../lib/model/Response'
+import { InsertUserModel } from '@/lib/model/User'
+import { SignUp } from '@/app/api/auth/service/SignUp'
+import { ResponseModel } from '@/lib/model/Response'
 
 /**
  * @swagger

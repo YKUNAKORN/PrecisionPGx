@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { ResponseModel } from '../../../../lib/model/Response'
-import { Logout } from '../service/Logout'
-import { deleteToken } from '../../../../lib/auth/jwt'
+import { ResponseModel } from '@/lib/model/Response'
+import { Logout } from '@/app/api/auth/service/Logout'
+import { deleteToken } from '@/lib/auth/jwt'
 
 /**
  * @swagger

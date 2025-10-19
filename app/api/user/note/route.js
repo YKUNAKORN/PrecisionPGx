@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { CreateNote, GetAllNotes, UpdateNoteByID, DeleteNoteByID } from "../service/note_service";
-import { ResponseModel } from "../../../../lib/model/Response";
-import { UpdateNote } from "../../../../lib/model/Note";
+import { CreateNote, GetAllNotes, UpdateNoteByID, DeleteNoteByID } from "@/app/api/user/service/note_service";
+import { ResponseModel } from "@/lib/model/Response";
+import { UpdateNote } from "@/lib/model/Note";
 
 /**
  * @swagger

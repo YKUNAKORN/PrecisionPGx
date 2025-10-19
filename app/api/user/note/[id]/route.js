@@ -1,6 +1,6 @@
-import { GetNoteById } from '../../service/note_service'
+import { GetNoteById } from '@/app/api/user/service/note_service'
 import { NextResponse } from 'next/server';
-import { ResponseModel } from '../../../../../lib/model/Response'; 
+import { ResponseModel } from '@/lib/model/Response'; 
 
 /**
  * @swagger
