@@ -7,7 +7,7 @@ const Home = () => {
     <div className="flex flex-col items-center gap-1">
 
     <Button size="sm" asChild variant="outline" className="size-12 w-12 h-12">
-      <Link href="/Dashboard/Home" className="text-2xl">
+      <Link href="/" className="text-2xl">
         <HomeIcon/>
       </Link>
     </Button>
