@@ -1,0 +1,282 @@
+.title-1 {
+  margin-left: 108px; 
+  font-size: 24px;    
+  color: #ffffff;
+  padding-top: 24px;
+  font-weight: bold;
+}
+
+.title-2 {
+  margin-left: 108px; 
+  font-size: 16px;  
+  color: #c1c1c7;
+}
+
+.card-c1-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 24px;
+  padding-top: 23.5px;
+  padding-left: 104px;
+  padding-right: 24px;
+}
+
+.card-c1 {
+  background: #1f1c21;         
+  border: 1px solid #333;      
+  border-radius: 12px;         
+  padding-left: 24px;
+  padding-right: 15px;
+  padding-top: 24px;
+  padding-bottom: 10px;
+  border: 1px solid #ffffff20;
+}
+
+.card-label-c1 {
+  font-size: 16px;
+  color: #aaa;
+  margin-bottom: 9px;                 
+}
+
+.card-value-c1 {
+  font-size: 33px;
+  font-weight: bold;
+  color: #fff;        
+}
+
+.card-c1-progress{
+  margin-top: 10px;
+  margin-right: 10px;
+  height: 5px;
+  margin-bottom: 12px;
+  background: #ffffff20;     /* รางจางๆ */
+  border-radius: 90px;
+  overflow: hidden;
+}
+.card-c1-progress .fill{
+  height: 100%;
+  width: 100%;     /* ปรับเปอร์เซ็นต์ด้วยตัวแปรนี้ */
+  background: #cdb6ff;        /* หรือ #6b4eff; #f1b5d4 ตามธีม */
+  border-radius: inherit;
+}
+
+.card-c2-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); 
+  gap: 24px;                             
+  padding-top: 23.5px;
+  padding-left: 104px;
+  padding-right: 24px;
+  height: auto;
+}
+
+.card-c2 {
+  background: #1f1c21;           
+  border: 1px solid #ffffff20;   
+  border-radius: 12px;           
+  padding: 20px;                 
+}
+
+.card-value-c2{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 22px;  
+    font-weight: bold;
+    color: #fff;   
+    padding: 5px 5px 0px 5px;
+}
+
+.card-value-c2-l{
+    font-size: 16px; 
+    font-weight: normal;
+    color: #c1c1c7;
+    padding: 0px 5px 18px 5px;
+}
+
+.bar-chart{
+  height: 260px;                 /* กรอบกราฟมีความสูงแน่นอน */
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  padding: 8px 16px 16px 16px;
+  margin-top: 30px;
+}
+
+.bar{
+  height: 100%;                  /* <— สำคัญ! ให้ลูกคำนวณ % ได้ */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;     /* ให้แท่งยันจากพื้น */
+  align-items: center;
+  min-width: 40px;
+}
+
+.bar-fill{
+  width: 70px;
+  background: #d6c4ff;
+  border-radius: 2px;
+  transition: height .4s ease;
+}
+
+.bar-label{
+  margin-top: 8px;
+  color: #c1c1c7;
+  font-size: 12px;
+}
+
+@media (max-width: 1200px){
+  .bar-chart{ gap: 16px; }
+  .bar-fill{ width: 44px; }
+}
+
+.status-list{
+  display: grid;
+  gap: 12px;
+  margin-top: 26px;
+  padding-right: 6px;
+}
+
+.status-row{
+  display: grid;
+  grid-template-columns: auto 1fr auto; /* label | bar | value */
+  align-items: center;
+}
+
+.status-label {
+  position: relative;
+  color: #ffffff;
+  font-size: 16px;
+  padding-left: 18px; /* เผื่อที่ให้จุด */
+}
+
+.status-label::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background-color: #8a8a8a; /* สีเทาแบบในภาพ */
+  border-radius: 50%;
+}
+
+
+.status-val{
+  color: #c1c1c7;
+  font-size: 14px;
+  white-space: nowrap;
+  margin-left: auto;
+  font-weight: bold;
+}
+
+.status-rail{
+  height: 8px;
+  background: #ffffff1f;      /* รางจาง */
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.status-fill{
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg,#bfa8ff,#f3b8d1); /* โทนม่วง-ชมพู */
+  transition: width .3s ease;
+}
+
+/* ถ้าอยากให้แต่ละสถานะคนละโทนสี */
+.status-fill.s1{ background: #a7a7b4; }   /* Submitted */
+.status-fill.s2{ background: #a7a7b4; }   /* Awaiting */
+.status-fill.s3{ background: #f1b5d4; }   /* In Progress */
+.status-fill.s4{ background: #cdb6ff; }   /* Completed */
+.status-fill.s5{ background: #a7a7b4; }
+
+.s1::before { background-color: #a7a7b4; }   /* เทา */
+.s2::before { background-color: #a7a7b4; }   /* ม่วง */
+.s3::before { background-color: #f1b5d4; }   /* ชมพู */
+.s4::before { background-color: #cdb6ff; }   /* ม่วงอ่อน */
+.s5::before { background-color: #a7a7b4; }
+
+.card-c3-container {
+  display: grid;
+  grid-template-columns: repeat 1fr; 
+  gap: 24px;                             
+  padding-top: 23.5px;
+  padding-left: 104px;
+  padding-right: 24px;
+  height: auto;
+}
+
+.card-c3{
+  background: #1f1c21;            
+  border: 1px solid #ffffff20;   
+  border-radius: 12px;           
+  padding: 20px;    
+}
+
+.card-value-c3{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 22px;  
+    font-weight: bold;
+    color: #fff;   
+    padding: 10px 0px 10px 5px;
+}
+
+.card-value-c3-subt{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    font-size: 16px;
+    color: #c1c1c7;
+    padding: 14px 0px 0px 15px;
+    gap: 10px;
+    white-space: nowrap;
+}
+
+/* ให้หัวตารางดูต่างจากแถวข้อมูล */
+.card-value-c3-subt.header {
+  color: #c1c1c7;
+  font-weight: bold;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ffffff20;
+  font-size:16px
+}
+
+/* เพิ่มเส้นแบ่งระหว่างแต่ละแถว */
+.card-value-c3-subt:not(.header) {
+  border-bottom: 2px solid #ffffff10;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.card-value-c3-subt:not(.header):hover {
+  background: #ffffff10;   
+  transition: background 0.2s ease;
+}
+
+/* แท็กสถานะ (badge) */
+.status {
+  display: inline-block;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+/* สีแต่ละสถานะ */
+.status.completed {
+  background: #6b4eff25;
+  color: #cdb6ff;
+}
+
+.status.progress {
+  background: #f1b5d420;
+  color: #f1b5d4;
+}
+
+.status.pending {
+  background: #c1c1c720;
+  color: #c1c1c7;
+}
