@@ -5,12 +5,12 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
     <div>
       <ThemeProvider
         attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
+        defaultTheme="light"
+        enableSystem={false}
+        storageKey="theme"
       >
         {children}
-      </ThemeProvider>
+      </ThemeProvider>  
     </div>
   );
 };
