@@ -31,7 +31,7 @@ export async function QueryRule(ruleID, index) {
     }
 }
 
-export async function InsertRule(InsertRuleModel) {
+export async function InsertRule(InsertReportModel) {
     try {
         const response = await Create(db, "TestRuleBasedFolkFolk", InsertRuleModel);
         if (response.error) {
