@@ -1,6 +1,46 @@
 import { NextResponse } from 'next/server'
-import { ResponseModel } from '../../../../lib/model/Response'
-import { Login } from '../service/Login'
+import { ResponseModel } from '@/lib/model/Response'
+import { Login } from '@/app/api/auth/service/Login'
+
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Login User
+ *     description: Login a user and return authentication data
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ * 
+ *     responses:
+ *       200:
+ *         description: Successful login
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: Successful login
+ *                 data:
+ *                   type: object
+ */
 
 export async function POST(request) {
   const { email, password } = await request.json()

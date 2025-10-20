@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
-import { ResponseModel } from '../../../../lib/model/Response'
-import { createSupabaseServerClientForAuth } from '../../../../lib/supabase/server'
-import { generateToken } from '../../../../lib/auth/jwt'
-import { GetById } from '../../../../lib/supabase/crud'
-import { CreateClientSecret } from '../../../../lib/supabase/client'
+import { ResponseModel } from '@/lib/model/Response'
+import { createSupabaseServerClientForAuth } from '@/lib/supabase/server'
+import { generateToken } from '@/lib/auth/jwt'
+import { GetById } from '@/lib/supabase/crud'
+import { CreateClientSecret } from '@/lib/supabase/client'
 
 export async function Login(email, password) {
   try {
