@@ -27,13 +27,24 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased `}
       >
         <Providers>
-          {/* // Use LayoutWrapper to conditionally render Navbar */}
-          <LayoutWrapper>
-            <main>{children}</main>
-          </LayoutWrapper>
+          <div className="flex ">
+            {/* <Navbar /> */}
+            <LayoutWrapper>
+            <main className="min-h-dvh overflow-y-auto">
+              <div className="mx-auto w-full  p-6">
+                {children}
+              </div>
+            </main>
+            </LayoutWrapper>
+          </div>
+          {/* <LayoutWrapper>
+            <main>
+              {children}
+            </main>
+          </LayoutWrapper> */}
         </Providers>
       </body>
     </html>
