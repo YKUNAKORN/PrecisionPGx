@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { verifyToken } from './lib/auth/jwt'
-import { checkPermission } from './lib/auth/permission'
-import { ResponseModel } from './lib/model/Response'
+import { verifyToken } from '@/lib/auth/jwt'
+import { checkPermission } from '@/lib/auth/permission'
+import { ResponseModel } from '@/lib/model/Response'
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl
