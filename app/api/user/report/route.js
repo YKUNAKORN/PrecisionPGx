@@ -5,7 +5,7 @@ import { ReportModel, ReportUpdate } from '../../../../lib/model/Report';
 
 /**
  * @swagger
- * /api/user/report/{id}:
+ * /api/user/report:
  *   get:
  *     summary: Read Report by ID
  *     description: Retrieve a specific report by its ID from the database
@@ -43,7 +43,7 @@ import { ReportModel, ReportUpdate } from '../../../../lib/model/Report';
  *     tags:
  *       - Report
  *     parameters:
- *       - in: path
+ *       - in: query
  *         name: id
  *         required: true
  *         schema:
@@ -58,15 +58,29 @@ import { ReportModel, ReportUpdate } from '../../../../lib/model/Report';
  *           schema:
  *             type: object
  *             properties:
- *               name:
+ *               specimens_id:
  *                 type: string
- *               phone:
+ *               doctor_id:
  *                 type: string
- *               age:
- *                 type: integer
- *               gender:
+ *               patient_id:
  *                 type: string
- *               Ethnlecity:
+ *               pharm_verify:
+ *                 type: string
+ *               medtech_verify:
+ *                 type: string
+ *               note_id:
+ *                 type: string
+ *               rule_id:
+ *                 type: string
+ *               more_information:
+ *                 type: string
+ *               pharmacist_id:
+ *                 type: string
+ *               medical_technician_id:
+ *                 type: string
+ *               request_date:
+ *                 type: string
+ *               report_date:
  *                 type: string
  *     responses:
  *       200:
@@ -91,7 +105,7 @@ import { ReportModel, ReportUpdate } from '../../../../lib/model/Report';
  *     tags:
  *       - Report
  *     parameters:
- *       - in: path
+ *       - in: query
  *         name: id
  *         required: true
  *         schema:
@@ -113,6 +127,59 @@ import { ReportModel, ReportUpdate } from '../../../../lib/model/Report';
  *                 message:
  *                   type: string
  *                   example: Report deleted successfully
+ *                 data:
+ *                   type: object
+ * 
+ *   post:
+ *     summary: Create a new Report
+ *     description: Create a new report in the database
+ *     tags:
+ *       - Report
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               specimens_id:
+ *                 type: string
+ *               doctor_id:
+ *                 type: string
+ *               patient_id:
+ *                 type: string
+ *               pharm_verify:
+ *                 type: string
+ *               medtech_verify:
+ *                 type: string
+ *               note_id:
+ *                 type: string
+ *               rule_id:
+ *                 type: string
+ *               more_information:
+ *                 type: string
+ *               pharmacist_id:
+ *                 type: string
+ *               medical_technician_id:
+ *                 type: string
+ *               request_date:
+ *                 type: string
+ *               report_date:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Report created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "201"
+ *                 message:
+ *                   type: string
+ *                   example: Report created successfully
  *                 data:
  *                   type: object
  */
