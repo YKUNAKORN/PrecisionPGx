@@ -1,6 +1,6 @@
-import { createSupabaseServerClient } from "../../../../lib/supabase/server";
-import { Create } from "../../../../lib/supabase/crud";
-import { CreateClientPublic } from "../../../../lib/supabase/client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { Create } from "@/lib/supabase/crud";
+import { CreateClientPublic } from "@/lib/supabase/client";
 
 export async function SignUp(InsertUserModel, password) {
   try {

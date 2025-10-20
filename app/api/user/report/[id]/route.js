@@ -1,14 +1,13 @@
-import { GetNoteById } from '@/app/api/user/service/note_service'
 import { NextResponse } from 'next/server';
-import { ResponseModel } from '@/lib/model/Response'; 
+import { ResponseModel } from '../../../../../lib/model/Response'
+import { GetReportById } from '../../service/report_service';
 
 /**
  * @swagger
- * /api/user/note/{id}:
+ * /api/user/report/{id}:
  *   get:
- *     summary: Read Note by ID
- *     description: Retrieve a specific note by its ID from the database
- *     tags: [Note]
+ *     summary: Read Report by ID
+ *     description: Retrieve a specific report from the database by its ID
  *     parameters:
  *       - in: path
  *         name: id
@@ -16,8 +15,10 @@ import { ResponseModel } from '@/lib/model/Response';
  *         schema:
  *           type: string
  *           format: uuid
- *         description: The unique identifier of the note
- *         example: c39ba4bb-e684-4b52-a66e-9084f9ef4c3e
+ *         description: The ID of the report to retrieve
+ *         example: 60b3d5cb-0c24-4bc4-95c2-a733c2b65175
+ *     tags:
+ *       - Report
  *     responses:
  *       200:
  *         description: Query Successful
@@ -31,40 +32,28 @@ import { ResponseModel } from '@/lib/model/Response';
  *                   example: "200"
  *                 message:
  *                   type: string
- *                   example: Query Successful
+ *                   example: Success
  *                 data:
  *                   type: array
  *                   items:
  *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         format: uuid
- *                         example: c39ba4bb-e684-4b52-a66e-9084f9ef4c3e
- *                       method:
- *                         type: string
- *                         example: 37 Kobbie Mainoo
- *                       created_at:
- *                         type: string
- *                         format: date-time
- *                         example: 2025-10-17T14:13:18.592258+00:00
  */
 
 export async function GET(req, { params }) {
     const { id } = await params;
     if (!id) {
-      ResponseModel.status = '400';
-      ResponseModel.message = 'ID parameter is required';
-      ResponseModel.data = null;
-      return NextResponse.json(ResponseModel, { status: 400 });
+        ResponseModel.status = '400';
+        ResponseModel.message = 'ID parameter is required';
+        ResponseModel.data = null;
+        return NextResponse.json(ResponseModel, { status: 400 });
     }
     console.log(id)
-    const { data, error } = await GetNoteById(id);
+    const { data, error } = await GetReportById(id);
     if (!data || data.length === 0) {
         ResponseModel.status = '404'
         ResponseModel.message = 'Note Not Found with ID: ' + id
         ResponseModel.data = null;
-        console.error("Note Not Found with ID: " + id) //for Debug
+        console.error("Reports Not Found with ID: " + id) //for Debug
         return NextResponse.json(ResponseModel, { status: 404 }) //for User
     }
     if (error) {
@@ -76,8 +65,8 @@ export async function GET(req, { params }) {
     {
         ResponseModel.status = '200'
         ResponseModel.message = 'Query Successful'
-        ResponseModel.data = data[0] // Return only the first item as object, not array
-        console.log("Query Successful") //for Debug
+        ResponseModel.data = data
+        console.error("Query Successful") //for Debug
         return NextResponse.json(ResponseModel, { status: 200 }) //for User
     }
 }

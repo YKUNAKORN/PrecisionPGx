@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
 import Providers from "./Providers";
-import Navbar from "@/components/Navbar/Navbar";
-
-import { ClerkProvider } from "@clerk/nextjs";
+import LayoutWrapper from "./LayoutWrpper";// Import the LayoutWrapper to manage Navbar visibility
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,25 +26,15 @@ export default function RootLayout({
 }>) {
   return (
 
-    <ClerkProvider>
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased `}>
         <Providers>
-          {/* ทำเป็น 2 คอลัมน์: ซ้าย (80px) | ขวา (ยืด) */}
-          <div className="flex justify grid-cols text-zinc-100">
-            {/* ซ้าย: Sidebar */}
-            <Navbar />
-
-            {/* ขวา: เนื้อหา (เลื่อนเฉพาะฝั่งขวา) */}
-            <main className="min-h-dvh overflow-y-auto">
-              <div className="mx-auto w-full  p-6">
-                {children}
-              </div>
-            </main>
-          </div>
+          {/* // Use LayoutWrapper to conditionally render Navbar */}
+          <LayoutWrapper>
+            <main>{children}</main>
+          </LayoutWrapper>
         </Providers>
       </body>
     </html>
-    </ClerkProvider>
   );
 }
