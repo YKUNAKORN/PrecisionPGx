@@ -25,19 +25,19 @@
       case 'current':
         return {
           circle:
-            'bg-primary text-primary-foreground ring-1 ring-ring',
+            'bg-primary text-primary-foreground ring-1 ring-ring border-1',
           label: 'text-primary',
         }
       case 'complete':
         return {
           circle:
-            'bg-muted text-muted-foreground ring-1 ring-ring',
-          label: 'text-foreground/80',
+            'bg-primary bg-muted text-foreground ring-1 ring-ring ',
+          label: 'text-primary',
         }
       default:
         return {
           circle:
-            'bg-card text-card-foreground ring-1 ring-border',
+            ' text--foreground ring-1 ring-border border-1',
           label: 'text-muted-foreground',
         }
     }
@@ -67,7 +67,7 @@
     const goNext = () => setActive((v) => (v < STEPS.length - 1 ? v + 1 : v))
 
     return (
-      <div className="min-h-dvh bg-background text-foreground">
+      <div className="min-h-dvh ">
         <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <header className="mb-4">
@@ -78,7 +78,7 @@
           </header>
 
           {/* Stepper */}
-          <div className="w-full rounded-xl border border-border p-4 bg-card text-card-foreground">
+          <div className="w-full rounded-xl border p-4 ">
             <nav aria-label="Progress">
               <ol className="flex gap-2 md:gap-4 w-full">
                 {STEPS.map((step, idx) => {
@@ -109,7 +109,7 @@
                       </button>
                       {!isLast && (
                         <span
-                          className="mx-2 hidden h-px w-10 rounded bg-border md:block"
+                          className="mx-2 hidden h-px w-10 rounded  md:block"
                           aria-hidden="true"
                         />
                       )}
@@ -121,16 +121,16 @@
           </div>
 
           {/* Toolbar placeholder */}
-          <div className="w-full mt-4 rounded-xl border border-border bg-card p-4 text-card-foreground">
+          <div className="w-full mt-4 rounded-xl border  p-4 ">
             <div className="w-full grid grid-cols-[1fr_auto_auto] gap-3">
               <input
                 placeholder="Search reports, patients…"
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full rounded-lg border border-input  px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
-              <button className="rounded-lg border border-border bg-card px-4 py-2 text-sm hover:opacity-90">
+              <button className="rounded-lg border  px-4 py-2 text-sm hover:opacity-90">
                 Clear All
               </button>
-              <button className="rounded-lg border border-border bg-card px-4 py-2 text-sm hover:opacity-90">
+              <button className="rounded-lg border  px-4 py-2 text-sm hover:opacity-90">
                 Reset Data
               </button>
             </div>
@@ -180,12 +180,12 @@
             <button
               onClick={goPrev}
               disabled={active === 0}
-              className="rounded-lg border border-border bg-card px-4 py-2 text-sm disabled:opacity-50 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring"
+              className="rounded-lg border  px-4 py-2 text-sm disabled:opacity-50 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring"
             >
               Back
             </button>
             <div className="flex items-center gap-3">
-              <button className="rounded-lg border border-border bg-card px-4 py-2 text-sm hover:opacity-90">
+              <button className="rounded-lg border  px-4 py-2 text-sm hover:opacity-90">
                 Save Draft
               </button>
               {active < STEPS.length - 1 ? (
@@ -218,7 +218,7 @@
     children?: React.ReactNode
   }) {
     return (
-      <div className="rounded-xl border border-border bg-card p-6 text-card-foreground">
+      <div className="rounded-xl border  p-6 ">
         <h2 className="text-sm font-semibold">{title}</h2>
         {subtitle && <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>}
         <div className="mt-4">{children}</div>
@@ -229,7 +229,7 @@
   function Placeholder({ label = 'Blank area' }: { label?: string }) {
     return (
       <div className="grid gap-4">
-        <div className="h-48 rounded-lg border border-dashed border-border" />
+        <div className="h-48 rounded-lg border border-dashed " />
         <div className="text-xs text-muted-foreground">{label}</div>
       </div>
     )

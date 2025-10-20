@@ -12,7 +12,7 @@ import Samples from "./Samples"
 export default function Navbar() {
   return (
     <aside
-        className="shrink-0 sticky top-0 h-dvh w-20 border-r border-white/10 
+        className=" sticky top-0 h-dvh w-20 border-r
                   flex flex-col justify-between items-center p-3"
     >
       <nav aria-label="Primary" className="flex flex-col items-center gap-10">

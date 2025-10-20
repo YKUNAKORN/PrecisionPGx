@@ -32,7 +32,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased `}
       >
         <Providers>
-          <div className="flex text-foreground">
+          <div className="flex ">
             {/* <Navbar /> */}
             <LayoutWrapper>
             <main className="min-h-dvh overflow-y-auto">
