@@ -25,7 +25,9 @@ export default function Navbar() {
       </nav>
 
       <nav aria-label="Utilities" className="mb-2 flex flex-col items-center gap-2">
+        <div className="size-9">
         <Darkmode/>
+        </div>
         <Account/>
       </nav>
       

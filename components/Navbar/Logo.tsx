@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 const Logo = () => {
   return (
     <Button size="sm" asChild variant="outline">
-      <Link href="/Dashboard/Home" className="text-2xl">
+      <Link href="/Dashboard/" className="text-2xl">
         Logo 
       </Link>
     </Button>

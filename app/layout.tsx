@@ -33,8 +33,8 @@ export default function RootLayout({
           <div className="flex ">
             {/* <Navbar /> */}
             <LayoutWrapper>
-            <main className="min-h-dvh overflow-y-auto">
-              <div className="mx-auto w-full  p-6">
+            <main className="y-auto w-full">
+              <div className="my-10 mx-auto w-full p-4 ">
                 {children}
               </div>
             </main>
