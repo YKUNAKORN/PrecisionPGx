@@ -121,7 +121,7 @@
           </div>
 
           {/* Toolbar placeholder */}
-          <div className="w-full mt-4 rounded-xl border  p-4 ">
+          {/* <div className="w-full mt-4 rounded-xl border  p-4 ">
             <div className="w-full grid grid-cols-[1fr_auto_auto] gap-3">
               <input
                 placeholder="Search reports, patients…"
@@ -134,13 +134,13 @@
                 Reset Data
               </button>
             </div>
-          </div>
+          </div> */}
 
           {/* Panels: inline, one visible at a time */}
           <section className="mt-6">
             {active === 0 && (
               <Panel title="Patient" subtitle="Design your patient table or picker here.">
-                <Placeholder label="Reports Table area" />
+                <PatientTable />
               </Panel>
             )}
             {active === 1 && (
@@ -234,3 +234,126 @@
       </div>
     )
   }
+
+  function PatientTable() {
+  const [rows, setRows] = React.useState<
+    { id: string; full_name: string; mrn: string; dob: string | null; updated_at: string | null }[]
+  >([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [q, setQ] = React.useState("");
+  const [page, setPage] = React.useState(1);
+  const limit = 10;
+  const [total, setTotal] = React.useState(0);
+
+  const load = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const params = new URLSearchParams({
+        limit: String(limit),
+        page: String(page),
+      });
+      if (q.trim()) params.set("q", q.trim());
+
+      const res = await fetch(`/api/user/storage?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "Failed to load");
+      setRows(json.data || []);
+      setTotal(json.total || 0);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [q, page]);
+
+  React.useEffect(() => {
+    load();
+  }, [load]);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  return (
+    <div className="space-y-3">
+      {/* ค้นหา */}
+      <div className="flex gap-2">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search by name or MRN..."
+          className="w-full rounded-lg border border-input px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+        <button
+          onClick={() => { setPage(1); load(); }}
+          className="rounded-lg border px-3 py-2 text-sm"
+        >
+          Search
+        </button>
+      </div>
+
+      {/* ตาราง */}
+      <div className="overflow-y-auto max-h-[400px] rounded-lg border">
+        <table className="min-w-full text-sm">
+          <thead className="bg-muted/50">
+            <tr className="[&>th]:px-3 [&>th]:py-2 [&>th]:text-left">
+              <th>Patient</th>
+              <th>MRN</th>
+              <th>DOB</th>
+              <th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody className="[&>tr>td]:px-3 [&>tr>td]:py-2">
+            {loading ? (
+              <tr>
+                <td colSpan={4} className="text-muted-foreground">Loading…</td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan={4} className="text-red-600">Error: {error}</td>
+              </tr>
+            ) : rows.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="text-muted-foreground">No data</td>
+              </tr>
+            ) : (
+              rows.map((r) => (
+                <tr key={r.id} className="border-t">
+                  <td className="font-medium">{r.full_name}</td>
+                  <td>{r.mrn}</td>
+                  <td>{r.dob ? new Date(r.dob).toLocaleDateString() : "-"}</td>
+                  <td>{r.updated_at ? new Date(r.updated_at).toLocaleString() : "-"}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* หน้า */}
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-muted-foreground">
+          Page {page} / {totalPages} · {total} records
+        </span>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1 || loading}
+            className="rounded-lg border px-3 py-1 disabled:opacity-50"
+          >
+            Prev
+          </button>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages || loading}
+            className="rounded-lg border px-3 py-1 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
