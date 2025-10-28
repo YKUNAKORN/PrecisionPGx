@@ -12,44 +12,6 @@ const Page = () => {
   });
 
   return (
-<<<<<<< HEAD
-    <div className="min-h-dvh ">
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-2xl font-semibold">Sample Management</h1>
-        <h3 className="text-sm text-muted-foreground">
-          Inventory, storage, and chain-of-custody controls.
-        </h3>
-
-        {/* Cards Section */}
-        <div className="flex flex-wrap justify-center gap-5 mt-5">
-          <Card title="Storage Capacity" value="68%" />
-          <Card title="Temperature Alerts" value="1" />
-          <Card title="Expiring Soon (30d)" value="1" />
-        </div>
-
-        {/* Chart Section */}
-        <div className="mt-5 flex justify-center">
-          <Chart
-            title="Levey–Jennings Control Chart"
-            value="Westgard checks: 1-3s (fail), 2-2s (fail), 1-2s (warn), R-4s (fail), 4-1s (warn), 10x (warn)"
-          />
-        </div>
-
-        {/* Alerts */}
-        <div className="mt-5 flex justify-center">
-          <Alerts title="Alerts" value="xxxxxxx" />
-        </div>
-
-        {/* Inventory */}
-        <div className="mt-5 flex justify-center">
-          <Inventory title="Control Inventory" value="xxxxxxxxx" />
-        </div>
-
-        {/* Status */}
-        <div className="mt-5 flex justify-center">
-          <Status value="Status colors: Pass green, Warning orange, Failure red, Info blue. Control limits and target lines follow high-contrast styling for accessibility." />
-        </div>
-=======
     <div className="p-6 bg-zinc-900 min-h-screen text-white">
       {/* Header */}
       <h1 className="text-2xl font-bold">Sample Management</h1>
@@ -88,27 +50,17 @@ const Page = () => {
         ) : (
           <Placeholder title={activeTab} desc="Coming soon..." />
         )}
->>>>>>> e8f1ed813aea6c13c153ece04caa5808ff05778c
       </div>
     </div>
   );
 };
 
-<<<<<<< HEAD
-/* ✅ ปรับเฉพาะ style เท่านั้น ไม่ยุ่ง logic */
-function Card({ title, value }) {
-  return (
-    <div className=" border border-border rounded-xl p-5 shadow-sm w-64">
-      <h3 className="text-sm text-muted-foreground">{title}</h3>
-      {value && <p className="text-lg font-semibold">{value}</p>}
-=======
 /* --- PLACEHOLDER (Matched Layout) --- */
 function Placeholder({ title, desc }) {
   return (
     <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-10 shadow-md text-center text-gray-300 w-full min-h-[400px] flex flex-col justify-center items-center">
       <h3 className="text-lg font-semibold text-white">{title}</h3>
       <p className="mt-2">{desc}</p>
->>>>>>> e8f1ed813aea6c13c153ece04caa5808ff05778c
     </div>
   );
 }
@@ -116,18 +68,12 @@ function Placeholder({ title, desc }) {
 /* --- SUMMARY CARD --- */
 function SummaryCard({ title, value, color, progress }) {
   return (
-<<<<<<< HEAD
-    <div className=" border border-border rounded-xl p-6 shadow-sm w-full max-w-3xl">
-      <h3 className="text-sm font-semibold">{title}</h3>
-      {value && <p className="text-sm text-muted-foreground mt-2">{value}</p>}
-=======
     <div className="bg-zinc-900 rounded-xl shadow-md p-5 flex flex-col justify-between border border-zinc-700">
       <h3 className="text-sm text-gray-400">{title}</h3>
       <p className="text-lg font-semibold text-white mt-1">{value}</p>
       <div className="w-full h-3 bg-zinc-800 rounded-full mt-3">
         <div className={`${color} h-3 rounded-full transition-all`} style={{ width: `${progress}%` }}></div>
       </div>
->>>>>>> e8f1ed813aea6c13c153ece04caa5808ff05778c
     </div>
   );
 }
@@ -142,11 +88,6 @@ function InventorySection({ filters, setFilters }) {
   ];
 
   return (
-<<<<<<< HEAD
-    <div className=" border border-border rounded-xl p-6 shadow-sm w-full max-w-3xl">
-      <h3 className="text-sm font-semibold">{title}</h3>
-      {value && <p className="text-sm text-muted-foreground mt-2">{value}</p>}
-=======
     <div className="mt-4 bg-zinc-900 border border-zinc-700 rounded-xl p-6 shadow-md">
       {/* Search & Filters */}
       <div className="mb-5">
@@ -177,7 +118,6 @@ function InventorySection({ filters, setFilters }) {
           <SampleCard key={s.id} data={s} />
         ))}
       </div>
->>>>>>> e8f1ed813aea6c13c153ece04caa5808ff05778c
     </div>
   );
 }
@@ -185,11 +125,6 @@ function InventorySection({ filters, setFilters }) {
 /* --- FILTER COMPONENT --- */
 function Filter({ label, value, onChange, options }) {
   return (
-<<<<<<< HEAD
-    <div className=" border border-border rounded-xl p-6 shadow-sm w-full max-w-3xl">
-      <h3 className="text-sm font-semibold">{title}</h3>
-      {value && <p className="text-sm text-muted-foreground mt-2">{value}</p>}
-=======
     <div className="flex items-center gap-2">
       <label>{label}:</label>
       <select
@@ -201,17 +136,10 @@ function Filter({ label, value, onChange, options }) {
           <option key={opt} value={opt}>{opt}</option>
         ))}
       </select>
->>>>>>> e8f1ed813aea6c13c153ece04caa5808ff05778c
     </div>
   );
 }
 
-<<<<<<< HEAD
-function Status({ value }) {
-  return (
-    <div className=" border border-border rounded-xl p-6 shadow-sm w-full max-w-3xl">
-      {value && <p className="text-sm text-muted-foreground mt-2">{value}</p>}
-=======
 /* --- SAMPLE CARD --- */
 function SampleCard({ data }) {
   const dotColor =
@@ -249,13 +177,8 @@ function SampleCard({ data }) {
           </button>
         ))}
       </div>
->>>>>>> e8f1ed813aea6c13c153ece04caa5808ff05778c
     </div>
   );
 }
 
-<<<<<<< HEAD
 export default Page;
-=======
-export default Page;
->>>>>>> e8f1ed813aea6c13c153ece04caa5808ff05778c
