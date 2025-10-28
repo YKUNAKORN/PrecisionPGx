@@ -2,7 +2,7 @@ import { AlertTriangle, Info } from "lucide-react";
 
 const Page = () => {
   return (
-    <div className="p-5 bg-black min-h-screen text-white">
+    <div className="p-5  min-h-screen ">
       {/* Header */}
       <h1 className="text-2xl font-bold">Quality Control</h1>
       <h3 className="text-gray-300">
@@ -45,9 +45,9 @@ const Page = () => {
 // ✅ Card
 function Card({ title, value }) {
   return (
-    <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-5 shadow-sm w-60">
+    <div className=" border border-zinc-700 rounded-lg p-5 shadow-sm w-60">
       <h3 className="text-sm text-gray-400">{title}</h3>
-      {value && <p className="text-lg font-semibold text-white mt-1">{value}</p>}
+      {value && <p className="text-lg font-semibold  mt-1">{value}</p>}
     </div>
   );
 }
@@ -55,11 +55,11 @@ function Card({ title, value }) {
 // ✅ Chart
 function Chart({ title, value }) {
   return (
-    <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 shadow-md w-full">
-      <h3 className="text-sm font-bold text-white">{title}</h3>
+    <div className=" border border-zinc-700 rounded-lg p-6 shadow-md w-full">
+      <h3 className="text-sm font-bold">{title}</h3>
       {value && <p className="text-sm text-gray-400 mt-3">{value}</p>}
       {/* Placeholder for chart */}
-      <div className="h-56 bg-zinc-800 mt-4 rounded-md flex items-center justify-center text-gray-500 text-xs">
+      <div className="h-56  mt-4 rounded-md flex items-center justify-center text-gray-500 text-xs">
         Chart Area
       </div>
     </div>
@@ -97,18 +97,18 @@ function Alerts() {
   };
 
   return (
-    <div className="bg-zinc-900 rounded-xl p-4 shadow-lg w-full border border-zinc-700">
-      <h2 className="mb-3 text-lg font-semibold text-white">Alerts</h2>
+    <div className=" rounded-xl p-4 shadow-lg w-full border border-zinc-700">
+      <h2 className="mb-3 text-lg font-semibold ">Alerts</h2>
       <div className="space-y-2">
         {alertsData.map((alert) => (
           <div
             key={alert.id}
-            className="flex items-start justify-between rounded-lg bg-zinc-800 p-3"
+            className="flex items-start justify-between rounded-lg p-3"
           >
             <div className="flex items-start gap-3">
               {renderIcon(alert.type)}
               <div>
-                <p className="text-sm font-medium text-white">{alert.title}</p>
+                <p className="text-sm font-medium ">{alert.title}</p>
                 <p className="text-xs text-gray-400">{alert.description}</p>
               </div>
             </div>
@@ -131,12 +131,12 @@ function Inventory() {
   const getStockColor = (stock) => {
     if (stock < 10) return "text-red-400 font-semibold";
     if (stock < 20) return "text-amber-400 font-semibold";
-    return "text-white font-semibold";
+    return " font-semibold";
   };
 
   return (
-    <div className="bg-zinc-900 rounded-xl p-4 shadow-md w-full border border-zinc-700">
-      <h3 className="text-lg font-semibold mb-4 text-white">Control Inventory</h3>
+    <div className=" rounded-xl p-4 shadow-md w-full border border-zinc-700">
+      <h3 className="text-lg font-semibold mb-4 ">Control Inventory</h3>
       <table className="w-full text-sm text-left border-collapse">
         <thead>
           <tr className="border-b border-zinc-700 text-gray-300 uppercase text-xs tracking-wider">

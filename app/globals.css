@@ -98,3 +98,15 @@
     --color-sidebar-ring: oklch(0.541 0.281 293.009);
   }
 }
+
+:root {
+  --bg: var(--color-background);
+  --fg: var(--color-foreground);
+  --surface: var(--color-card);
+  --border: var(--color-border);
+  --muted: var(--color-muted-foreground);
+  --accent: var(--color-primary);
+}
+
+@import "./template.css";
+

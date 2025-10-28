@@ -1,166 +1,162 @@
-
-import '@/app/style/home.css';
-
 export default function Home() {
   const trends = [
-    { day: "Sat", value: 72 },
-    { day: "Sun", value: 58 },
-    { day: "Mon", value: 35 },
-    { day: "Tue", value: 88 },
-    { day: "Wed", value: 55 },
-    { day: "Thu", value: 70 },
-    { day: "Fri", value: 48 },
-  ];  
-  const maxVal = Math.max(...trends.map(t => t.value));
+    { day: 'Sat', value: 72 },
+    { day: 'Sun', value: 58 },
+    { day: 'Mon', value: 35 },
+    { day: 'Tue', value: 88 },
+    { day: 'Wed', value: 55 },
+    { day: 'Thu', value: 70 },
+    { day: 'Fri', value: 48 },
+  ];
+  const maxVal = Math.max(...trends.map((t) => t.value));
 
   return (
-    <div>
-      <div className='title-1'>Dashboard</div>
-      <div className='title-2'>At a glance overview of operations and performance.</div>
-      
-      <div className="card-c1-container">
-        <div className="card-c1">
-          <p className="card-label-c1">Samples Received</p>
-          <p className="card-value-c1">120</p>
-          <div className="card-c1-progress">
-            <div className="fill" style={{ width: "72%" }} />
-          </div>  
-        </div>
-        <div className="card-c1">
-          <p className="card-label-c1">Tests Completed</p>
-          <p className="card-value-c1">105</p>
-          <div className="card-c1-progress">
-            <div className="fill" style={{ width: "82%" }} />
-          </div>   
-        </div>
-        <div className="card-c1">
-          <p className="card-label-c1">Results Interpreted</p>
-          <p className="card-value-c1">98</p>
-          <div className="card-c1-progress">
-            <div className="fill" style={{ width: "92%" }} />
-          </div>   
-        </div>
-      </div>
+    <div className="content-shell">
+      {/* ✅ คุมระยะ content ให้บาลานซ์ทุกจอ */}
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* Header */}
+        <header className="space-y-1">
+          <h1 className="text-xl font-semibold">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            At a glance overview of operations and performance.
+          </p>
+        </header>
 
-      <div className="card-c2-container">
-        <div className="card-c2">
-          <p className="card-value-c2">Sample Registration Trends </p>
-          <p className="card-value-c2-l">Last 7 Days</p>
-          <div className="bar-chart">
-            {trends.map(t => (
-              <div className="bar" key={t.day}>
-                <div
-                  className="bar-fill"
-                  style={{ height: `${(t.value / maxVal) * 100}%` }}
-                  aria-label={`${t.day}: ${t.value}`}
-                />
-                <span className="bar-label">{t.day}</span>
+        {/* KPI / Metrics */}
+        <section>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <article className="metric">
+              <div className="metric-title">Samples Received</div>
+              <div className="metric-value">120</div>
+              <div className="metric-bar" style={{ ['--progress' as any]: '72%' }}>
+                <i />
               </div>
-            ))}
-          </div>  
-        </div>
-        <div className="card-c2">
-          <p className="card-value-c2">Test Execution Status</p>
-          <p className="card-value-c2-l">Real-time workflow progress tracking</p>
-          <div className="status-list">
-            <div className="status-row">
-              <span className="status-label s1">Submitted for Inspection</span>
-              <span className="status-val">8</span>
-            </div>
-            <div className="status-rail">
-              <div className="status-fill s1" style={{width:"20%"}}/>
+            </article>
+
+            <article className="metric">
+              <div className="metric-title">Tests Completed</div>
+              <div className="metric-value">105</div>
+              <div className="metric-bar" style={{ ['--progress' as any]: '82%' }}>
+                <i />
+              </div>
+            </article>
+
+            <article className="metric">
+              <div className="metric-title">Results Interpreted</div>
+              <div className="metric-value">98</div>
+              <div className="metric-bar" style={{ ['--progress' as any]: '92%' }}>
+                <i />
+              </div>
+            </article>
+          </div>
+        </section>
+
+        {/* Trends + Execution Status */}
+        <section>
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Sample Registration Trends */}
+            <div className="panel stack">
+              <div>
+                <p className="text-base font-medium">Sample Registration Trends</p>
+                <p className="text-sm text-muted-foreground">Last 7 Days</p>
+              </div>
+
+              <div className="h-48 grid grid-cols-7 items-end gap-3">
+                {trends.map((t) => (
+                  <div key={t.day} className="flex flex-col items-center gap-2">
+                    <div
+                      className="w-8 rounded-md ring-1 ring-inset"
+                      style={{
+                        height: `${(t.value / maxVal) * 100}%`,
+                        background: 'var(--accent)',
+                        borderColor: 'var(--border)',
+                      }}
+                      aria-label={`${t.day}: ${t.value}`}
+                    />
+                    <span className="text-xs text-muted-foreground">{t.day}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="status-row">
-              <span className="status-label s2">Awaiting Inspection</span>
-              <span className="status-val">12</span>
-            </div>
-            <div className="status-rail">
-              <div className="status-fill s2" style={{width:"35%"}}/>
-            </div>
+            {/* Test Execution Status */}
+            <div className="panel stack">
+              <div>
+                <p className="text-base font-medium">Test Execution Status</p>
+                <p className="text-sm text-muted-foreground">Real-time workflow progress tracking</p>
+              </div>
 
-            <div className="status-row">
-              <span className="status-label s3">In Progress</span>
-              <span className="status-val">35</span>
-            </div>
-            <div className="status-rail">
-              <div className="status-fill s3" style={{width:"70%"}}/>
-            </div>
-
-            <div className="status-row">
-              <span className="status-label s4">Completed</span>
-              <span className="status-val">50</span>
-            </div>
-            <div className="status-rail">
-              <div className="status-fill s4" style={{width:"92%"}}/>
-            </div>
-
-            <div className="status-row">
-              <span className="status-label s5">Awaiting Report</span>
-              <span className="status-val">5</span>
-            </div>
-            <div className="status-rail">
-              <div className="status-fill s5" style={{width:"14%"}}/>
+              <div className="stack">
+                {[
+                  { label: 'Submitted for Inspection', value: 8, pct: '20%' },
+                  { label: 'Awaiting Inspection', value: 12, pct: '35%' },
+                  { label: 'In Progress', value: 35, pct: '70%' },
+                  { label: 'Completed', value: 50, pct: '92%' },
+                  { label: 'Awaiting Report', value: 5, pct: '14%' },
+                ].map((row) => (
+                  <div key={row.label} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">{row.label}</span>
+                      <span className="text-sm">{row.value}</span>
+                    </div>
+                    <div className="kbar" style={{ ['--progress' as any]: row.pct }}>
+                      <i />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-      
-      <div className='card-c3-container'>
-        <div className="card-c3">
-          <p className="card-value-c3">Sample Management</p>
-          
-          <div className="card-value-c3-subt header">
-            <span>Sample ID</span>
-            <span>Patient Name</span>
-            <span>Test Type</span>
-            <span>Status</span>
-            <span>Result</span>
-          </div>
+        </section>
 
-          <div className="card-value-c3-subt">
-            <span>LAB-2023-001</span>
-            <span>Ethan Harper</span>
-            <span>Blood Test</span>
-            <span><span className="status completed">Completed</span></span>
-            <span>Normal</span>
-          </div>
+        {/* Sample Management */}
+        <section>
+          <div className="panel stack">
+            <p className="text-base font-medium">Sample Management</p>
 
-          <div className="card-value-c3-subt">
-            <span>LAB-2023-002</span>
-            <span>Olivia Bennett</span>
-            <span>Urine Analysis</span>
-            <span><span className="status progress">In Progress</span></span>
-            <span>N/A</span>
+            <div className="overflow-x-auto">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Sample ID</th>
+                    <th>Patient Name</th>
+                    <th>Test Type</th>
+                    <th>Status</th>
+                    <th>Result</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ['LAB-2023-001', 'Ethan Harper', 'Blood Test', 'Completed', 'Normal'],
+                    ['LAB-2023-002', 'Olivia Bennett', 'Urine Analysis', 'In Progress', 'N/A'],
+                    ['LAB-2023-003', 'Liam Carter', 'Biopsy', 'Pending', 'N/A'],
+                    ['LAB-2023-004', 'Sophia Davis', 'Genetic Screening', 'Completed', 'Positive'],
+                    ['LAB-2023-005', 'Noah Evans', 'Allergy Test', 'Completed', 'Negative'],
+                  ].map(([id, name, type, status, result]) => (
+                    <tr key={id}>
+                      <td>{id}</td>
+                      <td>{name}</td>
+                      <td>{type}</td>
+                      <td>
+                        <span className="badge">
+                          <i className="dot" />
+                          {status}
+                        </span>
+                      </td>
+                      <td>{result}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colSpan={5}>Showing 5 of 5 samples</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
-
-          <div className="card-value-c3-subt">
-            <span>LAB-2023-003</span>
-            <span>Liam Carter</span>
-            <span>Biopsy</span>
-            <span><span className="status pending">Pending</span></span>
-            <span>N/A</span>
-          </div>
-
-          <div className="card-value-c3-subt">
-            <span>LAB-2023-004</span>
-            <span>Sophia Davis</span>
-            <span>Genetic Screening</span>
-            <span><span className="status completed">Completed</span></span>
-            <span>Positive</span>
-          </div>
-
-          <div className="card-value-c3-subt">
-            <span>LAB-2023-005</span>
-            <span>Noah Evans</span>
-            <span>Allergy Test</span>
-            <span><span className="status completed">Completed</span></span>
-            <span>Negative</span>
-          </div>
-
-        </div>
+        </section>
       </div>
     </div>
   );
-} 
-    
+}

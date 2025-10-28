@@ -236,45 +236,121 @@
   }
 
   function PatientTable() {
-  const [rows, setRows] = React.useState<
-    { id: string; full_name: string; mrn: string; dob: string | null; updated_at: string | null }[]
-  >([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-  const [q, setQ] = React.useState("");
-  const [page, setPage] = React.useState(1);
-  const limit = 10;
-  const [total, setTotal] = React.useState(0);
+  type Row = {
+    id: string
+    report_no: string
+    patient: string
+    status: 'Completed' | 'In Progress' | 'Failed'
+    is_approve: 'approved' | 'pending' | 'rejected'
+    updated_at?: string | null
+  }
+
+  const [rows, setRows] = React.useState<Row[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
+  const [q, setQ] = React.useState("")
+  const [page, setPage] = React.useState(1)
+  const limit = 10
+  const [total, setTotal] = React.useState(0)
+
+  // แปลงข้อมูลจาก API ให้เข้ากับ Row (ยืดหยุ่นชื่อฟิลด์)
+  function normalizeRow(r: any): Row {
+    return {
+      id: String(r.id ?? r.report_id ?? r.reportNo ?? crypto.randomUUID()),
+      report_no: String(r.report_no ?? r.reportNo ?? r.code ?? "-"),
+      patient: String(r.patient ?? r.full_name ?? r.patient_name ?? "-"),
+      status: (r.status ?? "In Progress") as Row["status"],
+      is_approve: (r.is_approve ?? r.approval ?? "pending") as Row["is_approve"],
+      updated_at: r.updated_at ?? r.updatedAt ?? null,
+    }
+  }
 
   const load = React.useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
       const params = new URLSearchParams({
         limit: String(limit),
         page: String(page),
-      });
-      if (q.trim()) params.set("q", q.trim());
+      })
+      if (q.trim()) params.set("q", q.trim())
 
-      const res = await fetch(`/api/user/storage?${params.toString()}`, {
+      const res = await fetch(`/api/user/report?${params.toString()}`, {
         cache: "no-store",
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Failed to load");
-      setRows(json.data || []);
-      setTotal(json.total || 0);
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error || "Failed to load")
+
+      const data: Row[] = (json.data ?? []).map(normalizeRow)
+      setRows(data)
+      setTotal(json.total ?? data.length ?? 0)
     } catch (e: any) {
-      setError(e.message);
+      setError(e.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [q, page]);
+  }, [q, page])
 
   React.useEffect(() => {
-    load();
-  }, [load]);
+    load()
+  }, [load])
 
-  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const totalPages = Math.max(1, Math.ceil(total / limit))
+
+  // ---------- UI helpers ----------
+  const StatusBadge = ({ status }: { status: Row["status"] }) => {
+    if (status === "Completed") {
+      return (
+        <span className="inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+          Completed
+        </span>
+      )
+    }
+    if (status === "In Progress") {
+      return (
+        <span className="inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+          In Progress
+        </span>
+      )
+    }
+    // Failed (เส้นกรอบแดง ตัวอักษรแดง)
+    return (
+      <span className="inline-flex items-center rounded-full border border-destructive px-3 py-1 text-xs font-semibold text-destructive">
+        Failed
+      </span>
+    )
+  }
+
+  const ApproveDot = ({ state }: { state: Row["is_approve"] }) => {
+    const color =
+      state === "approved" ? "bg-emerald-500" : state === "pending" ? "bg-amber-500" : "bg-red-500"
+    return <span className={`inline-block size-3 rounded-full ${color}`} />
+  }
+
+  const PencilIcon = () => (
+    <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+    </svg>
+  )
+
+  const ActionButtons = ({ row }: { row: Row }) => {
+    const primaryLabel = row.status === "Completed" ? "Preview" : "Continue"
+    return (
+      <div className="flex items-center gap-2">
+        <button className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium">
+          <PencilIcon />
+          EDIT
+        </button>
+        <button className="rounded-full border px-3 py-1.5 text-xs font-medium">
+          Approval
+        </button>
+        <button className="rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">
+          {primaryLabel}
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-3">
@@ -283,48 +359,58 @@
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search by name or MRN..."
+          placeholder="Search by report number or patient..."
           className="w-full rounded-lg border border-input px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
         <button
-          onClick={() => { setPage(1); load(); }}
+          onClick={() => {
+            setPage(1)
+            load()
+          }}
           className="rounded-lg border px-3 py-2 text-sm"
         >
           Search
         </button>
       </div>
 
-      {/* ตาราง */}
-      <div className="overflow-y-auto max-h-[400px] rounded-lg border">
+      {/* ตาราง (มีสกรอลล์ + sticky header) */}
+      <div className="overflow-y-auto max-h-[60vh] rounded-lg border">
         <table className="min-w-full text-sm">
-          <thead className="bg-muted/50">
-            <tr className="[&>th]:px-3 [&>th]:py-2 [&>th]:text-left">
+          <thead className="sticky top-0 z-10 bg-muted/50">
+            <tr className="[&>th]:px-4 [&>th]:py-3 [&>th]:text-left">
+              <th>Report Number</th>
               <th>Patient</th>
-              <th>MRN</th>
-              <th>DOB</th>
-              <th>Last Updated</th>
+              <th>Status</th>
+              <th>IsApprove</th>
+              <th>Actions</th>
             </tr>
           </thead>
-          <tbody className="[&>tr>td]:px-3 [&>tr>td]:py-2">
+
+          <tbody className="[&>tr>td]:px-4 [&>tr>td]:py-3">
             {loading ? (
               <tr>
-                <td colSpan={4} className="text-muted-foreground">Loading…</td>
+                <td colSpan={5} className="text-muted-foreground">
+                  Loading…
+                </td>
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan={4} className="text-red-600">Error: {error}</td>
+                <td colSpan={5} className="text-destructive">Error: {error}</td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={4} className="text-muted-foreground">No data</td>
+                <td colSpan={5} className="text-muted-foreground">
+                  No data
+                </td>
               </tr>
             ) : (
               rows.map((r) => (
                 <tr key={r.id} className="border-t">
-                  <td className="font-medium">{r.full_name}</td>
-                  <td>{r.mrn}</td>
-                  <td>{r.dob ? new Date(r.dob).toLocaleDateString() : "-"}</td>
-                  <td>{r.updated_at ? new Date(r.updated_at).toLocaleString() : "-"}</td>
+                  <td className="font-medium">{r.report_no}</td>
+                  <td>{r.patient}</td>
+                  <td><StatusBadge status={r.status} /></td>
+                  <td><ApproveDot state={r.is_approve} /></td>
+                  <td><ActionButtons row={r} /></td>
                 </tr>
               ))
             )}
@@ -335,7 +421,7 @@
       {/* หน้า */}
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">
-          Page {page} / {totalPages} · {total} records
+          Page {page} / {Math.max(1, Math.ceil(total / limit))} · {total} records
         </span>
         <div className="flex gap-2">
           <button
@@ -346,8 +432,8 @@
             Prev
           </button>
           <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page >= totalPages || loading}
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page * limit >= total || loading}
             className="rounded-lg border px-3 py-1 disabled:opacity-50"
           >
             Next
@@ -355,5 +441,5 @@
         </div>
       </div>
     </div>
-  );
+  )
 }
