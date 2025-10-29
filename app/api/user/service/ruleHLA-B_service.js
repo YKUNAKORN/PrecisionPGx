@@ -1,15 +1,16 @@
 import { Create, GetById } from "@/lib/supabase/crud";
-import { RuleResult, RuleBased } from "@/lib/model/Rule";
+import { RuleResult, RuleBased } from "@/lib/model/RuleHLA-B";
 import { CreateClientSecret } from "@/lib/supabase/client";
 
 const db = CreateClientSecret();
+
 export async function QueryRule(ruleID, index) {
     try {
-        const response = await GetById(db, "rule", ruleID);
+        const response = await GetById(db, "ruleHLA-B", ruleID);
         if (!response.data || response.data.length === 0) {
             return { data: null, error: "No rule found with the given ID." };
         }
-        if (index < 0 || index >= response.data[0].predicted_genotype.length) {
+        if (index < 0 || index >= response.data[0].odds_score.length) {
             return { data: null, error: "Index out of bounds." };
         }
         if (response.error) {
@@ -17,16 +18,13 @@ export async function QueryRule(ruleID, index) {
             return { data: null, error: response.error.message };
         }
         RuleResult.id = response.data[0].id;
-        RuleResult.location = response.data[0].location;
-        RuleResult.result_location = response.data[0].result_location[index].split(',');
-        RuleResult.predicted_genotype = response.data[0].predicted_genotype[index];
-        RuleResult.predicted_phenotype = response.data[0].predicted_phenotype[index];
-        RuleResult.recommendation = response.data[0].recommend[index];
-        if (response.data[0].phenotype == null || response.data[0].phenotype == undefined) {
-            RuleResult.phenotype = [];
-        } else {
-            RuleResult.phenotype = response.data[0].phenotype[index];
-        }
+        RuleResult.hla_gene = response.data[0].hla_gene;
+        RuleResult.drug = response.data[0].drug[index];
+        RuleResult.typeof_scar = response.data[0].typeof_scar[index];
+        RuleResult.ethnic_group = response.data[0].ethnic_group[index];
+        RuleResult.odds_score = response.data[0].odds_score[index];
+        RuleResult.ref = response.data[0].ref[index];
+
         return { data: RuleResult, error: null };
     } catch (error) {
         console.error("Error fetching rule:", error);
@@ -36,23 +34,20 @@ export async function QueryRule(ruleID, index) {
 
 export async function InsertRule(InsertRuleModel) {
     try {
-        const response = await Create(db, "rule", InsertRuleModel);
+        const response = await Create(db, "ruleHLA-B", InsertRuleModel);
         if (response.error) {
             console.error("Error inserting rule:", response.error);
             return { data: null, error: response.error.message }; //for User
         }
-        RuleBased.id = response.data[0].id;
-        RuleBased.location = response.data[0].location;
-        RuleBased.result_location = response.data[0].result_location;
-        RuleBased.predicted_genotype = response.data[0].predicted_genotype;
-        RuleBased.predicted_phenotype = response.data[0].predicted_phenotype;
-        RuleBased.recommendation = response.data[0].recommend;
+        RuleResult.id = response.data[0].id;
+        RuleResult.hla_gene = response.data[0].hla_gene;
+        RuleResult.drug = response.data[0].drug[index];
+        RuleResult.typeof_scar = response.data[0].typeof_scar[index];
+        RuleResult.ethnic_group = response.data[0].ethnic_group[index];
+        RuleResult.odds_score = response.data[0].odds_score[index];
+        RuleResult.ref = response.data[0].ref[index];
         RuleBased.created_at = response.data[0].created_at;
-        if (response.data[0].phenotype == null || response.data[0].phenotype == undefined) {
-            RuleBased.phenotype = [];
-        } else {
-            RuleBased.phenotype = response.data[0].phenotype;
-        }
+        
         return { data: RuleBased, error: null }; //for User
     } catch (error) {
         console.error("Error inserting rule:", error);
@@ -62,23 +57,20 @@ export async function InsertRule(InsertRuleModel) {
 
 export async function UpdateRule(ruleID, UpdateRuleModel) {
     try {
-        const response = await db.from("rule").update(UpdateRuleModel).eq("id", ruleID).select();
+        const response = await db.from("ruleHLA-B").update(UpdateRuleModel).eq("id", ruleID).select();
         if (response.error) {
             console.error("Error updating rule:", response.error);
             return { data: null, error: response.error.message }; //for User
         }
-        RuleBased.id = response.data[0].id;
-        RuleBased.location = response.data[0].location;
-        RuleBased.result_location = response.data[0].result_location;
-        RuleBased.predicted_genotype = response.data[0].predicted_genotype;
-        RuleBased.predicted_phenotype = response.data[0].predicted_phenotype;
-        RuleBased.recommendation = response.data[0].recommend;
+        RuleResult.id = response.data[0].id;
+        RuleResult.hla_gene = response.data[0].hla_gene;
+        RuleResult.drug = response.data[0].drug[index];
+        RuleResult.typeof_scar = response.data[0].typeof_scar[index];
+        RuleResult.ethnic_group = response.data[0].ethnic_group[index];
+        RuleResult.odds_score = response.data[0].odds_score[index];
+        RuleResult.ref = response.data[0].ref[index];
         RuleBased.created_at = response.data[0].created_at;
-        if (response.data[0].phenotype == null || response.data[0].phenotype == undefined) {
-            RuleBased.phenotype = [];
-        } else {
-            RuleBased.phenotype = response.data[0].phenotype;
-        }
+        
         return { data: RuleBased, error: null };
     } catch (error) {
         console.error("Error updating rule:", error);
@@ -88,7 +80,7 @@ export async function UpdateRule(ruleID, UpdateRuleModel) {
 
 export async function DeleteRule(ruleID) {
     try {
-        const response = await db.from("rule").delete().eq("id", ruleID);
+        const response = await db.from("ruleHLA-B").delete().eq("id", ruleID);
         if (response.error) {
             console.error("Error deleting rule:", response.error);
             return { data: null, error: response.error.message }; //for User
