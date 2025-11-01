@@ -187,7 +187,6 @@ import { ReportModel, ReportUpdate } from '../../../../lib/model/Report';
 
 export async function POST(req) {
     const body = await req.json()
-    // const { specimens_id, doctor_id, patient_id, pharm_verify, medtech_verify, note_id, rule_id, more_information, pharmacist_id, pharmacist_license, medical_technician_id, medtech_license, request_date, report_date } = row
     if (!body || !body.specimens_id || !body.patient_id) {
         ResponseModel.status = '400'
         ResponseModel.message = 'Invalid Data'

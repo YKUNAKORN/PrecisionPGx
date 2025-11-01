@@ -40,7 +40,7 @@ import { GetReportById } from '../../service/report_service';
  */
 
 export async function GET(req, { params }) {
-    const { id } = await params;
+    const { id } = params;
     if (!id) {
         ResponseModel.status = '400';
         ResponseModel.message = 'ID parameter is required';
