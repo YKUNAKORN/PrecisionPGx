@@ -12,7 +12,7 @@ const Page = () => {
   });
 
   return (
-    <div className="p-6 bg-zinc-900 min-h-screen text-white">
+    <div className="p-6  min-h-screen ">
       {/* Header */}
       <h1 className="text-2xl font-bold">Sample Management</h1>
       <h3 className="text-gray-300 mt-1">
@@ -34,8 +34,8 @@ const Page = () => {
             onClick={() => setActiveTab(tab)}
             className={`px-6 py-2 rounded-full font-medium transition shadow-sm ${
               activeTab === tab
-                ? "bg-purple-600 text-white"
-                : "bg-zinc-800 text-gray-300 hover:bg-zinc-700"
+                ? "bg-purple-600 "
+                : " text-gray-500 hover:bg-zinc-700"
             }`}
           >
             {tab}
@@ -58,8 +58,8 @@ const Page = () => {
 /* --- PLACEHOLDER (Matched Layout) --- */
 function Placeholder({ title, desc }) {
   return (
-    <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-10 shadow-md text-center text-gray-300 w-full min-h-[400px] flex flex-col justify-center items-center">
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
+    <div className=" border border-zinc-700 rounded-xl p-10 shadow-md text-center  w-full min-h-[400px] flex flex-col justify-center items-center">
+      <h3 className="text-lg font-semibold ">{title}</h3>
       <p className="mt-2">{desc}</p>
     </div>
   );
@@ -68,10 +68,10 @@ function Placeholder({ title, desc }) {
 /* --- SUMMARY CARD --- */
 function SummaryCard({ title, value, color, progress }) {
   return (
-    <div className="bg-zinc-900 rounded-xl shadow-md p-5 flex flex-col justify-between border border-zinc-700">
-      <h3 className="text-sm text-gray-400">{title}</h3>
-      <p className="text-lg font-semibold text-white mt-1">{value}</p>
-      <div className="w-full h-3 bg-zinc-800 rounded-full mt-3">
+    <div className=" rounded-xl shadow-md p-5 flex flex-col justify-between border border-zinc-700">
+      <h3 className="text-sm ">{title}</h3>
+      <p className="text-lg font-semibold  mt-1">{value}</p>
+      <div className="w-full h-3 rounded-full mt-3">
         <div className={`${color} h-3 rounded-full transition-all`} style={{ width: `${progress}%` }}></div>
       </div>
     </div>
@@ -88,7 +88,7 @@ function InventorySection({ filters, setFilters }) {
   ];
 
   return (
-    <div className="mt-4 bg-zinc-900 border border-zinc-700 rounded-xl p-6 shadow-md">
+    <div className="mt-4  border border-zinc-700 rounded-xl p-6 shadow-md">
       {/* Search & Filters */}
       <div className="mb-5">
         <input
@@ -96,19 +96,19 @@ function InventorySection({ filters, setFilters }) {
           placeholder="Search by ID, patient, or test"
           value={filters.search}
           onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-          className="w-full bg-zinc-800 text-white placeholder-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
+          className="w-full  placeholder-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
         />
       </div>
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-300 md:justify-start">
+        <div className="flex flex-wrap items-center gap-4 text-sm  md:justify-start">
           <Filter label="Location" value={filters.location} onChange={(v) => setFilters(f => ({ ...f, location: v }))} options={["All","A","B","C"]} />
           <Filter label="Type" value={filters.type} onChange={(v) => setFilters(f => ({ ...f, type: v }))} options={["All","Blood","Saliva","Tissue"]} />
           <Filter label="Status" value={filters.status} onChange={(v) => setFilters(f => ({ ...f, status: v }))} options={["All","Active","Stored","Warning"]} />
         </div>
-        <div className="flex items-center gap-3 text-sm text-gray-300 md:ml-auto md:justify-end">
+        <div className="flex items-center gap-3 text-sm  md:ml-auto md:justify-end">
           <Filter label="Sort" value={filters.sortBy} onChange={(v) => setFilters(f => ({ ...f, sortBy: v }))} options={["ID","Date","Status","Type"]} />
-          <button className="border border-zinc-700 text-gray-300 px-4 py-1 rounded-md hover:bg-zinc-800 transition text-sm">Advanced Filtering</button>
+          <button className="border border-zinc-700  px-4 py-1 rounded-md  transition text-sm">Advanced Filtering</button>
         </div>
       </div>
 
@@ -130,7 +130,7 @@ function Filter({ label, value, onChange, options }) {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-zinc-800 text-white rounded-md px-3 py-1 focus:outline-none"
+        className="rounded-md px-3 py-1 focus:outline-none"
       >
         {options.map((opt) => (
           <option key={opt} value={opt}>{opt}</option>
@@ -150,16 +150,16 @@ function SampleCard({ data }) {
       : "bg-blue-400";
 
   return (
-    <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4 shadow-md hover:shadow-lg transition w-full">
+    <div className=" border border-zinc-700 rounded-xl p-4 shadow-md hover:shadow-lg transition w-full">
       <div className="flex justify-between items-start">
-        <h3 className="font-semibold text-white text-sm md:text-base">{data.id}</h3>
-        <span className="flex items-center gap-1 text-xs text-gray-400 md:text-sm">
+        <h3 className="font-semibold text-sm md:text-base">{data.id}</h3>
+        <span className="flex items-center gap-1 text-xs  md:text-sm">
           <span className={`w-3 h-3 rounded-full ${dotColor}`}></span>
           {data.status}
         </span>
       </div>
 
-      <div className="mt-1 space-y-1 text-gray-300 text-xs md:text-sm">
+      <div className="mt-1 space-y-1  text-xs md:text-sm">
         <p>Type: {data.type}</p>
         <p>Patient / Location: {data.location}</p>
         <p>Collected: {data.date}</p>
@@ -171,7 +171,7 @@ function SampleCard({ data }) {
         {["Status", "Transfer", "Log"].map((btn) => (
           <button
             key={btn}
-            className="border border-zinc-700 rounded-lg px-2 py-1 text-xs text-gray-300 hover:bg-zinc-800 transition"
+            className="border border-zinc-700 rounded-lg px-2 py-1 text-xs   transition"
           >
             {btn}
           </button>
