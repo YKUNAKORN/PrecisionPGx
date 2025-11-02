@@ -1,4 +1,4 @@
-import { Create, GetAll, GetById, Update, Delete } from '@/lib/supabase/crud'
+import { Create, GetAll, GetById, Update } from '@/lib/supabase/crud'
 import { CreateClientSecret } from '@/lib/supabase/client'
 
 const db = CreateClientSecret()
@@ -36,9 +36,11 @@ export async function UpdateUser(id, row) {
 }
 
 export async function DeleteUser(id) {
-    const { data, error } = await Delete(db, "user", id)
+\    const { data, error } = await db.auth.admin.deleteUser(id)
+    
     if (error) {
         return { data: null, error: error }
     }
-    return { data: data, error: error }
+    
+    return { data: data, error: null }
 }

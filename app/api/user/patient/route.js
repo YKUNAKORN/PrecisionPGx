@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { ResponseModel } from '@/lib/model/Response'
 import { GetAllPatient, CreatePatient } from '@/app/api/user/service//patient_service'
 
-/*
+/**
  * @swagger
  * /api/user/patient:
  *   get:
