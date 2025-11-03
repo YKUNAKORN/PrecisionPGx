@@ -50,6 +50,23 @@ export async function QueryRuleByRowIndex(rowIndex) {
         return { data: null, error: error.message }
     }
 }
+export async function QueryRulesById(id) {
+    try {
+        const response = await db.from("rule").select("*").eq("id", id).single()
+        if (response.error) {
+            console.error("Error fetching rule by ID:", response.error)
+            return { data: null, error: response.error.message }
+        }
+        if (!response.data) {
+            return { data: null, error: "No rule found with the given ID." }
+        }
+        console.log(`Successfully fetched rule by ID ${id}:`, response.data) // for Debug
+        return { data: response.data, error: null }
+    } catch (error) {
+        console.error("Error fetching rule by ID:", error)
+        return { data: null, error: error.message }
+    }
+}
 
 export async function QueryAllRulesByIndex(index) {
     try {
