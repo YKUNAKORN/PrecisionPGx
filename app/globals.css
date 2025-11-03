@@ -145,10 +145,14 @@
   --sidebar-ring: var(--color-sidebar-ring);
 } 
 
-/* 
+/* globals.css */
 @layer base {
-  body { @apply bg-[oklch(0.969_0.014_286.375)] transition-colors; }
-}  */
+  html:not(.dark) body {
+    /* ✅ ใช้ utility ที่ Tailwind รู้จัก */
+    @apply bg-violet-50 ;
+  }
+}
+
 
 
 /* ============== Light (default) tokens ============== */
