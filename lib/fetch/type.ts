@@ -11,14 +11,14 @@ type Storage ={
     created_at: Timestamp;
 }
 
-type Specimen = {
+export type Specimen = {
     id: string;
     name: string;
     expiry_in: string;
     created_at: Timestamp;
 }
 
-type RuleBased ={
+export type RuleBased ={
     id: string;
     gene_location: string;
     genotype: string;
@@ -29,7 +29,7 @@ type RuleBased ={
     enzyme: string;
 }
 
-type Report = {
+export type Report = {
     sepicimens_id: string;
     doctor_id: string;
     patient_id: string;
@@ -44,13 +44,13 @@ type Report = {
     report_date: Timestamp;
 }
 
-type Note = {
+export type Note = {
     id: string;
     method: string;
     created_at: Timestamp;
 }
 
-type Patient = {
+export type Patient = {
     name: string;
     phone: string;
     age: number;
