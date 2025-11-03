@@ -1,6 +1,12 @@
 import { queryOptions } from "@tanstack/react-query";
 import { Storage } from "./type";
 
+export type CreateStorageDTO = {
+  patient_id: string;
+  location: string;
+  specimen_id: string;
+  status: string;       // เช่น "stored"
+};
 
 export async function getStorages(): Promise<Storage[]> {
   const res = await fetch(`/api/user/storage`);
@@ -14,12 +20,10 @@ export async function getStorage(id :string): Promise<Storage> {
   return res.json();
 }
 
-export async function putStorage(data: Storage) {
-  const res = await fetch(`/api/user/storage`, {
+export async function putStorage(id: string, data: CreateStorageDTO ) {
+  const res = await fetch(`/api/user/storage/${id}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to put Storage");
@@ -37,13 +41,11 @@ export async function deleteStorage(id: string) {
   return res.json();
 }
 
-export async function postStorage(data: Storage) {
+export async function postStorage(dto: CreateStorageDTO) {
   const res = await fetch(`/api/user/storage`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(dto),
   });
   if (!res.ok) throw new Error("Failed to post Storage");
   return res.json();
@@ -67,13 +69,9 @@ export const createStorageQueryOptions = {
   }
 
 export const mutateStorageQueryOptions = {
-  put: () => ({
-      mutationFn: async (data: Storage) => await putStorage(data),
-    }),
+   put: (id: string) => ({ mutationFn: async (data: CreateStorageDTO ) => await putStorage(id, data) }),
   delete: ({
       mutationFn: async (id: string) => await deleteStorage(id),
     }),
-  post: ({
-      mutationFn: async (data: Storage) => await postStorage(data),
-    }),
+  post: () => ({ mutationFn: async (dto: CreateStorageDTO) => await postStorage(dto) }),
   };

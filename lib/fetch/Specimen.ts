@@ -1,6 +1,10 @@
 import { queryOptions } from "@tanstack/react-query";
 import { Specimen } from "./type";
 
+export type CreateSpecimenDTO = {
+  name: string;            // เช่น "blood" | "saliva" | ...
+  expire_in: string;       // "YYYY-MM-DD"
+};
 
 export async function getSpecimens(): Promise<Specimen[]> {
   const res = await fetch(`/api/user/specimen`);
@@ -37,16 +41,14 @@ export async function deleteSpecimen(id: string) {
   return res.json();
 }
 
-export async function postSpecimen(data: Specimen) {
+export async function postSpecimen(dto: CreateSpecimenDTO) {
   const res = await fetch(`/api/user/specimen`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(dto),
   });
   if (!res.ok) throw new Error("Failed to post Specimen");
-  return res.json();
+  return res.json(); // คาดหวัง { status, message, data: { id?... } } หรือรูปแบบใกล้เคียง
 }
 
 export const createSpecimenQueryOptions = {
@@ -73,7 +75,6 @@ export const mutateSpecimenQueryOptions = {
   delete: ({
       mutationFn: async (id: string) => await deleteSpecimen(id),
     }),
-  post: ({
-      mutationFn: async (data: Specimen) => await postSpecimen(data),
+  post: () => ({ mutationFn: async (dto: CreateSpecimenDTO) => await postSpecimen(dto),
     }),
   };
