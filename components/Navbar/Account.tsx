@@ -10,7 +10,7 @@ const Account = () => {
   const isActive = pathname === "/Dashboard/Account";
 
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center gap-1 rounded-2xl">
       <Button
         size="sm"
         asChild

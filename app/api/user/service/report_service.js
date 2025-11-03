@@ -1,6 +1,6 @@
-import { Create, GetAll, Update, Delete, GetById } from '../../../../lib/supabase/crud'
-import { ReportResult } from "../../../../lib/model/Report"
-import { CreateClientSecret } from "../../../../lib/supabase/client"
+import { Create, GetAll, Update, Delete, GetById } from '@/lib/supabase/crud'
+import { ReportResult } from "@/lib/model/Report"
+import { CreateClientSecret } from "@/lib/supabase/client"
 
 const db = CreateClientSecret()
 
@@ -24,6 +24,7 @@ export async function CreateReport(InsertReportModel) {
         ReportResult.pharmacist_license = response.data[0].pharmacist_license;
         ReportResult.medical_technician_id = response.data[0].medical_technician_id;
         ReportResult.medtech_license = response.data[0].medtech_license;
+        ReportResult.status = response.data[0].status;
         ReportResult.request_date = response.data[0].request_date;
         ReportResult.report_date = response.data[0].report_date;
         ReportResult.created_at = response.data[0].created_at;
@@ -56,6 +57,7 @@ export async function GetAllReports() {
             ReportResult[i].rule_id = data[i].rule_id;
             ReportResult[i].pharmacist_id = data[i].pharmacist_id;
             ReportResult[i].medical_technician_id = data[i].medical_technician_id;
+            ReportResult[i].status = data[i].status;
             ReportResult[i].request_date = data[i].request_date;
             ReportResult[i].report_date = data[i].report_date;
             ReportResult[i].updated_at = data[i].updated_at;
@@ -71,7 +73,6 @@ export async function GetAllReports() {
 
 export async function UpdateReportByID(id, row) {
     const { data, error } = await Update(db, "reports", id, row);
-    console.log(data)
     if (data.length === 0) {
         return { data: [], error: new Error("Data Not Found : " + id) }; //for User
     }
@@ -90,6 +91,7 @@ export async function UpdateReportByID(id, row) {
         ReportResult.rule_id = data[0].rule_id;
         ReportResult.more_information = data[0].more_information;
         ReportResult.medical_technician_id = data[0].medical_technician_id;
+        ReportResult.status = data[0].status;
         ReportResult.request_date = data[0].request_date;
         ReportResult.report_date = data[0].report_date;
         ReportResult.created_at = data[0].created_at;
@@ -128,6 +130,7 @@ export async function GetReportById(id) {
         ReportResult.rule_id = data[0].rule_id;
         ReportResult.more_information = data[0].more_information;
         ReportResult.medical_technician_id = data[0].medical_technician_id;
+        ReportResult.status = data[0].status;
         ReportResult.request_date = data[0].request_date;
         ReportResult.report_date = data[0].report_date;
         ReportResult.created_at = data[0].created_at;

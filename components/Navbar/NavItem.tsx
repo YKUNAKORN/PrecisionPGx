@@ -28,7 +28,7 @@ export default function NavItem({ href, icon: Icon, label, size = 28, exact = fa
         <span
           className={[
             // ขนาดพื้นที่คลิกไอคอน
-            "w-14 h-10 rounded-2xl flex items-center justify-center",
+            "w-14 h-10 rounded-xl flex items-center justify-center",
             // hover นุ่ม ๆ
             "hover:bg-white/5",
             // สถานะ active = มีพื้นหลังแบบภาพแรก
