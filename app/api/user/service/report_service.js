@@ -1,6 +1,6 @@
-import { Create, GetAll, Update, Delete, GetById } from '@/lib/supabase/crud'
-import { ReportResult } from "@/lib/model/Report"
-import { CreateClientSecret } from "@/lib/supabase/client"
+import { Create, GetAll, Update, Delete, GetById } from '../../../../lib/supabase/crud'
+import { ReportResult } from "../../../../lib/model/Report"
+import { CreateClientSecret } from "../../../../lib/supabase/client"
 
 const db = CreateClientSecret()
 

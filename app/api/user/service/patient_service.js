@@ -22,12 +22,9 @@ export async function GetAllPatient() {
 export async function GetPatientById(id) {
     const { data, error } = await GetById(db, "patient", id)
     if (error) {
-        return { data: null, error: error }
+        throw new Error(`Failed to fetch patient: ${error.message}`)
     }
-    if (!data || data.length === 0) {
-        return { data: null, error: { message: 'Patient not found' } }
-    }
-    return { data: data, error: null }
+    return data
 }
 
 export async function UpdatePatient(id, row) {
