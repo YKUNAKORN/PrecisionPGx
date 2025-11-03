@@ -55,14 +55,11 @@ export const createPatientQueryOptions = {
 };
 
 export const mutatePatientQueryOptions = {
-  put: (data: Patient) =>
-    queryOptions({
-      queryKey: ["patients", data],
-      queryFn: () => putPatient(data),
-    }),
-  delete: (id: string) =>
-    queryOptions({
-      queryKey: ["patients", id],
-      queryFn: () => deletePatient(id),
-    }),
-};  
+  put: () => ({
+    mutationFn: async (data: Patient) => await putPatient(data),
+  }),
+
+  delete: () => ({
+    mutationFn: async (id: string) => await deletePatient(id),
+  }),
+};

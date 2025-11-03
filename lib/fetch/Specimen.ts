@@ -67,19 +67,13 @@ export const createSpecimenQueryOptions = {
   }
 
 export const mutateSpecimenQueryOptions = {
-  put: (data: Specimen) =>
-    queryOptions({
-      queryKey: ["specimens", data],
-      queryFn: () => putSpecimen(data),
+  put: () => ({
+      mutationFn: async (data: Specimen) => await putSpecimen(data),
     }),
-  delete: (id: string) =>
-    queryOptions({
-      queryKey: ["specimens", id],
-      queryFn: () => deleteSpecimen(id),
+  delete: ({
+      mutationFn: async (id: string) => await deleteSpecimen(id),
     }),
-  post: (data: Specimen) =>
-    queryOptions({
-      queryKey: ["specimens", data],
-      queryFn: () => postSpecimen(data),
+  post: ({
+      mutationFn: async (data: Specimen) => await postSpecimen(data),
     }),
   };

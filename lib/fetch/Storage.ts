@@ -67,19 +67,13 @@ export const createStorageQueryOptions = {
   }
 
 export const mutateStorageQueryOptions = {
-  put: (data: Storage) =>
-    queryOptions({
-      queryKey: ["storages", data],
-      queryFn: () => putStorage(data),
+  put: () => ({
+      mutationFn: async (data: Storage) => await putStorage(data),
     }),
-  delete: (id: string) =>
-    queryOptions({
-      queryKey: ["storages", id],
-      queryFn: () => deleteStorage(id),
+  delete: ({
+      mutationFn: async (id: string) => await deleteStorage(id),
     }),
-  post: (data: Storage) =>
-    queryOptions({
-      queryKey: ["storages", data],
-      queryFn: () => postStorage(data),
+  post: ({
+      mutationFn: async (data: Storage) => await postStorage(data),
     }),
   };
