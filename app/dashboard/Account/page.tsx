@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useTheme } from "next-themes";
 
+
 type TabKey = "profile" | "security" | "preferences";
 const TABS: { key: TabKey; label: string }[] = [
   { key: "profile", label: "Profile" },
@@ -92,111 +93,19 @@ export default function AccountSettingsPage() {
   );
 }
 
-/* ========================= Profile ========================= */
-  // function ProfilePanel() {
-  //   return (
-  //     <section className="space-y-6">
-  //       {/* Summary + Form */}
-  //       <div className="rounded-2xl border shadow-sm p-6">
-  //         <div className="grid gap-6 md:grid-cols-[320px_1fr]">
-  //           {/* Summary card (left) */}
-  //           <div className="rounded-xl border shadow-sm p-5">
-  //             <div className="flex items-center gap-4">
-  //               <div className="grid place-items-center rounded-full border shadow-sm w-18 h-18 text-base font-semibold">
-  //                 SJ
-  //               </div>
-  //               <div>
-  //                 <div className="text-base font-semibold">Dr. Sarah Johnson</div>
-  //                 <div className="text-sm">Senior Laboratory Technician</div>
-  //               </div>
-  //             </div>
-  //           </div>
 
-  //           {/* Form (right) */}
-  //           <form className="grid gap-4 md:grid-cols-2">
-  //             <Field label="First Name">
-  //               <Input defaultValue="Sarah" />
-  //             </Field>
-  //             <Field label="Last Name">
-  //               <Input defaultValue="Johnson" />
-  //             </Field>
 
-  //             <Field label="Email Address">
-  //               <Input type="email" defaultValue="sarah.johnson@medslab.com" />
-  //             </Field>
-  //             <Field label="Phone Number">
-  //               <Input placeholder="+1 (555) 123-4567" />
-  //             </Field>
-
-  //             <Field label="Role" full>
-  //               <Input defaultValue="Senior Laboratory Technician" />
-  //             </Field>
-  //             <Field label="Department" full>
-  //               <Input defaultValue="Molecular Diagnostics" />
-  //             </Field>
-
-  //             <div className="md:col-span-2 flex justify-end gap-2 pt-2">
-  //               <button
-  //                 type="button"
-  //                 className="rounded-lg border px-4 py-2 text-sm shadow-sm hover:bg-destructive"
-  //               >
-  //                 Cancel
-  //               </button>
-  //               <button
-  //                 type="submit"
-  //                 className="rounded-lg border px-4 py-2 text-sm shadow-sm font-medium hover:bg-primary"
-  //               >
-  //                 Save Changes
-  //               </button>
-  //             </div>
-  //           </form>
-  //         </div>
-  //       </div>
-
-  //       {/* Laboratory info */}
-  //       <div className="rounded-2xl border shadow-sm p-6">
-  //         <h3 className="text-sm font-semibold">Laboratory Information</h3>
-  //         <div className="mt-4 grid gap-4 md:grid-cols-3">
-  //           <Field label="Laboratory ID">
-  //             <Input defaultValue="LAB-001" />
-  //           </Field>
-  //           <Field label="Employee ID">
-  //             <Input defaultValue="EMP-2024-001" />
-  //           </Field>
-  //           <Field label="Access Level">
-  //             <Input defaultValue="Level 3" />
-  //           </Field>
-  //         </div>
-  //       </div>
-
-  //       {/* Delete profile */}
-  //       <div className="rounded-2xl border border-destructive shadow-sm p-6">
-  //         <h3 className="text-sm font-semibold text-destructive">Delete Profile</h3>
-  //         <p className="mt-1 text-sm">
-  //           Permanently delete your profile and all associated data.
-  //         </p>
-  //         <div className="mt-3">
-  //           <button className="rounded-lg  bg-destructive text-white px-4 py-2 text-sm shadow-sm ">
-  //             Delete Profile
-  //           </button>
-  //         </div>
-  //       </div>
-  //     </section>
-  //   );
-  // }
-
-/* ========================= Security ========================= */
-function ProfilePanel() {
-  const [editing, setEditing] = React.useState(false);
-
-  const handleToggle = () => {
-    // ถ้าอยู่โหมดแก้ แล้วกด Save → ตรงนี้คือจุดยิง API ได้
-    if (editing) {
-      console.log("save profile...");
-    }
+  function ProfilePanel() {
+    const [editing, setEditing] = React.useState(false);
+    
+    const handleToggle = () => {
+      // ถ้าอยู่โหมดแก้ แล้วกด Save → ตรงนี้คือจุดยิง API ได้
+      if (editing) {
+        console.log("save profile...");
+      }
     setEditing((v) => !v);
   };
-
+  
   return (
     <section className="space-y-6">
       {/* ================== Personal / Summary + Form ================== */}
@@ -238,13 +147,13 @@ function ProfilePanel() {
                 type="email"
                 defaultValue="sarah.johnson@medslab.com"
                 readOnly={!editing}
-              />
+                />
             </Field>
             <Field label="Phone Number">
               <Input
                 placeholder="+1 (555) 123-4567"
                 readOnly={!editing}
-              />
+                />
             </Field>
 
             <Field label="Role" full>
@@ -257,7 +166,7 @@ function ProfilePanel() {
               <Input
                 defaultValue="Molecular Diagnostics"
                 readOnly={!editing}
-              />
+                />
             </Field>
 
             
@@ -296,6 +205,87 @@ function ProfilePanel() {
     </section>
   );
 }
+/* ========================= Security ========================= */
+
+import { KeyIcon, EyeIcon } from "@heroicons/react/24/outline";
+
+function SecurityPanel() {
+  return (
+    <section className="space-y-6">
+      <div className="rounded-2xl border border-violet-200 bg-violet-50/70 p-5">
+        <h3 className="text-lg font-semibold mb-2">Password &amp; Security</h3>
+
+        <form className="grid gap-4 md:max-w-md">
+          {/* Current Password */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-neutral-800">
+              Current Password
+            </label>
+            <div className="relative">
+              <span className="pointer-events-none absolute inset-y-0 left-3 inline-flex items-center">
+                <KeyIcon className="size-5 text-neutral-500" aria-hidden />
+              </span>
+              <input
+                name="currentPassword"
+                type="password"
+                placeholder="Enter current password"
+                className="w-full rounded-xl border border-violet-200 bg-white/90 pl-11 pr-10 py-2.5 text-sm shadow-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-300"
+              />
+              <span className="absolute inset-y-0 right-2 grid place-items-center rounded-md p-1.5 text-neutral-500">
+                <EyeIcon className="size-5" aria-hidden />
+              </span>
+            </div>
+          </div>
+
+          {/* New Password */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-neutral-800">
+              New Password
+            </label>
+            <div className="relative">
+              <input
+                name="newPassword"
+                type="password"
+                placeholder="Enter new password"
+                className="w-full rounded-xl border border-violet-200 bg-white/90 pr-10 py-2.5 text-sm shadow-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-300"
+              />
+              <span className="absolute inset-y-0 right-2 grid place-items-center rounded-md p-1.5 text-neutral-500">
+                <EyeIcon className="size-5" aria-hidden />
+              </span>
+            </div>
+          </div>
+
+          {/* Confirm New Password */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-neutral-800">
+              Confirm New Password
+            </label>
+            <div className="relative">
+              <input
+                name="confirmPassword"
+                type="password"
+                placeholder="Confirm new password"
+                className="w-full rounded-xl border border-violet-200 bg-white/90 pr-10 py-2.5 text-sm shadow-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-300"
+              />
+              <span className="absolute inset-y-0 right-2 grid place-items-center rounded-md p-1.5 text-neutral-500">
+                <EyeIcon className="size-5" aria-hidden />
+              </span>
+            </div>
+          </div>
+
+          {/* Submit (UI only) */}
+          <button
+            type="submit"
+            className="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-violet-700 px-5 py-2.5 text-base font-medium text-white shadow hover:bg-violet-800 active:bg-violet-900"
+          >
+            Update Password
+          </button>
+        </form>
+      </div>
+    </section>
+  );
+}
+
 
 
 
