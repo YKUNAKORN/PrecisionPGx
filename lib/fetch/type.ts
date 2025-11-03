@@ -49,3 +49,11 @@ type Note = {
     method: string;
     created_at: Timestamp;
 }
+
+type Patient = {
+    name: string;
+    phone: string;
+    age: number;
+    gender: string;
+    Ethnicity: string;
+}
