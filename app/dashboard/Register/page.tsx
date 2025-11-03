@@ -186,7 +186,7 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
 
         // 2) POST /api/user/specimen  -> { name, expire_in }
         //    ใช้วันที่เก็บเป็น expire_in (ถ้าต้องการ logic อื่น เปลี่ยนที่นี่ได้)
-        const expireDate = (collectedAt || "").slice(0, 10); // "YYYY-MM-DD"
+
         const specimenDTO = { name: sampleType, expire_in: 2 };
 
         try {
@@ -194,9 +194,9 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
 
             // พยายามอ่าน id จากหลายรูปแบบ response
             const specimenId =
-                createdSpecimen?.data?.id ??
+                createdSpecimen?.data[0]?.id ??
                 createdSpecimen?.id ??
-                createdSpecimen?.data?.specimen_id;
+                createdSpecimen?.data[0]?.specimen_id;
 
             if (!specimenId) {
                 alert("Specimen created but no id returned from API");
