@@ -83,7 +83,6 @@ export async function POST(request) {
       error: 'Invalid request payload' + error.message,
       details: process.env.NODE_ENV === 'development' ? error.message : undefined }, { status: 400 })
   }
-
   const data = await SignUp(InsertUserModel, password)
   if (data.error) {
     console.error('Error during SignUp:', data.error) // Debug log
