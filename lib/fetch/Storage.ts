@@ -14,11 +14,27 @@ export async function getStorages(): Promise<Storage[]> {
   return res.json();
 }
 
-export async function getStorage(id :string): Promise<Storage> {
+export async function getStorage(id: string): Promise<Storage> {
   const res = await fetch(`/api/user/storage/${id}`);
-  if (!res.ok) throw new Error("Failed to fetch Storage");
-  return res.json();
+
+  // ตรวจสอบว่า request สำเร็จไหม
+  if (!res.ok) {
+    const msg = await res.text();
+    throw new Error(`Failed to fetch storage: ${msg || res.statusText}`);
+  }
+
+  // ✅ manual unwrap
+  const body = await res.json();
+
+  // บาง API อาจตอบเป็น { status, message, data: {...} }
+  if (body && typeof body === "object" && "data" in body) {
+    return body.data as Storage;
+  }
+
+  // บางกรณีอาจส่ง object ตรง ๆ
+  return body as Storage;
 }
+
 
 export async function putStorage(id: string, data: CreateStorageDTO ) {
   const res = await fetch(`/api/user/storage/${id}`, {

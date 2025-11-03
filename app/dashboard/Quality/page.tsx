@@ -55,16 +55,18 @@ function Card({ title, value }) {
 // ✅ Chart
 function Chart({ title, value }) {
   return (
-    <div className=" border border-zinc-700 rounded-lg p-6 shadow-md w-full">
+    <div className="border border-zinc-700 rounded-lg p-6 shadow-md w-full relative overflow-hidden">
       <h3 className="text-sm font-bold">{title}</h3>
       {value && <p className="text-sm text-gray-400 mt-3">{value}</p>}
-      {/* Placeholder for chart */}
-      <div className="h-56  mt-4 rounded-md flex items-center justify-center text-gray-500 text-xs">
-        Chart Area
+
+      {/* พื้นที่ chart พร้อมเบลอ */}
+      <div className="h-56 mt-4 rounded-md flex items-center justify-center text-gray-400 text-sm backdrop-blur-sm bg-zinc-900/50">
+        <span className="font-medium text-gray-500 animate-pulse">Coming Soon</span>
       </div>
     </div>
   );
 }
+
 
 // ✅ Alerts
 function Alerts() {

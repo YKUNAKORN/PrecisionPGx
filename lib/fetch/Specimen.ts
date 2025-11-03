@@ -1,9 +1,10 @@
 import { queryOptions } from "@tanstack/react-query";
 import { Specimen } from "./type";
 
+
 export type CreateSpecimenDTO = {
   name: string;            // เช่น "blood" | "saliva" | ...
-  expire_in: string;       // "YYYY-MM-DD"
+  expire_in: number;       // "YYYY-MM-DD"
 };
 
 export async function getSpecimens(): Promise<Specimen[]> {
