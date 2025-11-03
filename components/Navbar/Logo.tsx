@@ -113,9 +113,9 @@ export default function Logo() {
         <Image
           src={logoSrc}
           alt="Logo"
-          width={48}
-          height={48}
-          className="object-contain size-15  !rounded-3xl"
+          width={60}
+          height={60}
+          className="object-contain size-14 !rounded-full"
           priority
         />
       </Link>

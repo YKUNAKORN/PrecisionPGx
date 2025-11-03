@@ -5,9 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 /**
  * Single-file page (Next.js + Tailwind)
- * - no background colors
- * - no text colors
- * - structure + layout only
  * - left sidebar, header, stepper, table, 7 panels
  */
 
@@ -23,9 +20,19 @@ const STEPS = [
 
 type StepKey = (typeof STEPS)[number]["slug"];
 
+/** ---------- API types & local model ---------- */
+type ApiReport = {
+  id: string;        // ใช้แสดงในคอลัมน์ Report Number
+  patient_id: string;  // ใช้แสดงในคอลัมน์ Patient
+  status?: string;   // complete | in progress | failed | (อาจไม่มี)
+  // อื่น ๆ ตาม API จริง เพิ่มได้
+};
+
+type StatusNorm = "complete" | "in progress" | "failed" | "unknown";
+
 type ReportRow = {
   id: string;
-  report_no: string;
+  report_no: string;  // แสดง id อีกชุด
   patient: string;
   status: "Completed" | "In Progress" | "Failed";
   is_approve: "approved" | "pending" | "rejected";
@@ -36,62 +43,32 @@ type ReportRow = {
   age?: string | null;
 };
 
-const MOCK_REPORTS: ReportRow[] = [
-  {
-    id: "1",
-    report_no: "RPT-2025-001",
-    patient: "John Smith",
-    status: "Completed",
-    is_approve: "approved",
-    mrn: "MRN-001",
-    dob: "Jan 12, 1988",
-    physician: "Dr. Emily Chen",
-    gender: "Male",
-    age: "37 years old",
-  },
-  {
-    id: "2",
-    report_no: "RPT-2025-002",
-    patient: "Sarah Johnson",
-    status: "In Progress",
-    is_approve: "pending",
-    mrn: "MRN-123456",
-    dob: "Jul 22, 1990",
-    physician: "Dr. Emily Chen",
-    gender: "Female",
-    age: "35 years old",
-  },
-  {
-    id: "3",
-    report_no: "RPT-2025-003",
-    patient: "Michael Brown",
-    status: "Failed",
-    is_approve: "rejected",
-    physician: "Dr. Anna Li",
-  },
-  {
-    id: "4",
-    report_no: "RPT-2025-004",
-    patient: "Emily Davis",
-    status: "Failed",
-    is_approve: "rejected",
-  },
-  {
-    id: "5",
-    report_no: "RPT-2025-005",
-    patient: "David Wilson",
-    status: "In Progress",
-    is_approve: "pending",
-  },
-  {
-    id: "6",
-    report_no: "RPT-2025-006",
-    patient: "Lisa Anderson",
-    status: "In Progress",
-    is_approve: "pending",
-  },
-];
+/** ---------- helpers: status mapping & colors ---------- */
+function normalizeStatus(s?: string | null): StatusNorm {
+  if (!s) return "unknown";
+  const t = s.toLowerCase().trim();
+  if (t === "complete" || t === "completed") return "complete";
+  if (t === "in progress" || t === "in_progress" || t === "processing") return "in progress";
+  if (t === "failed" || t === "fail" || t === "error") return "failed";
+  return "unknown";
+}
+function toDisplayStatus(norm: StatusNorm): ReportRow["status"] {
+  if (norm === "complete") return "Completed";
+  if (norm === "in progress") return "In Progress";
+  return "Failed"; // failed/unknown → Failed
+}
+function toApprove(norm: StatusNorm): ReportRow["is_approve"] {
+  if (norm === "complete") return "approved";
+  if (norm === "in progress") return "pending";
+  return "rejected"; // failed/unknown → แดง
+}
+function dotColorClass(norm: StatusNorm) {
+  if (norm === "complete") return "bg-green-500 border-green-600";
+  if (norm === "in progress") return "bg-orange-400 border-orange-500";
+  return "bg-red-500 border-red-600"; // failed/unknown
+}
 
+/** ---------- page component ---------- */
 export default function Page() {
   const router = useRouter();
   const search = useSearchParams();
@@ -103,14 +80,59 @@ export default function Page() {
   }, [search]);
 
   const [active, setActive] = React.useState(initialIndex);
-  const [selectedReport, setSelectedReport] = React.useState<ReportRow | null>(
-    null
-  );
+  const [selectedReport, setSelectedReport] = React.useState<ReportRow | null>(null);
 
+  // 🔹 state สำหรับโหลดข้อมูลจาก API
+  const [rows, setRows] = React.useState<ReportRow[] | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  // sync URL แค่ step (ตัด id ออกแล้ว)
   React.useEffect(() => {
     const slug = STEPS[active]?.slug;
     if (slug) router.replace(`?step=${slug}`, { scroll: false });
   }, [active, router]);
+
+  // 🔹 ดึงข้อมูลจาก /api/user/report
+  React.useEffect(() => {
+    let cancelled = false;
+    async function fetchReports() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/user/report`, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data: ApiReport[] = await res.json();
+
+        const list = Array.isArray(data) ? data : [];
+        const mapped: ReportRow[] = list.map((it) => {
+          const norm = normalizeStatus(it.status);
+          return {
+            id: it.id,
+            report_no: it.id,               // 👉 Report Number = id
+            patient: it.patient_id ?? "-",    // 👉 Patient = patient_id
+            status: toDisplayStatus(norm),  // 👉 Status
+            is_approve: toApprove(norm),    // 👉 สีวงกลม IsApprove
+            mrn: null,
+            dob: null,
+            physician: null,
+            gender: null,
+            age: null,
+          };
+        });
+
+        if (!cancelled) setRows(mapped);
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message || "Fetch failed");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    fetchReports();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const goPrev = () => setActive((v) => Math.max(0, v - 1));
   const goNext = () => setActive((v) => Math.min(STEPS.length - 1, v + 1));
@@ -121,12 +143,8 @@ export default function Page() {
       <main className="flex-1 min-h-screen">
         {/* top bar */}
         <header className="flex flex-col px-6 py-4 ">
-          <h1 className="text-2xl font-semibold leading-tight">
-            Result Interpretation
-          </h1>
-          <p className="text-sm leading-relaxed">
-            Review and interpret genetic test results
-          </p>
+          <h1 className="text-2xl font-semibold leading-tight">Result Interpretation</h1>
+          <p className="text-sm leading-relaxed">Review and interpret genetic test results</p>
         </header>
 
         {/* stepper */}
@@ -142,9 +160,7 @@ export default function Page() {
                     className={[
                       "flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm",
                       isActive ? "ring-1" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
+                    ].join(" ")}
                   >
                     <span
                       className={[
@@ -154,18 +170,13 @@ export default function Page() {
                           : isDone
                           ? "border-purple-400 bg-purple-400 "
                           : "border-neutral-300 text-neutral-400",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
+                      ].join(" ")}
                     >
                       {s.id}
                     </span>
-
                     <span className="whitespace-nowrap">{s.label}</span>
                   </button>
-                  {idx < STEPS.length - 1 ? (
-                    <span className="h-px w-10 border-t" />
-                  ) : null}
+                  {idx < STEPS.length - 1 ? <span className="h-px w-10 border-t" /> : null}
                 </li>
               );
             })}
@@ -192,136 +203,140 @@ export default function Page() {
                     />
                   </div>
                 </div>
-                <button className="border rounded-full px-4 py-2 text-sm">
-                  Clear All (Test 0 patients)
+                <button
+                  className="border rounded-full px-4 py-2 text-sm"
+                  onClick={() => setSelectedReport(null)}
+                >
+                  Clear Selection
                 </button>
-                <button className="border rounded-full px-4 py-2 text-sm">
-                  Reset Data
+                <button
+                  className="border rounded-full px-4 py-2 text-sm"
+                  onClick={() => window.location.reload()}
+                >
+                  Reload Data
                 </button>
               </div>
 
               {/* table */}
               <div className="border rounded-xl overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className="border-b">
-                    <tr className="h-11">
-                      <th className="text-left px-4 font-medium">
-                        Report Number
-                      </th>
-                      <th className="text-left px-4 font-medium">Patient</th>
-                      <th className="text-left px-4 font-medium">Status</th>
-                      <th className="text-left px-4 font-medium">IsApprove</th>
-                      <th className="text-left px-4 font-medium w-[16rem]">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {MOCK_REPORTS.map((r) => {
-                      const isSelected = selectedReport?.id === r.id;
-                      return (
-                        <tr
-                          key={r.id}
-                          className={[
-                            "border-b last:border-b-0",
-                            isSelected ? "ring-inset" : "",
-                          ]
-                            .filter(Boolean)
-                            .join(" ")}
-                        >
-                          <td
-                            className="px-4 py-3 cursor-pointer"
-                            onClick={() => {
-                              setSelectedReport(r);
-                              setActive(1);
-                            }}
+                {loading ? (
+                  <div className="p-6 text-sm">Loading reports…</div>
+                ) : error ? (
+                  <div className="p-6 text-sm">Failed to load: {error}</div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead className="border-b">
+                      <tr className="h-11">
+                        <th className="text-left px-4 font-medium">Report Number</th>
+                        <th className="text-left px-4 font-medium">Patient</th>
+                        <th className="text-left px-4 font-medium">Status</th>
+                        <th className="text-left px-4 font-medium">IsApprove</th>
+                        <th className="text-left px-4 font-medium w-[16rem]">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(rows ?? []).map((r) => {
+                        const isSelected = selectedReport?.id === r.id;
+                        const norm = normalizeStatus(r.status);
+                        const isComplete = norm === "complete";
+                        return (
+                          <tr
+                            key={r.id}
+                            className={["border-b last:border-b-0", isSelected ? "ring-inset" : ""].join(" ")}
                           >
-                            {r.report_no}
-                          </td>
-                          <td
-                            className="px-4 py-3 cursor-pointer"
-                            onClick={() => {
-                              setSelectedReport(r);
-                              setActive(1);
-                            }}
-                          >
-                            {r.patient}
-                          </td>
-                          <td
-                            className="px-4 py-3 cursor-pointer"
-                            onClick={() => {
-                              setSelectedReport(r);
-                              setActive(1);
-                            }}
-                          >
-                            {/* status pill (no colors) */}
-                            <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium">
-                              <span
-                                className="size-2 rounded-full border"
-                                aria-hidden
-                              />
-                              {r.status}
-                            </span>
-                          </td>
-                          <td
-                            className="px-4 py-3 cursor-pointer"
-                            onClick={() => {
-                              setSelectedReport(r);
-                              setActive(1);
-                            }}
-                          >
-                            <span className="inline-flex items-center gap-2 rounded-full border px-2 py-1 text-xs">
-                              <span
-                                className="size-2 rounded-full border"
-                                aria-hidden
-                              />
-                              {r.is_approve}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <button
-                                className="inline-flex items-center gap-1 border rounded-full px-3 py-1.5 text-xs"
-                                onClick={() => {
-                                  setSelectedReport(r);
-                                  setActive(1);
-                                }}
-                              >
+                            {/* Report Number = id */}
+                            <td
+                              className="px-4 py-3 cursor-pointer"
+                              onClick={() => {
+                                setSelectedReport(r);
+                                setActive(1);
+                              }}
+                            >
+                              {r.report_no}
+                            </td>
+
+                            {/* Patient = patient_id */}
+                            <td
+                              className="px-4 py-3 cursor-pointer"
+                              onClick={() => {
+                                setSelectedReport(r);
+                                setActive(1);
+                              }}
+                            >
+                              {r.patient}
+                            </td>
+
+                            {/* Status (text) */}
+                            <td
+                              className="px-4 py-3 cursor-pointer"
+                              onClick={() => {
+                                setSelectedReport(r);
+                                setActive(1);
+                              }}
+                            >
+                              <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium">
+                                <span className="size-2 rounded-full border" aria-hidden />
+                                {r.status}
+                              </span>
+                            </td>
+
+                            {/* IsApprove สีตามเงื่อนไข */}
+                            <td
+                              className="px-4 py-3 cursor-pointer"
+                              onClick={() => {
+                                setSelectedReport(r);
+                                setActive(1);
+                              }}
+                            >
+                              <span className="inline-flex items-center gap-2 rounded-full border px-2 py-1 text-xs">
                                 <span
-                                  className="size-4 border rounded"
+                                  className={`size-2 rounded-full border ${dotColorClass(norm)}`}
                                   aria-hidden
                                 />
-                                EDIT
-                              </button>
-                              <button className="border rounded-full px-3 py-1.5 text-xs">
-                                Approval
-                              </button>
-                              <button
-                                className="border rounded-full px-3 py-1.5 text-xs"
-                                onClick={() => {
-                                  setSelectedReport(r);
-                                  setActive(1);
-                                }}
-                              >
-                                {r.status === "Completed"
-                                  ? "Preview"
-                                  : "Continue"}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <td colSpan={5} className="px-4 py-3 text-sm">
-                        Showing {MOCK_REPORTS.length} of {MOCK_REPORTS.length}{" "}
-                        reports
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
+                                {r.is_approve}
+                              </span>
+                            </td>
+
+                            {/* Actions */}
+                            <td className="px-4 py-3">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                  className="inline-flex items-center gap-1 border rounded-full px-3 py-1.5 text-xs"
+                                  onClick={() => {
+                                    setSelectedReport(r);
+                                    setActive(1);
+                                  }}
+                                >
+                                  <span className="size-4 border rounded" aria-hidden />
+                                  EDIT
+                                </button>
+                                <button className="border rounded-full px-3 py-1.5 text-xs">
+                                  Approval
+                                </button>
+                                <button
+                                  className="border rounded-full px-3 py-1.5 text-xs"
+                                  onClick={() => {
+                                    setSelectedReport(r);
+                                    setActive(1);
+                                  }}
+                                >
+                                  {isComplete ? "Preview" : "Continue"}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colSpan={5} className="px-4 py-3 text-sm">
+                          Showing {rows?.length ?? 0} of {rows?.length ?? 0} reports
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                )}
               </div>
             </>
           ) : null}
@@ -335,9 +350,7 @@ export default function Page() {
                     {initials(selectedReport.patient)}
                   </div>
                   <div>
-                    <div className="text-base font-semibold leading-tight">
-                      {selectedReport.patient}
-                    </div>
+                    <div className="text-base font-semibold leading-tight">{selectedReport.patient}</div>
                     <div className="text-sm">
                       {selectedReport.gender ? selectedReport.gender : "—"}{" "}
                       {selectedReport.age ? `• ${selectedReport.age}` : ""}
@@ -348,10 +361,7 @@ export default function Page() {
                   <Info label="Report" value={selectedReport.report_no} />
                   <Info label="MRN" value={selectedReport.mrn ?? "-"} />
                   <Info label="DOB" value={selectedReport.dob ?? "-"} />
-                  <Info
-                    label="Physician"
-                    value={selectedReport.physician ?? "-"}
-                  />
+                  <Info label="Physician" value={selectedReport.physician ?? "-"} />
                 </div>
                 <button
                   onClick={() => {
@@ -365,21 +375,18 @@ export default function Page() {
               </div>
             ) : (
               <div className="border rounded-xl px-4 py-3 text-sm">
-                No patient selected. Please select a report in the Patient step
-                first.
+                No patient selected. Please select a report in the Patient step first.
               </div>
             )
           ) : null}
 
-          {/* other panels */}
+          {/* panels อื่น ๆ เหมือนเดิม */}
           {active === 1 && (
             <div className="border rounded-xl p-4 flex flex-col gap-4">
-              <h2 className="text-lg font-semibold">
-                Raw Variant Data (VCF excerpt)
-              </h2>
+              <h2 className="text-lg font-semibold">Raw Variant Data (VCF excerpt)</h2>
               <div className="border rounded-xl p-4 overflow-x-auto text-xs font-mono leading-relaxed">
                 <pre>
-                  {`#CHROM  POS     ID        REF ALT QUAL FILTER INFO
+{`#CHROM  POS     ID        REF ALT QUAL FILTER INFO
 chr19   9655168  rs11185532  C   T   99   PASS   GENE=CYP2C19;IMPACT=MODERATE
 chr19   9474180  rs4986833   G   A   99   PASS   GENE=CYP2C19;IMPACT=HIGH
 chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
@@ -405,12 +412,9 @@ chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
           {active === 2 && (
             <div className="border rounded-xl p-4 flex flex-col gap-4">
               <div>
-                <h2 className="text-lg font-semibold">
-                  Rule-Based Genotype Interpretation
-                </h2>
+                <h2 className="text-lg font-semibold">Rule-Based Genotype Interpretation</h2>
                 <p className="text-sm mt-1">
-                  Algorithm-based genotype-to-phenotype conversion following
-                  CPIC/PharmGKB guidelines.
+                  Algorithm-based genotype-to-phenotype conversion following CPIC/PharmGKB guidelines.
                 </p>
               </div>
 
@@ -440,24 +444,17 @@ chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
                         </td>
                         <td className="px-4 py-3">*1 / *2</td>
                         <td className="px-4 py-3 text-center">–</td>
-                        <td className="px-4 py-3 text-center">
-                          {i !== 1 ? "✓" : "–"}
-                        </td>
+                        <td className="px-4 py-3 text-center">{i !== 1 ? "✓" : "–"}</td>
                         <td className="px-4 py-3 text-center">–</td>
                         <td className="px-4 py-3 text-center">–</td>
                         <td className="px-4 py-3">*1/*2</td>
                         <td className="px-4 py-3">
                           <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium">
-                            <span
-                              className="size-2 rounded-full border"
-                              aria-hidden
-                            />
+                            <span className="size-2 rounded-full border" aria-hidden />
                             Intermediate Metabolizer
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-right">
-                          {i === 2 ? "2.0" : "1.5"}
-                        </td>
+                        <td className="px-4 py-3 text-right">{i === 2 ? "2.0" : "1.5"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -478,9 +475,7 @@ chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
 
           {active === 3 && (
             <div className="border rounded-xl p-4 flex flex-col gap-4">
-              <h2 className="text-lg font-semibold">
-                Phenotype Classification
-              </h2>
+              <h2 className="text-lg font-semibold">Phenotype Classification</h2>
 
               {/* activity bar */}
               <div className="flex flex-col gap-2">
@@ -526,10 +521,7 @@ chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
           {active === 4 && (
             <div className="border rounded-xl p-4 flex flex-col gap-4">
               <h2 className="text-lg font-semibold">Quality Review</h2>
-              <p className="text-sm">
-                Validate sequencing quality metrics before finalizing
-                recommendations.
-              </p>
+              <p className="text-sm">Validate sequencing quality metrics before finalizing recommendations.</p>
 
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
@@ -558,26 +550,16 @@ chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
                 </div>
               </div>
 
-              <button className="border rounded-full px-4 py-2 text-sm self-stretch">
-                Validate Quality Metrics
-              </button>
+              <button className="border rounded-full px-4 py-2 text-sm self-stretch">Validate Quality Metrics</button>
 
               <div className="border-t pt-4 flex gap-3">
                 <div className="flex-1 flex flex-col gap-1">
                   <h3 className="font-medium">Approval</h3>
-                  <p className="text-sm">
-                    Review and approve this interpretation.
-                  </p>
+                  <p className="text-sm">Review and approve this interpretation.</p>
                 </div>
                 <div className="flex gap-2">
-                  <button className="border rounded-full px-4 py-2 text-sm">
-                    Request Review
-                  </button>
-                  <button
-                    className="border rounded-full px-4 py-2 text-sm"
-                    onClick={goNext}
-                    disabled={!selectedReport}
-                  >
+                  <button className="border rounded-full px-4 py-2 text-sm">Request Review</button>
+                  <button className="border rounded-full px-4 py-2 text-sm" onClick={goNext} disabled={!selectedReport}>
                     Approve &amp; Continue to Export
                   </button>
                 </div>
@@ -590,14 +572,8 @@ chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
               <h2 className="text-lg font-semibold">Approval</h2>
               <p className="text-sm">Review and approve this interpretation.</p>
               <div className="flex gap-3">
-                <button className="border rounded-full px-4 py-2 text-sm">
-                  Request Review
-                </button>
-                <button
-                  className="border rounded-full px-4 py-2 text-sm"
-                  onClick={goNext}
-                  disabled={!selectedReport}
-                >
+                <button className="border rounded-full px-4 py-2 text-sm">Request Review</button>
+                <button className="border rounded-full px-4 py-2 text-sm" onClick={goNext} disabled={!selectedReport}>
                   Approve &amp; Continue to Export
                 </button>
               </div>
@@ -658,15 +634,9 @@ chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <button className="border rounded-full px-4 py-2 text-sm">
-                  Preview Report
-                </button>
-                <button className="border rounded-full px-4 py-2 text-sm">
-                  Download PDF
-                </button>
-                <button className="border rounded-full px-4 py-2 text-sm">
-                  Email Report
-                </button>
+                <button className="border rounded-full px-4 py-2 text-sm">Preview Report</button>
+                <button className="border rounded-full px-4 py-2 text-sm">Download PDF</button>
+                <button className="border rounded-full px-4 py-2 text-sm">Email Report</button>
               </div>
             </div>
           )}
@@ -674,17 +644,11 @@ chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
 
         {/* footer nav buttons */}
         <footer className="px-6 py-4  flex items-center justify-between gap-3">
-          <button
-            onClick={goPrev}
-            disabled={active === 0}
-            className="border rounded-full px-4 py-2 text-sm disabled:opacity-50"
-          >
+          <button onClick={goPrev} disabled={active === 0} className="border rounded-full px-4 py-2 text-sm disabled:opacity-50">
             Back
           </button>
           <div className="flex gap-2">
-            <button className="border rounded-full px-4 py-2 text-sm">
-              Save Draft
-            </button>
+            <button className="border rounded-full px-4 py-2 text-sm">Save Draft</button>
             <button
               onClick={goNext}
               disabled={active > 0 && !selectedReport}
@@ -707,9 +671,7 @@ function NavItem({ label, active }: { label: string; active?: boolean }) {
       className={[
         "w-12 md:w-14 aspect-square rounded-full flex flex-col items-center justify-center gap-1 border",
         active ? "ring-1" : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      ].join(" ")}
       type="button"
     >
       <span className="size-4 border rounded" aria-hidden />

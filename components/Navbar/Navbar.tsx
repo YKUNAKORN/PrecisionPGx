@@ -13,8 +13,8 @@ import Samples from "./Samples";
 export default function Navbar() {
   return (
       <aside
-        className="fixed top-0 left-0 h-dvh w-20 border-r
-                  flex flex-col justify-between items-center p-3"
+        className="fixed top-0 left-0 h-dvh w-21 border-r
+                  flex flex-col justify-between items-center p-4 "
       >
         <nav aria-label="Primary" className="flex flex-col items-center gap-10  ">
           <Logo />
