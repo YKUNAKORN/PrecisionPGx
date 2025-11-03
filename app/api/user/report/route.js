@@ -196,6 +196,7 @@ export async function POST(req) {
     }
     ReportModel.specimens_id = body.specimens_id;
     ReportModel.patient_id = body.patient_id;
+    ReportModel.status = 'in progress'
     const { data, error } = await CreateReport(ReportModel)
     if (error) {
         ResponseModel.status = '500'
@@ -253,9 +254,11 @@ export async function PUT(req) {
     ReportUpdate.more_information = body.more_information;
     ReportUpdate.pharmacist_id = body.pharmacist_id;
     ReportUpdate.medical_technician_id = body.medical_technician_id;
+    ReportUpdate.status = 'finished'
     ReportUpdate.request_date = body.request_date;
     ReportUpdate.report_date = body.report_date;
     ReportUpdate.updated_at = new Date().toISOString();
+    console.log(ReportUpdate)
     try {
         const { data, error } = await UpdateReportByID(id, ReportUpdate)
         if (!data || data.length === 0) {
