@@ -51,3 +51,31 @@ export async function middleware(request) {
 }
 
 export const config = { matcher: ['/api/user/:path*'] }
+
+
+
+
+  // import { NextResponse } from "next/server";
+
+  // export function middleware(request) {
+  //   const token = request.cookies.get("token")?.value;
+  //   const pathname = request.nextUrl.pathname;
+
+  //   // ยังไม่ล็อกอิน → แต่จะเข้าเพจอื่นที่ไม่ใช่ /login → เตะไป /login
+  //   if (!token && !pathname.startsWith("/login")) {
+  //     const loginUrl = new URL("/login", request.url);
+  //     return NextResponse.redirect(loginUrl);
+  //   }
+
+  //   // ล็อกอินแล้ว → แต่ยังอยู่ /login → ส่งไปหน้าแรก
+  //   if (token && pathname.startsWith("/login")) {
+  //     const homeUrl = new URL("/", request.url);
+  //     return NextResponse.redirect(homeUrl);
+  //   }
+
+  //   return NextResponse.next();
+  // }
+
+  // export const config = {
+  //   matcher: ["/((?!_next/static|_next/image|favicon.ico|api).*)"],
+  // };
