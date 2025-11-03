@@ -1,6 +1,6 @@
 import { Timestamp } from "next/dist/server/lib/cache-handlers/types";
 
-type Storage ={
+export type Storage ={
     id: string;
     patient_id: string;
     location: string;

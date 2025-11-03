@@ -39,14 +39,14 @@ export async function deletePatient(id: string) {
 
 export const createPatientQueryOptions = {
   all: () =>
-    queryOptions<Patient[]>({
+    queryOptions({
       queryKey: ["patients"],
       queryFn: getPatients,
       staleTime: 60_000,
     }),
 
   detail: (id: string) =>
-    queryOptions<Patient>({
+    queryOptions({
       queryKey: ["patient", id],
       queryFn: () => getPatient(id),
       staleTime: 60_000,
@@ -56,13 +56,13 @@ export const createPatientQueryOptions = {
 
 export const mutatePatientQueryOptions = {
   put: (data: Patient) =>
-    queryOptions<Patient>({
-      queryKey: ["putPatient", data],
+    queryOptions({
+      queryKey: ["patients", data],
       queryFn: () => putPatient(data),
     }),
   delete: (id: string) =>
-    queryOptions<Patient>({
-      queryKey: ["deletePatient", id],
+    queryOptions({
+      queryKey: ["patients", id],
       queryFn: () => deletePatient(id),
     }),
 };  
