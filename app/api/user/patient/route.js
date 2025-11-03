@@ -120,9 +120,9 @@ export async function GET() {
 export async function POST(req) {
     try {
         const body = await req.json()
-        const { name, phone, age, gender, Ethnicity } = body
+        const { phone, age, gender, Ethnicity, Eng_name, Thai_name, dob, email, address } = body
         
-        if (!name || !phone || !age || !gender || !Ethnicity) {
+        if ((!phone || !age || !gender || !Ethnicity || !Eng_name || !Thai_name || !dob || !email || !address)) {
             ResponseModel.status = '400'
             ResponseModel.message = 'Missing required fields'
             ResponseModel.data = null

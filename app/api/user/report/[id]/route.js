@@ -51,7 +51,7 @@ export async function GET(req, { params }) {
     const { data, error } = await GetReportById(id);
     if (!data || data.length === 0) {
         ResponseModel.status = '404'
-        ResponseModel.message = 'Note Not Found with ID: ' + id
+        ResponseModel.message = 'Report Not Found with ID: ' + id
         ResponseModel.data = null;
         console.error("Reports Not Found with ID: " + id) //for Debug
         return NextResponse.json(ResponseModel, { status: 404 }) //for User
