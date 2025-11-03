@@ -52,14 +52,14 @@ export async function postSpecimen(data: Specimen) {
 export const createSpecimenQueryOptions = {
     all: () =>
     queryOptions({
-      queryKey: ["specimen"],
+      queryKey: ["specimens"],
       queryFn: getSpecimens,
       staleTime: 60_000,
     }),
 
   detail: (id: string) =>
     queryOptions({
-      queryKey: ["specimens", id],
+      queryKey: ["specimen", id],
       queryFn: () => getSpecimen(id),
       staleTime: 60_000,
       enabled: !!id, 
