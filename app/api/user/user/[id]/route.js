@@ -161,7 +161,6 @@ export async function PUT(req, { params }) {
         const { id } = await params
         const body = await req.json()
         const { data, error } = await UpdateUser(id, body)
-
         if (error) {
             ResponseModel.status = '400'
             ResponseModel.message = error.message
@@ -172,11 +171,9 @@ export async function PUT(req, { params }) {
         ResponseModel.status = '200'
         ResponseModel.message = 'User updated successfully'
         ResponseModel.data = data
-
         return NextResponse.json(ResponseModel, { status: 200 })
     } catch (error) {
-        console.error('Error updating user:', error)
-
+        console.error('Error updating user:', error) 
         ResponseModel.status = '500'
         ResponseModel.message = 'Internal server error'
         ResponseModel.data = null

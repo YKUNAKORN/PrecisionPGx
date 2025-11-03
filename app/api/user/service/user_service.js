@@ -38,9 +38,7 @@ export async function UpdateUser(id, row) {
 export async function DeleteUser(id) {
    const { data, error } = await db.auth.admin.deleteUser(id)
     if (error) {
-        console.error(error)
         return { data: null, error: error }
     }
-    console.log(data)
     return { data: data, error: null }
 }
