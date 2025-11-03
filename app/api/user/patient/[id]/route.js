@@ -124,17 +124,18 @@ import { GetPatientById, UpdatePatient, DeletePatient } from '@/app/api/user/ser
 export async function GET(req, { params }) {
     try {  
         const { id } = await params
-        const { data, error } = await GetPatientById(id)
-        if (error || !data) {
+        const patient = await GetPatientById(id)
+
+        if (!patient) {
             ResponseModel.status = '404'
-            ResponseModel.message = error?.message || 'Patient not found'
+            ResponseModel.message = 'Patient not found'
             ResponseModel.data = null
             return NextResponse.json(ResponseModel, { status: 404 })
         }
 
         ResponseModel.status = '200'
         ResponseModel.message = 'Success'
-        ResponseModel.data = data
+        ResponseModel.data = patient
 
         return NextResponse.json(ResponseModel, { status: 200 })
     } catch (error) {
@@ -152,20 +153,7 @@ export async function PUT(req, { params }) {
     try {
         const { id } = await params
         const body = await req.json()
-        const { phone, age, gender, Ethnicity, Eng_name, Thai_name, dob, email, address } = body
-        const updatedData = {
-            phone,
-            age,
-            gender,
-            Ethnicity,
-            Eng_name,
-            Thai_name,
-            dob,
-            email,
-            address,
-            updated_at: new Date().toISOString()
-        }
-        const { data, error } = await UpdatePatient(id, updatedData)
+        const { data, error } = await UpdatePatient(id, body)
 
         if (error) {
             ResponseModel.status = '400'

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { ResponseModel } from '@/lib/model/Response'
 import { GetAllPatient, CreatePatient } from '@/app/api/user/service//patient_service'
 
-/**
+/*
  * @swagger
  * /api/user/patient:
  *   get:
@@ -120,9 +120,9 @@ export async function GET() {
 export async function POST(req) {
     try {
         const body = await req.json()
-        const { phone, age, gender, Ethnicity, Eng_name, Thai_name, dob, email, address } = body
+        const { name, phone, age, gender, Ethnicity } = body
         
-        if (!phone || !age || !gender || !Ethnicity || !Eng_name || !Thai_name || !dob || !email || !address) {
+        if (!name || !phone || !age || !gender || !Ethnicity) {
             ResponseModel.status = '400'
             ResponseModel.message = 'Missing required fields'
             ResponseModel.data = null
