@@ -39,7 +39,11 @@
   display:grid; place-items:center;
   font-weight: 700;
   font-size: 14px;
-  border: 2px solid #4a4550;        
+  border: 2px solid #4a4550;   
+  background:#cdb6ff;             
+  color:#1f1c21;
+  border-color:#cdb6ff;
+  box-shadow: 0 0 0 3px #6b4eff33;      
 }
 
 .step .label{
@@ -47,12 +51,10 @@
   font-weight: 600;
 }
 
-.step:hover .dot{ border-color:#6b4eff66; }
-
 .step.active .dot{
-  background:#cdb6ff;             
+  background:#8b5cf6;           
   color:#1f1c21;
-  border-color:#cdb6ff;
+  border-color:#8b5cf6;
   box-shadow: 0 0 0 3px #6b4eff33; 
 }
 
@@ -110,6 +112,7 @@
 
 /* ปุ่ม Add */
 .add-btn{
+  font-weight: 500;
   color: #1f1c21;
   background: #cdb6ff;
   border-radius: 12px;
@@ -144,6 +147,7 @@
 }
 
 .scan-btn{
+  font-weight: 500;
   height: 38px;
   padding: 0 14px;
   color: #1f1c21;
@@ -349,11 +353,11 @@
 }
 
 .priority-btn:hover {
-  background:#84807c;
+  background:#cac5c0;
 }
 
 .priority-btn.active {
-  background:  #6b4eff;
+  background: #cdb6ff;
   color: #1a171c;
 }
 
@@ -395,8 +399,9 @@
 }
 
 .sample-submit button {
-  background: #6b4eff;
-  color: #fff;
+  font-weight: 500;
+  background: #cdb6ff;
+  color: #000000;
   padding: 10px 20px;
   border: none;
   border-radius: 12px;
@@ -557,18 +562,18 @@ html, body {
   border-radius:8px;
   padding: 5px;
   cursor:pointer;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .bc-register{
+  
   background:#cdb6ff;
   color:#1f1c21;
   border:none;
   border-radius:8px;
   padding: 5px;
-  font-weight:700;
+  font-weight:500;
   cursor:pointer;
-  font-weight: 400;
 }
 .bc-register:hover{ filter:brightness(.9); }
 

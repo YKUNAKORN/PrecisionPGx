@@ -34,8 +34,8 @@ const Page = () => {
             onClick={() => setActiveTab(tab)}
             className={`px-6 py-2 rounded-full font-medium transition shadow-sm ${
               activeTab === tab
-                ? "bg-purple-600 "
-                : " text-gray-500 hover:bg-zinc-700"
+                ? "bg-primary "
+                : "hover:bg-primary/90"
             }`}
           >
             {tab}
