@@ -16,7 +16,7 @@ const Account = () => {
         asChild
         variant="ghost"
         className={[
-          "size-12 w-12 h-12 transition",
+          "size-15  !rounded-3xl  transition",
           // ✅ ถ้า path ตรงกับหน้าปัจจุบัน ให้แสดงสไตล์ active
           isActive
             ? "bg-primary text-white"

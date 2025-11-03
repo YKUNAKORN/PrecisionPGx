@@ -16,7 +16,7 @@ export default function Navbar() {
         className="fixed top-0 left-0 h-dvh w-20 border-r
                   flex flex-col justify-between items-center p-3"
       >
-        <nav aria-label="Primary" className="flex flex-col items-center gap-10 ">
+        <nav aria-label="Primary" className="flex flex-col items-center gap-10  ">
           <Logo />
           <Home />
           <Register />
@@ -25,7 +25,7 @@ export default function Navbar() {
           <Samples />
         </nav>
 
-        <nav aria-label="Utilities" className="mb-2 flex flex-col items-center gap-2">
+        <nav aria-label="Utilities" className="mb-2 flex flex-col items-center gap-2  ">
           <div className="size-10"><Darkmode /></div>
           <Account />
         </nav>

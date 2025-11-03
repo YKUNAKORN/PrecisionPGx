@@ -10,13 +10,13 @@ const Account = () => {
   const isActive = pathname === "/Dashboard/Account";
 
   return (
-    <div className="flex flex-col items-center gap-1 rounded-2xl">
+    <div className="flex flex-col items-center gap-1 ">
       <Button
         size="sm"
         asChild
         variant="ghost"
         className={[
-          "size-12 w-12 h-12 transition",
+          "size-15  !rounded-3xl transition",
           // ✅ ถ้า path ตรงกับหน้าปัจจุบัน ให้แสดงสไตล์ active
           isActive
             ? "bg-primary text-white"

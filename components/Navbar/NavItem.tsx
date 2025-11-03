@@ -28,16 +28,16 @@ export default function NavItem({ href, icon: Icon, label, size = 28, exact = fa
         <span
           className={[
             // ขนาดพื้นที่คลิกไอคอน
-            "w-14 h-10 rounded-xl flex items-center justify-center",
+            "w-14 h-10 rounded-2xl flex items-center justify-center",
             // hover นุ่ม ๆ
-            "hover:bg-white/5",
+            "",
             // สถานะ active = มีพื้นหลังแบบภาพแรก
-            isActive ? "bg-white/10 ring-1 ring-white/20" : "",
+            isActive ? "ring-1 ring-white/20" : "",
             // transition
-            "transition-colors"
+            " "
           ].join(" ")}
         >
-          <Icon size={size} className="shrink-0" />
+          <Icon size={size} className="" />
         </span>
 
         <span className="text-[11px] leading-none text-zinc-200 mt-1">

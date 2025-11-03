@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { ResponseModel } from '@/lib/model/Response'
-import { QueryRule, UpdateRule, DeleteRule } from '@/app/api/user/service/rule_service'
+import { UpdateRule, DeleteRule, QueryRulesById } from '@/app/api/user/service/rule_service'
 import { RuleModel } from "@/lib/model/Rule"
 
 /**
@@ -20,14 +20,6 @@ import { RuleModel } from "@/lib/model/Rule"
  *         schema:
  *           type: string
  *           format: uuid
- *       - in: query
- *         name: index
- *         required: true
- *         description: The array index to retrieve from the rule's data arrays (0-based)
- *         example: 0
- *         schema:
- *           type: integer
- *           minimum: 0
  *     responses:
  *       200:
  *         description: Query Successful
@@ -195,9 +187,9 @@ import { RuleModel } from "@/lib/model/Rule"
 
 export async function GET(request, { params }) {
     const { id } = await params;
-    const { searchParams } = new URL(request.url);
-    const index = searchParams.get('index');
-    console.log("GET /api/user/rule/[id] - ruleID:", id, "index:", index) // for Debug
+    // const { searchParams } = new URL(request.url);
+    // const index = searchParams.get('index');
+    // console.log("GET /api/user/rule/[id] - ruleID:", id, "index:", index) // for Debug
 
     if (!id) {
         console.error("Invalid Data: Rule ID is required") // for Debug
@@ -206,14 +198,15 @@ export async function GET(request, { params }) {
         ResponseModel.data = null
         return NextResponse.json(ResponseModel, { status: 400 })
     }
-    if (index === null || index === undefined) {
-        console.error("Invalid Data: index is required") // for Debug
-        ResponseModel.status = '400'
-        ResponseModel.message = 'Invalid Data: index query parameter is required'
-        ResponseModel.data = null
-        return NextResponse.json(ResponseModel, { status: 400 })
-    }
-    const { data, error } = await QueryRule(id, parseInt(index))
+    // if (index === null || index === undefined) {
+    //     console.error("Invalid Data: index is required") // for Debug
+    //     ResponseModel.status = '400'
+    //     ResponseModel.message = 'Invalid Data: index query parameter is required'
+    //     ResponseModel.data = null
+    //     return NextResponse.json(ResponseModel, { status: 400 })
+    // }
+    // const { data, error } = await QueryRule(id, parseInt(index))
+    const { data, error } = await QueryRulesById(id)
     if (error) {
         ResponseModel.status = '500'
         ResponseModel.message = 'Query Failed: ' + error
@@ -221,9 +214,10 @@ export async function GET(request, { params }) {
         return NextResponse.json(ResponseModel, { status: 500 })
     }
     if (!data) {
-        console.error(`Rule Not Found with ID: ${id} at index: ${index}`) // for Debug
+        // console.error(`Rule Not Found with ID: ${id} at index: ${index}`) // for Debug
+         console.error(`Rule Not Found with ID: ${id} `) // for Debug
         ResponseModel.status = '404'
-        ResponseModel.message = `Rule Not Found with ID: ${id} at index: ${index}`
+        ResponseModel.message = `Rule Not Found with ID: ${id}`
         ResponseModel.data = null
         return NextResponse.json(ResponseModel, { status: 404 })
     }
