@@ -81,10 +81,10 @@ function SignInForm() {
     setLoading(true);
 
     try {
-      const res = await fetch("/auth/login", {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email, password: password }),
       });
 
       const data = await res.json().catch(() => null);
@@ -177,11 +177,11 @@ function SignUpForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email,
-          password,
+          email: email,
+          password: password,
           fullname: fullName,
-          position,
-          confirmPassword, // เผื่อฝั่ง API คุณเช็กด้วย
+          position : position,
+          confirmPassword:confirmPassword, // เผื่อฝั่ง API คุณเช็กด้วย
         }),
       });
 
