@@ -187,8 +187,7 @@ import { ReportModel, ReportUpdate } from '../../../../lib/model/Report';
 
 export async function POST(req) {
     const body = await req.json()
-    // const { specimens_id, doctor_id, patient_id, pharm_verify, medtech_verify, note_id, rule_id, more_information, pharmacist_id, pharmacist_license, medical_technician_id, medtech_license, request_date, report_date } = row
-    if (!body || !body.specimens_id || !body.doctor_id || !body.patient_id || !body.pharm_verify || !body.medtech_verify || !body.note_id || !body.rule_id || !body.more_information || !body.pharmacist_id || !body.pharmacist_license || !body.medical_technician_id || !body.medtech_license || !body.request_date || !body.report_date) {
+    if (!body || !body.specimens_id || !body.patient_id) {
         ResponseModel.status = '400'
         ResponseModel.message = 'Invalid Data'
         ResponseModel.data = null;
@@ -196,16 +195,8 @@ export async function POST(req) {
         return NextResponse.json(ResponseModel, { status: 400 }) //for User
     }
     ReportModel.specimens_id = body.specimens_id;
-    ReportModel.doctor_id = body.doctor_id;
     ReportModel.patient_id = body.patient_id;
-    ReportModel.pharm_verify = body.pharm_verify;
-    ReportModel.medtech_verify = body.medtech_verify;
-    ReportModel.note_id = body.note_id;
-    ReportModel.rule_id = body.rule_id;
-    ReportModel.pharmacist_id = body.pharmacist_id;
-    ReportModel.medical_technician_id = body.medical_technician_id;
-    ReportModel.request_date = body.request_date;
-    ReportModel.report_date = body.report_date;
+    ReportModel.status = 'in progress'
     const { data, error } = await CreateReport(ReportModel)
     if (error) {
         ResponseModel.status = '500'
@@ -247,25 +238,27 @@ export async function PUT(req) {
     const { searchParams } = new URL(req.url); //querystring
     const id = searchParams.get('id');
     const body = await req.json()
-    if (!body || !body.specimens_id || !body.doctor_id || !body.patient_id || !body.pharm_verify || !body.medtech_verify || !body.note_id || !body.rule_id || !body.more_information || !body.pharmacist_id || !body.medical_technician_id || !body.request_date || !body.report_date) {
+    if (!body || !body.doctor_id || !body.pharm_verify || !body.medtech_verify || !body.note_id || !body.rule_id || !body.index_rule || !body.more_information || !body.pharmacist_id || !body.medical_technician_id || !body.request_date || !body.report_date) {
         ResponseModel.status = '400'
         ResponseModel.message = 'Invalid Data'
         ResponseModel.data = null;
         console.error("Invalid Data") //for Debug
         return NextResponse.json(ResponseModel, { status: 400 }) //for User
     }
-    ReportUpdate.specimens_id = body.specimens_id;
     ReportUpdate.doctor_id = body.doctor_id;
-    ReportUpdate.patient_id = body.patient_id;
     ReportUpdate.pharm_verify = body.pharm_verify;
     ReportUpdate.medtech_verify = body.medtech_verify;
     ReportUpdate.note_id = body.note_id;
     ReportUpdate.rule_id = body.rule_id;
+    ReportUpdate.index_rule = parseInt(body.index_rule); // แปลงเป็น integer
+    ReportUpdate.more_information = body.more_information;
     ReportUpdate.pharmacist_id = body.pharmacist_id;
     ReportUpdate.medical_technician_id = body.medical_technician_id;
+    ReportUpdate.status = 'finished'
     ReportUpdate.request_date = body.request_date;
     ReportUpdate.report_date = body.report_date;
-    // console.log(ReportUpdate)
+    ReportUpdate.updated_at = new Date().toISOString();
+    console.log(ReportUpdate)
     try {
         const { data, error } = await UpdateReportByID(id, ReportUpdate)
         if (!data || data.length === 0) {
