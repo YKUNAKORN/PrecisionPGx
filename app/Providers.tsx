@@ -1,8 +1,15 @@
-import { ThemeProvider } from "./theme-provder";
+"use client";
 
-const Providers = ({ children }: { children: React.ReactNode }) => {
+import React, { ReactNode, useState } from "react";
+import { ThemeProvider } from "./theme-provder";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+export default function Providers({ children }: { children: ReactNode }) {
+  // ✅ สร้าง QueryClient หนึ่งตัวต่อการ mount
+  const [queryClient] = useState(() => new QueryClient());
+
   return (
-    <div>
+    <QueryClientProvider client={queryClient}>
       <ThemeProvider
         attribute="class"
         defaultTheme="light"
@@ -10,8 +17,8 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
         storageKey="theme"
       >
         {children}
-      </ThemeProvider>  
-    </div>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
-};
-export default Providers;
+}
+
