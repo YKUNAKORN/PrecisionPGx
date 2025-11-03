@@ -1,74 +1,110 @@
-import bwipjs from 'bwip-js';
+import { NextResponse } from 'next/server'
+import { ResponseModel } from '@/lib/model/Response'
+import { GenerateBarcode } from '@/app/api/service/barcode_service'
+import { GetPatientById } from '@/app/api/user/service/patient_service'
 
-export const runtime = 'nodejs'; 
-export const dynamic = 'force-dynamic';
-
-const VALID_BCIDS = new Set([
-  'code128','code39','ean13','ean8','upca','itf14',
-  'qrcode','pdf417','datamatrix',
-]);
-
-async function generateBarcode({
-  text,
-  bcid = 'code128',
-  scale = 3,
-  height = 10,
-  includetext = false,
-  textxalign = 'center',
-  textsize = 10,
-}) {
-  if (!text || !String(text).trim()) {
-    throw new Error('`text` is required');
-  }
-  const _bcid = String(bcid).toLowerCase();
-  if (!VALID_BCIDS.has(_bcid)) {
-    throw new Error(`invalid bcid. use one of: ${[...VALID_BCIDS].join(', ')}`);
-  }
-
-  const png = await bwipjs.toBuffer({
-    bcid: _bcid,
-    text: String(text),
-    scale: Number(scale),
-    height: Number(height), 
-    includetext: Boolean(includetext),
-    textxalign,
-    textsize: Number(textsize),
-  });
-  return png.toString('base64');
-}
+/**
+ * @swagger
+ * /api/barcode:
+ *   get:
+ *     summary: Get Barcode by Patient ID
+ *     description: Generate and retrieve a barcode image for a specific patient
+ *     tags:
+ *       - Barcode
+ *     parameters:
+ *       - in: query
+ *         name: patientId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Patient ID from database
+ *         example: c39ba4bb-e684-4b52-a66e-9084f9ef4c3e
+ *     responses:
+ *       200:
+ *         description: Barcode generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "200"
+ *                 message:
+ *                   type: string
+ *                   example: Barcode generated successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     patientId:
+ *                       type: string
+ *                       format: uuid
+ *                       example: c39ba4bb-e684-4b52-a66e-9084f9ef4c3e
+ *                     base64:
+ *                       type: string
+ *                       description: Base64 encoded barcode image
+ *                       example: iVBORw0KGgoAAAANSUhEUgAA...
+ */
 
 export async function GET(req) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const base64 = await generateBarcode({
-      text: searchParams.get('text'),
-      bcid: searchParams.get('bcid') ?? 'code128',
-      scale: Number(searchParams.get('scale')) || 3,
-      height: Number(searchParams.get('height')) || 10,
-      includetext: (searchParams.get('includetext') || '').toLowerCase() === 'true',
-      textxalign: searchParams.get('textxalign') || 'center',
-      textsize: Number(searchParams.get('textsize')) || 10,
-    });
-    return Response.json({ base64 });
-  } catch (err) {
-    return Response.json({ error: err.message || 'internal_error' }, { status: 400 });
-  }
-}
+    try {
+        const { searchParams } = new URL(req.url)
+        const patientId = searchParams.get('patientId')
 
-export async function POST(req) {
-  try {
-    const body = await req.json().catch(() => ({}));
-    const base64 = await generateBarcode({
-      text: body.text,
-      bcid: body.bcid ?? 'code128',
-      scale: body.scale ?? 3,
-      height: body.height ?? 10,
-      includetext: Boolean(body.includetext),
-      textxalign: body.textxalign ?? 'center',
-      textsize: body.textsize ?? 10,
-    });
-    return Response.json({ base64 });
-  } catch (err) {
-    return Response.json({ error: err.message || 'internal_error' }, { status: 400 });
-  }
+        if (!patientId) {
+            ResponseModel.status = '400'
+            ResponseModel.message = 'Patient ID is required'
+            ResponseModel.data = null
+            return NextResponse.json(ResponseModel, { status: 400 })
+        }
+
+        // Verify patient exists in database
+        const patient = await GetPatientById(patientId)
+        
+        if (!patient || patient.length === 0) {
+            ResponseModel.status = '404'
+            ResponseModel.message = 'Patient not found with ID: ' + patientId
+            ResponseModel.data = null
+            console.error('Patient not found with ID: ' + patientId)
+            return NextResponse.json(ResponseModel, { status: 404 })
+        }
+
+        // Generate barcode using patient ID
+        const options = {
+            text: patientId,
+            bcid: 'code128',
+            scale: 3,
+            height: 10,
+            includetext: true,
+            textxalign: 'center',
+            textsize: 10,
+        }
+
+        const { data, error } = await GenerateBarcode(options)
+
+        if (error) {
+            ResponseModel.status = '400'
+            ResponseModel.message = error.message || 'Failed to generate barcode'
+            ResponseModel.data = null
+            return NextResponse.json(ResponseModel, { status: 400 })
+        }
+
+        ResponseModel.status = '200'
+        ResponseModel.message = 'Barcode generated successfully'
+        ResponseModel.data = { 
+            patientId: patientId,
+            base64: data 
+        }
+
+        return NextResponse.json(ResponseModel, { status: 200 })
+    } catch (error) {
+        console.error('Error generating barcode:', error)
+
+        ResponseModel.status = '500'
+        ResponseModel.message = 'Internal server error'
+        ResponseModel.data = null
+
+        return NextResponse.json(ResponseModel, { status: 500 })
+    }
 }
