@@ -37,6 +37,19 @@ export async function deletePatient(id: string) {
   return res.json();
 }
 
+export async function postPatient(data: Patient) {
+  const res = await fetch(`/api/user/patient`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to post patient");
+  return res.json();
+}
+
+
 export const createPatientQueryOptions = {
   all: () =>
     queryOptions({
@@ -50,7 +63,7 @@ export const createPatientQueryOptions = {
       queryKey: ["patient", id],
       queryFn: () => getPatient(id),
       staleTime: 60_000,
-      enabled: !!id, 
+      enabled: !!id,
     }),
 };
 
@@ -61,5 +74,9 @@ export const mutatePatientQueryOptions = {
 
   delete: () => ({
     mutationFn: async (id: string) => await deletePatient(id),
+  }),
+
+  post: ({
+    mutationFn: async (data: Patient) => await postPatient(data),
   }),
 };
