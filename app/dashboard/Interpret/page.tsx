@@ -102,10 +102,12 @@ export default function Page() {
       try {
         const res = await fetch(`/api/user/report`, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data: ApiReport[] = await res.json();
+        const data = await res.json();
+        console.log("Fetched reports:", data.data);
 
-        const list = Array.isArray(data) ? data : [];
-        const mapped: ReportRow[] = list.map((it) => {
+        const list = Array.isArray(data.data) ? data.data : [];
+        console.log("Report list:", list);
+        const mapped: ReportRow[] = list.map((it: ApiReport) => {
           const norm = normalizeStatus(it.status);
           return {
             id: it.id,
