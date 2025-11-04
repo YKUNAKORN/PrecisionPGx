@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { ResponseModel } from '@/lib/model/Response'
-import { GenerateBarcode } from '@/app/api/service/barcode_service'
+import { GenerateBarcode } from '@/app/api/user/service/barcode_service'
 import { GetPatientById } from '@/app/api/user/service/patient_service'
 
 /**

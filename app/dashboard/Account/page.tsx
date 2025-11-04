@@ -114,7 +114,7 @@ export default function AccountSettingsPage() {
         <button
           type="button"
           onClick={handleToggle}
-          className="absolute top-2.5 right-5 p-0.5 border rounded-md text-sm"
+          className="absolute top-2.5 right-5 p-0.5 border rounded-md text-sm bg-primary/60 "
         >
           {editing ? "Save" : "Edit"}
         </button>
@@ -212,24 +212,24 @@ import { KeyIcon, EyeIcon } from "@heroicons/react/24/outline";
 function SecurityPanel() {
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-violet-200 bg-violet-50/70 p-5">
+      <div className="rounded-2xl border   p-5">
         <h3 className="text-lg font-semibold mb-2">Password &amp; Security</h3>
 
         <form className="grid gap-4 md:max-w-md">
           {/* Current Password */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-neutral-800">
+            <label className="text-sm font-medium ">
               Current Password
             </label>
             <div className="relative">
               <span className="pointer-events-none absolute inset-y-0 left-3 inline-flex items-center">
-                <KeyIcon className="size-5 text-neutral-500" aria-hidden />
+                <KeyIcon className="size-5 " aria-hidden />
               </span>
               <input
                 name="currentPassword"
                 type="password"
                 placeholder="Enter current password"
-                className="w-full rounded-xl border border-violet-200 bg-white/90 pl-11 pr-10 py-2.5 text-sm shadow-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-300"
+                className="w-full rounded-xl border   pl-11 pr-10 py-2.5 text-sm shadow-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-300"
               />
               <span className="absolute inset-y-0 right-2 grid place-items-center rounded-md p-1.5 text-neutral-500">
                 <EyeIcon className="size-5" aria-hidden />
@@ -239,15 +239,15 @@ function SecurityPanel() {
 
           {/* New Password */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-neutral-800">
+            <label className="text-sm font-medium ">
               New Password
             </label>
             <div className="relative">
               <input
                 name="newPassword"
                 type="password"
-                placeholder="Enter new password"
-                className="w-full rounded-xl border border-violet-200 bg-white/90 pr-10 py-2.5 text-sm shadow-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-300"
+                placeholder="   Enter new password"
+                className="w-full rounded-xl border   pr-10 py-2.5 text-sm shadow-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-300"
               />
               <span className="absolute inset-y-0 right-2 grid place-items-center rounded-md p-1.5 text-neutral-500">
                 <EyeIcon className="size-5" aria-hidden />
@@ -257,15 +257,15 @@ function SecurityPanel() {
 
           {/* Confirm New Password */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-neutral-800">
+            <label className="text-sm font-medium ">
               Confirm New Password
             </label>
             <div className="relative">
               <input
                 name="confirmPassword"
                 type="password"
-                placeholder="Confirm new password"
-                className="w-full rounded-xl border border-violet-200 bg-white/90 pr-10 py-2.5 text-sm shadow-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-300"
+                placeholder="   Confirm new password"
+                className="w-full rounded-xl border  pr-10 py-2.5 text-sm shadow-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-300"
               />
               <span className="absolute inset-y-0 right-2 grid place-items-center rounded-md p-1.5 text-neutral-500">
                 <EyeIcon className="size-5" aria-hidden />
