@@ -22,9 +22,9 @@ type StepKey = (typeof STEPS)[number]["slug"];
 
 /** ---------- API types & local model ---------- */
 type ApiReport = {
-  id: string;        // ใช้แสดงในคอลัมน์ Report Number
-  patient_id: string;  // ใช้แสดงในคอลัมน์ Patient
-  status?: string;   // complete | in progress | failed | (อาจไม่มี)
+  id: string; // ใช้แสดงในคอลัมน์ Report Number
+  patient_id: string; // ใช้แสดงในคอลัมน์ Patient
+  status?: string; // complete | in progress | failed | (อาจไม่มี)
   // อื่น ๆ ตาม API จริง เพิ่มได้
 };
 
@@ -32,7 +32,7 @@ type StatusNorm = "complete" | "in progress" | "failed" | "unknown";
 
 type ReportRow = {
   id: string;
-  report_no: string;  // แสดง id อีกชุด
+  report_no: string; // แสดง id อีกชุด
   patient: string;
   status: "Completed" | "In Progress" | "Failed";
   is_approve: "approved" | "pending" | "rejected";
@@ -48,7 +48,8 @@ function normalizeStatus(s?: string | null): StatusNorm {
   if (!s) return "unknown";
   const t = s.toLowerCase().trim();
   if (t === "complete" || t === "completed") return "complete";
-  if (t === "in progress" || t === "in_progress" || t === "processing") return "in progress";
+  if (t === "in progress" || t === "in_progress" || t === "processing")
+    return "in progress";
   if (t === "failed" || t === "fail" || t === "error") return "failed";
   return "unknown";
 }
@@ -80,7 +81,9 @@ export default function Page() {
   }, [search]);
 
   const [active, setActive] = React.useState(initialIndex);
-  const [selectedReport, setSelectedReport] = React.useState<ReportRow | null>(null);
+  const [selectedReport, setSelectedReport] = React.useState<ReportRow | null>(
+    null
+  );
 
   // 🔹 state สำหรับโหลดข้อมูลจาก API
   const [rows, setRows] = React.useState<ReportRow[] | null>(null);
@@ -109,10 +112,10 @@ export default function Page() {
           const norm = normalizeStatus(it.status);
           return {
             id: it.id,
-            report_no: it.id,               // 👉 Report Number = id
-            patient: it.patient_id ?? "-",    // 👉 Patient = patient_id
-            status: toDisplayStatus(norm),  // 👉 Status
-            is_approve: toApprove(norm),    // 👉 สีวงกลม IsApprove
+            report_no: it.id, // 👉 Report Number = id
+            patient: it.patient_id ?? "-", // 👉 Patient = patient_id
+            status: toDisplayStatus(norm), // 👉 Status
+            is_approve: toApprove(norm), // 👉 สีวงกลม IsApprove
             mrn: null,
             dob: null,
             physician: null,
@@ -137,14 +140,117 @@ export default function Page() {
   const goPrev = () => setActive((v) => Math.max(0, v - 1));
   const goNext = () => setActive((v) => Math.min(STEPS.length - 1, v + 1));
 
+
+
+/** ---------- Rule-based genotype interpretation (step 3) ---------- */
+  // 🔹 รายการตัวเลือก (text) จาก /api/user/rule
+const [rules, setRules] = React.useState<RuleItem[]>([]);
+const [rulesLoading, setRulesLoading] = React.useState(false);
+const [rulesError, setRulesError] = React.useState<string | null>(null);
+
+// 🔹 รายการที่ถูกเลือก + รายละเอียดที่ดึงแบบเจาะจง id
+const [selectedRuleId, setSelectedRuleId] = React.useState<string>("");
+const [selectedRuleText, setSelectedRuleText] = React.useState<string>("");
+const [ruleDetail, setRuleDetail] = React.useState<RuleDetail | null>(null);
+const [ruleDetailLoading, setRuleDetailLoading] = React.useState(false);
+const [ruleDetailError, setRuleDetailError] = React.useState<string | null>(null);
+
+// ดึงรายการตัวเลือกจาก /api/user/rule (เฉพาะ text + id)
+React.useEffect(() => {
+  let cancelled = false;
+  async function fetchRules() {
+    setRulesLoading(true);
+    setRulesError(null);
+    try {
+      const res = await fetch("/api/user/rule", { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const payload = await res.json();
+      const list: any[] = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+        ? payload.data
+        : [];
+
+      // ปรับชื่อฟิลด์ให้แน่นอน (รองรับ text/label/title เผื่อ)
+      const mapped: RuleItem[] = list
+        .map((it) => ({
+          id: String(it.id ?? ""),
+          text: String(it.text ?? it.label ?? it.title ?? "").trim(),
+        }))
+        .filter((x) => x.id && x.text);
+
+      if (!cancelled) setRules(mapped);
+    } catch (e: any) {
+      if (!cancelled) setRulesError(e?.message || "Fetch failed");
+    } finally {
+      if (!cancelled) setRulesLoading(false);
+    }
+  }
+  fetchRules();
+  return () => {
+    cancelled = true;
+  };
+}, []);
+
+// ฟังก์ชันดึงรายละเอียดของ rule ตาม id → ได้ result_location, predicted_genotype
+async function fetchRuleDetailById(ruleId: string) {
+  setRuleDetail(null);
+  setRuleDetailLoading(true);
+  setRuleDetailError(null);
+  try {
+    // พยายามเรียกแบบ /api/user/rule/{id} ก่อน
+    let res = await fetch(`/api/user/rule/${encodeURIComponent(ruleId)}`, { cache: "no-store" });
+
+    // ถ้า API ของคุณใช้ query แบบ /api/user/rule?id=... ให้ fallback
+    if (!res.ok) {
+      res = await fetch(`/api/user/rule?id=${encodeURIComponent(ruleId)}`, { cache: "no-store" });
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const detail = await res.json();
+    // รองรับได้ทั้ง object เดี่ยว และ { data: {...} } หรืออาร์เรย์ที่มีตัวแรก
+    const obj = Array.isArray(detail)
+      ? detail[0]
+      : detail?.data
+      ? Array.isArray(detail.data)
+        ? detail.data[0]
+        : detail.data
+      : detail;
+
+    const mapped: RuleDetail = {
+      id: String(obj?.id ?? ruleId),
+      result_location: obj?.result_location ?? null,
+      predicted_genotype: obj?.predicted_genotype ?? null,
+    };
+
+    setRuleDetail(mapped);
+  } catch (e: any) {
+    setRuleDetailError(e?.message || "Fetch failed");
+  } finally {
+    setRuleDetailLoading(false);
+  }
+}
+
+// เมื่อเลือก rule (radio)
+function handleSelectRule(id: string, text: string) {
+  setSelectedRuleId(id);
+  setSelectedRuleText(text);
+  fetchRuleDetailById(id);
+}
+
+
   return (
     <div className="min-h-screen flex">
       {/* main */}
       <main className="flex-1 min-h-screen">
         {/* top bar */}
         <header className="flex flex-col px-6 py-4 ">
-          <h1 className="text-2xl font-semibold leading-tight">Result Interpretation</h1>
-          <p className="text-sm leading-relaxed">Review and interpret genetic test results</p>
+          <h1 className="text-2xl font-semibold leading-tight">
+            Result Interpretation
+          </h1>
+          <p className="text-sm leading-relaxed">
+            Review and interpret genetic test results
+          </p>
         </header>
 
         {/* stepper */}
@@ -176,7 +282,9 @@ export default function Page() {
                     </span>
                     <span className="whitespace-nowrap">{s.label}</span>
                   </button>
-                  {idx < STEPS.length - 1 ? <span className="h-px w-10 border-t" /> : null}
+                  {idx < STEPS.length - 1 ? (
+                    <span className="h-px w-10 border-t" />
+                  ) : null}
                 </li>
               );
             })}
@@ -227,11 +335,17 @@ export default function Page() {
                   <table className="w-full text-sm">
                     <thead className="border-b">
                       <tr className="h-11">
-                        <th className="text-left px-4 font-medium">Report Number</th>
+                        <th className="text-left px-4 font-medium">
+                          Report Number
+                        </th>
                         <th className="text-left px-4 font-medium">Patient</th>
                         <th className="text-left px-4 font-medium">Status</th>
-                        <th className="text-left px-4 font-medium">IsApprove</th>
-                        <th className="text-left px-4 font-medium w-[16rem]">Actions</th>
+                        <th className="text-left px-4 font-medium">
+                          IsApprove
+                        </th>
+                        <th className="text-left px-4 font-medium w-[16rem]">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -242,7 +356,10 @@ export default function Page() {
                         return (
                           <tr
                             key={r.id}
-                            className={["border-b last:border-b-0", isSelected ? "ring-inset" : ""].join(" ")}
+                            className={[
+                              "border-b last:border-b-0",
+                              isSelected ? "ring-inset" : "",
+                            ].join(" ")}
                           >
                             {/* Report Number = id */}
                             <td
@@ -275,7 +392,10 @@ export default function Page() {
                               }}
                             >
                               <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium">
-                                <span className="size-2 rounded-full border" aria-hidden />
+                                <span
+                                  className="size-2 rounded-full border"
+                                  aria-hidden
+                                />
                                 {r.status}
                               </span>
                             </td>
@@ -290,7 +410,9 @@ export default function Page() {
                             >
                               <span className="inline-flex items-center gap-2 rounded-full border px-2 py-1 text-xs">
                                 <span
-                                  className={`size-2 rounded-full border ${dotColorClass(norm)}`}
+                                  className={`size-2 rounded-full border ${dotColorClass(
+                                    norm
+                                  )}`}
                                   aria-hidden
                                 />
                                 {r.is_approve}
@@ -307,7 +429,10 @@ export default function Page() {
                                     setActive(1);
                                   }}
                                 >
-                                  <span className="size-4 border rounded" aria-hidden />
+                                  <span
+                                    className="size-4 border rounded"
+                                    aria-hidden
+                                  />
                                   EDIT
                                 </button>
                                 <button className="border rounded-full px-3 py-1.5 text-xs">
@@ -331,7 +456,8 @@ export default function Page() {
                     <tfoot>
                       <tr>
                         <td colSpan={5} className="px-4 py-3 text-sm">
-                          Showing {rows?.length ?? 0} of {rows?.length ?? 0} reports
+                          Showing {rows?.length ?? 0} of {rows?.length ?? 0}{" "}
+                          reports
                         </td>
                       </tr>
                     </tfoot>
@@ -350,7 +476,9 @@ export default function Page() {
                     {initials(selectedReport.patient)}
                   </div>
                   <div>
-                    <div className="text-base font-semibold leading-tight">{selectedReport.patient}</div>
+                    <div className="text-base font-semibold leading-tight">
+                      {selectedReport.patient}
+                    </div>
                     <div className="text-sm">
                       {selectedReport.gender ? selectedReport.gender : "—"}{" "}
                       {selectedReport.age ? `• ${selectedReport.age}` : ""}
@@ -361,7 +489,10 @@ export default function Page() {
                   <Info label="Report" value={selectedReport.report_no} />
                   <Info label="MRN" value={selectedReport.mrn ?? "-"} />
                   <Info label="DOB" value={selectedReport.dob ?? "-"} />
-                  <Info label="Physician" value={selectedReport.physician ?? "-"} />
+                  <Info
+                    label="Physician"
+                    value={selectedReport.physician ?? "-"}
+                  />
                 </div>
                 <button
                   onClick={() => {
@@ -375,7 +506,8 @@ export default function Page() {
               </div>
             ) : (
               <div className="border rounded-xl px-4 py-3 text-sm">
-                No patient selected. Please select a report in the Patient step first.
+                No patient selected. Please select a report in the Patient step
+                first.
               </div>
             )
           ) : null}
@@ -383,10 +515,12 @@ export default function Page() {
           {/* panels อื่น ๆ เหมือนเดิม */}
           {active === 1 && (
             <div className="border rounded-xl p-4 flex flex-col gap-4">
-              <h2 className="text-lg font-semibold">Raw Variant Data (VCF excerpt)</h2>
+              <h2 className="text-lg font-semibold">
+                Raw Variant Data (VCF excerpt)
+              </h2>
               <div className="border rounded-xl p-4 overflow-x-auto text-xs font-mono leading-relaxed">
                 <pre>
-{`#CHROM  POS     ID        REF ALT QUAL FILTER INFO
+                  {`#CHROM  POS     ID        REF ALT QUAL FILTER INFO
 chr19   9655168  rs11185532  C   T   99   PASS   GENE=CYP2C19;IMPACT=MODERATE
 chr19   9474180  rs4986833   G   A   99   PASS   GENE=CYP2C19;IMPACT=HIGH
 chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
@@ -410,72 +544,112 @@ chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
           )}
 
           {active === 2 && (
-            <div className="border rounded-xl p-4 flex flex-col gap-4">
-              <div>
-                <h2 className="text-lg font-semibold">Rule-Based Genotype Interpretation</h2>
-                <p className="text-sm mt-1">
-                  Algorithm-based genotype-to-phenotype conversion following CPIC/PharmGKB guidelines.
-                </p>
-              </div>
+  <div className="border rounded-xl p-4 flex flex-col gap-4">
+    <div>
+      <h2 className="text-lg font-semibold">Rule-Based Genotype Interpretation</h2>
+      <p className="text-sm mt-1">
+        เลือกรายการจากฐานข้อมูล (คอลัมน์ <code>text</code>) เพื่อแสดงผล <code>result_location</code> และ <code>predicted_genotype</code>.
+      </p>
+    </div>
 
-              <div className="rounded-xl border overflow-x-auto">
-                <table className="min-w-[900px] w-full text-sm">
-                  <thead className="border-b">
-                    <tr className="h-11">
-                      <th className="text-left px-4">Gene</th>
-                      <th className="text-left px-4">Alleles</th>
-                      <th className="text-left px-4">G/G</th>
-                      <th className="text-left px-4">C/C</th>
-                      <th className="text-left px-4">A/A</th>
-                      <th className="text-left px-4">T/T</th>
-                      <th className="text-left px-4">Predicted Genotype</th>
-                      <th className="text-left px-4">Predicted Phenotype</th>
-                      <th className="text-left px-4">Activity</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {["CYP2C19", "CYP2D6", "SLCO1B1"].map((gene, i) => (
-                      <tr key={gene} className="border-b last:border-b-0">
-                        <td className="px-4 py-3">
-                          <label className="flex items-center gap-2">
-                            <input type="checkbox" className="size-4" />
-                            {gene}
-                          </label>
-                        </td>
-                        <td className="px-4 py-3">*1 / *2</td>
-                        <td className="px-4 py-3 text-center">–</td>
-                        <td className="px-4 py-3 text-center">{i !== 1 ? "✓" : "–"}</td>
-                        <td className="px-4 py-3 text-center">–</td>
-                        <td className="px-4 py-3 text-center">–</td>
-                        <td className="px-4 py-3">*1/*2</td>
-                        <td className="px-4 py-3">
-                          <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium">
-                            <span className="size-2 rounded-full border" aria-hidden />
-                            Intermediate Metabolizer
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right">{i === 2 ? "2.0" : "1.5"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+    {/* รายการตัวเลือกจาก /api/user/rule */}
+    <div className="border rounded-xl p-3">
+      <div className="flex items-center justify-between">
+        <h3 className="font-medium text-sm">All Rules</h3>
+        {rulesLoading ? <span className="text-xs">Loading…</span> : null}
+      </div>
 
-              <div className="flex justify-end">
-                <button
-                  onClick={goNext}
-                  className="border rounded-full px-4 py-2 text-sm"
-                  disabled={!selectedReport}
-                >
-                  Continue to Phenotype →
-                </button>
-              </div>
-            </div>
+      {rulesError ? (
+        <div className="mt-2 text-sm">Failed to load rules: {rulesError}</div>
+      ) : rules.length === 0 && !rulesLoading ? (
+        <div className="mt-2 text-sm">No rules found.</div>
+      ) : (
+        <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {rules.map((r) => (
+            <label
+              key={r.id}
+              className={[
+                "border rounded-lg px-3 py-2 text-sm flex items-start gap-2 cursor-pointer",
+                selectedRuleId === r.id ? "ring-1" : "",
+              ].join(" ")}
+            >
+              <input
+                type="radio"
+                name="rule-picker"
+                className="mt-0.5 size-4"
+                checked={selectedRuleId === r.id}
+                onChange={() => handleSelectRule(r.id, r.text)}
+              />
+              <span className="leading-relaxed">{r.text}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+
+    {/* ตารางผลลัพธ์จาก rule ที่เลือก */}
+    <div className="rounded-xl border overflow-x-auto">
+      <table className="min-w-[640px] w-full text-sm">
+        <thead className="border-b">
+          <tr className="h-11">
+            <th className="text-left px-4">Selected Rule</th>
+            <th className="text-left px-4">Result Location</th>
+            <th className="text-left px-4">Predicted Genotype</th>
+          </tr>
+        </thead>
+        <tbody>
+          {selectedRuleId ? (
+            <tr className="border-b last:border-b-0">
+              <td className="px-4 py-3">
+                <div className="flex flex-col">
+                  <span className="font-medium">{selectedRuleText}</span>
+                  <span className="text-xs opacity-80">id: {selectedRuleId}</span>
+                </div>
+              </td>
+              <td className="px-4 py-3">
+                {ruleDetailLoading
+                  ? "Loading…"
+                  : ruleDetailError
+                  ? `Error: ${ruleDetailError}`
+                  : ruleDetail?.result_location ?? "-"}
+              </td>
+              <td className="px-4 py-3">
+                {ruleDetailLoading
+                  ? "Loading…"
+                  : ruleDetailError
+                  ? `Error: ${ruleDetailError}`
+                  : ruleDetail?.predicted_genotype ?? "-"}
+              </td>
+            </tr>
+          ) : (
+            <tr>
+              <td className="px-4 py-3" colSpan={3}>
+                ยังไม่ได้เลือก rule — โปรดเลือกจากรายการด้านบน
+              </td>
+            </tr>
           )}
+        </tbody>
+      </table>
+    </div>
+
+    <div className="flex justify-end">
+      <button
+        onClick={goNext}
+        className="border rounded-full px-4 py-2 text-sm"
+        disabled={!selectedReport}
+      >
+        Continue to Phenotype →
+      </button>
+    </div>
+  </div>
+)}
+
 
           {active === 3 && (
             <div className="border rounded-xl p-4 flex flex-col gap-4">
-              <h2 className="text-lg font-semibold">Phenotype Classification</h2>
+              <h2 className="text-lg font-semibold">
+                Phenotype Classification
+              </h2>
 
               {/* activity bar */}
               <div className="flex flex-col gap-2">
@@ -521,7 +695,10 @@ chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
           {active === 4 && (
             <div className="border rounded-xl p-4 flex flex-col gap-4">
               <h2 className="text-lg font-semibold">Quality Review</h2>
-              <p className="text-sm">Validate sequencing quality metrics before finalizing recommendations.</p>
+              <p className="text-sm">
+                Validate sequencing quality metrics before finalizing
+                recommendations.
+              </p>
 
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
@@ -550,16 +727,26 @@ chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
                 </div>
               </div>
 
-              <button className="border rounded-full px-4 py-2 text-sm self-stretch">Validate Quality Metrics</button>
+              <button className="border rounded-full px-4 py-2 text-sm self-stretch">
+                Validate Quality Metrics
+              </button>
 
               <div className="border-t pt-4 flex gap-3">
                 <div className="flex-1 flex flex-col gap-1">
                   <h3 className="font-medium">Approval</h3>
-                  <p className="text-sm">Review and approve this interpretation.</p>
+                  <p className="text-sm">
+                    Review and approve this interpretation.
+                  </p>
                 </div>
                 <div className="flex gap-2">
-                  <button className="border rounded-full px-4 py-2 text-sm">Request Review</button>
-                  <button className="border rounded-full px-4 py-2 text-sm" onClick={goNext} disabled={!selectedReport}>
+                  <button className="border rounded-full px-4 py-2 text-sm">
+                    Request Review
+                  </button>
+                  <button
+                    className="border rounded-full px-4 py-2 text-sm"
+                    onClick={goNext}
+                    disabled={!selectedReport}
+                  >
                     Approve &amp; Continue to Export
                   </button>
                 </div>
@@ -572,8 +759,14 @@ chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
               <h2 className="text-lg font-semibold">Approval</h2>
               <p className="text-sm">Review and approve this interpretation.</p>
               <div className="flex gap-3">
-                <button className="border rounded-full px-4 py-2 text-sm">Request Review</button>
-                <button className="border rounded-full px-4 py-2 text-sm" onClick={goNext} disabled={!selectedReport}>
+                <button className="border rounded-full px-4 py-2 text-sm">
+                  Request Review
+                </button>
+                <button
+                  className="border rounded-full px-4 py-2 text-sm"
+                  onClick={goNext}
+                  disabled={!selectedReport}
+                >
                   Approve &amp; Continue to Export
                 </button>
               </div>
@@ -634,30 +827,21 @@ chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <button className="border rounded-full px-4 py-2 text-sm">Preview Report</button>
-                <button className="border rounded-full px-4 py-2 text-sm">Download PDF</button>
-                <button className="border rounded-full px-4 py-2 text-sm">Email Report</button>
+                <button className="border rounded-full px-4 py-2 text-sm">
+                  Preview Report
+                </button>
+                <button className="border rounded-full px-4 py-2 text-sm">
+                  Download PDF
+                </button>
+                <button className="border rounded-full px-4 py-2 text-sm">
+                  Email Report
+                </button>
               </div>
             </div>
           )}
         </section>
 
-        {/* footer nav buttons */}
-        <footer className="px-6 py-4  flex items-center justify-between gap-3">
-          <button onClick={goPrev} disabled={active === 0} className="border rounded-full px-4 py-2 text-sm disabled:opacity-50">
-            Back
-          </button>
-          <div className="flex gap-2">
-            <button className="border rounded-full px-4 py-2 text-sm">Save Draft</button>
-            <button
-              onClick={goNext}
-              disabled={active > 0 && !selectedReport}
-              className="border rounded-full px-4 py-2 text-sm disabled:opacity-50"
-            >
-              {active < STEPS.length - 1 ? "Next" : "Finish"}
-            </button>
-          </div>
-        </footer>
+        {/* footer nav buttons */}  
       </main>
     </div>
   );
@@ -707,3 +891,15 @@ function initials(name: string) {
     .join("")
     .toUpperCase();
 }
+
+/** ---------- Rule types (for /api/user/rule) ---------- */
+type RuleItem = {
+  id: string;
+  Name: string;
+};
+
+type RuleDetail = {
+  id: string;
+  result_location?: string | null;
+  predicted_genotype?: string | null;
+};
