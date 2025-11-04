@@ -40,14 +40,14 @@ import { GetReportById } from '../../service/report_service';
  */
 
 export async function GET(req, { params }) {
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
         ResponseModel.status = '400';
         ResponseModel.message = 'ID parameter is required';
         ResponseModel.data = null;
         return NextResponse.json(ResponseModel, { status: 400 });
     }
-    console.log(id)
+    // console.log(id)
     const { data, error } = await GetReportById(id);
     if (!data || data.length === 0) {
         ResponseModel.status = '404'

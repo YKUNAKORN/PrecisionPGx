@@ -11,15 +11,6 @@ import { ReportModel, ReportUpdate } from '../../../../lib/model/Report';
  *     description: Retrieve a specific report by its ID from the database
  *     tags:
  *       - Report
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *         description: The unique identifier of the report
- *         example: 60b3d5cb-0c24-4bc4-95c2-a733c2b65175
  *     responses:
  *       200:
  *         description: Query Successful
