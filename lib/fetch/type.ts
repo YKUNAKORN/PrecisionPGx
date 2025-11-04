@@ -18,18 +18,21 @@ export type Specimen = {
     created_at: Timestamp;
 }
 
-export type RuleBased ={
+export type RuleBased = {
     id: string;
-    gene_location: string;
-    genotype: string;
-    phenotype: string;
-    active_score: number;
-    recommendation: string;
-    created_at: Timestamp;
-    enzyme: string;
+    location: string[];
+    result_location: string[];
+    phenotype: string[];
+    predicted_genotype: string[];
+    predicted_phenotype: string[];
+    recommendation: string[];
+    Name: string;
+    created_at: string
 }
 
 export type Report = {
+    id: string;
+    status: string;
     sepicimens_id: string;
     doctor_id: string;
     patient_id: string;
@@ -37,11 +40,14 @@ export type Report = {
     medtech_verify: boolean;
     note_id: string;
     rule_id: string;
+    index_rule: number;
     more_information: string;
     pharmacist_id: string;
     medical_technologist_id: string;
     request_date: Timestamp;
     report_date: Timestamp;
+    create_at: Timestamp
+    update_at: Timestamp
 }
 
 export type Note = {
