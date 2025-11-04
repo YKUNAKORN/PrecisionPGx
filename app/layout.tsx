@@ -16,10 +16,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased `} >
         <Providers>
           <LayoutWrapper>
-            <div className="mx-auto w-full p-4 my-10">
+            <div className=" mx-auto w-full p-4 my-10 ">
               {children}
             </div>
           </LayoutWrapper>

@@ -44,6 +44,7 @@ export async function GetAllReports() {
     if (error) {
         return { data: null, error: error }; //for User
     }
+    console.log(data)
     try {
         for (let i = 0; i < data.length; i++) {
             ReportResult[i] = {};
@@ -62,7 +63,6 @@ export async function GetAllReports() {
             ReportResult[i].report_date = data[i].report_date;
             ReportResult[i].updated_at = data[i].updated_at;
             ReportResult[i].created_at = data[i].created_at;
-
         }
     } catch (err) {
         console.error("Failed to parse data" + err); //for Debug

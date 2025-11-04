@@ -11,15 +11,6 @@ import { ReportModel, ReportUpdate } from '../../../../lib/model/Report';
  *     description: Retrieve a specific report by its ID from the database
  *     tags:
  *       - Report
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *         description: The unique identifier of the report
- *         example: 60b3d5cb-0c24-4bc4-95c2-a733c2b65175
  *     responses:
  *       200:
  *         description: Query Successful
@@ -311,3 +302,37 @@ export async function DELETE(req) {
     return NextResponse.json(ResponseModel, { status: 200 });
 }
 
+// // app/api/user/report/route.ts
+// import { NextResponse } from "next/server";
+// import { createClient } from "@supabase/supabase-js";
+
+// const supabase = createClient(
+//   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+//   process.env.SUPABASE_SERVICE_ROLE_KEY! // ใช้ฝั่ง server เท่านั้น
+// );
+
+// export async function GET() {
+//   // FK สมมติชื่อ reports_patient_id_fkey (ดูชื่อจริงใน DB)
+//   const { data, error } = await supabase
+//     .from("reports")
+//     .select(`
+//       id,
+//       status,
+//       patient:patients!reports_patient_id_fkey (
+//         Eng_name,
+//         eng_name
+//       )
+//     `)
+//     .limit(200);
+
+//   if (error) return NextResponse.json({ error: error.message, data: [] }, { status: 500 });
+
+//   // แปลงชื่อให้ง่ายต่อฝั่ง UI (Eng_name รองรับ 2 สไตล์)
+//   const mapped = (data ?? []).map((r) => ({
+//     id: r.id,
+//     status: r.status,
+//     Eng_name: r.patient?.Eng_name ?? r.patient?.eng_name ?? null,
+//   }));
+
+//   return NextResponse.json(mapped, { status: 200 });
+// }
