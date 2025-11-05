@@ -38,7 +38,7 @@ export async function CreateReport(InsertReportModel) {
 }
 
 export async function GetAllReports() {
-    const { data, error } = await GetJoinAll(db, "reports",`*, specimen(*), patient(*), doctor:user!doctor_id(*), pharmacist:user!pharmacist_id(*), medical_technician:user!medical_technician_id(*), note(*), rule(*)`);
+    const { data, error } = await GetJoinAll(db, "reports",`*, specimen(*), patient(*), doctor:user!doctor_id(*), pharmacist:user!pharmacist_id(*), medical_technician:user!medical_technician_id(*), note(*), rule(*), ward(*)`);
     if (data.length === 0) {
         return { data: [], error: new Error("Data Not Found ") };
     }
@@ -173,12 +173,25 @@ export async function GetAllReports() {
         } else {
             ReportResult[i].report_date = data[i].report_date;
         }
+        if (data[i].priority == null || data[i].priority == undefined) {
+            ReportResult[i].priority = "";
+        } else {
+            ReportResult[i].priority = data[i].priority;
+        }
+        if (data[i].ward_id == null || data[i].ward_id == undefined) {
+            ReportResult[i].ward_id = "";
+            ReportResult[i].contact_number = "";
+        } else {
+            ReportResult[i].ward_id = data[i].ward_id;
+            ReportResult[i].contact_number = data[i].ward.contact_number;
+        }
         ReportResult[i].created_at = data[i].created_at;
         if (data[i].updated_at == null || data[i].updated_at == undefined) {
             ReportResult[i].updated_at = "";
         } else {
             ReportResult[i].updated_at = data[i].updated_at;
         }
+
     }
     } catch (err) {
         console.error("Failed to parse data" + err); //for Debug
@@ -210,6 +223,9 @@ export async function UpdateReportByID(id, row) {
         ReportResult.status = data[0].status;
         ReportResult.request_date = data[0].request_date;
         ReportResult.report_date = data[0].report_date;
+        ReportResult.priority = data[0].priority;
+        ReportResult.ward_id = data[0].ward_id;
+        ReportResult.contact_number = data[0].ward.contact_number;
         ReportResult.created_at = data[0].created_at;
         ReportResult.updated_at = data[0].updated_at;
     } catch (err) {
@@ -228,7 +244,7 @@ export async function DeleteReportByID(id) {
 }
 
 export async function GetReportById(id) {
-    const { data, error } = await GetJoinWithId(db, "reports", id, `*, specimen(*), patient(*), doctor:user!doctor_id(*), pharmacist:user!pharmacist_id(*), medical_technician:user!medical_technician_id(*), note(*), rule(*)`);
+    const { data, error } = await GetJoinWithId(db, "reports", id, `*, specimen(*), patient(*), doctor:user!doctor_id(*), pharmacist:user!pharmacist_id(*), medical_technician:user!medical_technician_id(*), note(*), rule(*), ward(*)`);
     if (data.length === 0) {
         return { data: [], error: new Error("Data Not Found : " + id) };
     }
@@ -237,53 +253,154 @@ export async function GetReportById(id) {
     }
     // console.log(data[0].id)
     try {
-        ReportResultOne.id = data[0].id;
-        ReportResultOne.specimens_id = data[0].specimens_id;
-        ReportResultOne.specimens_name = data[0].specimen.name;
-        ReportResultOne.specimens_expire_date = data[0].specimen.expire_date;
-        ReportResultOne.doctor_fullname = data[0].doctor.fullname;
-        ReportResultOne.doctor_license = data[0].doctor.license;
-        ReportResultOne.doctor_id = data[0].doctor_id;
-        ReportResultOne.patient_id = data[0].patient_id;
-        ReportResultOne.Eng_name = data[0].patient.Eng_name;
-        ReportResultOne.Thai_name = data[0].patient.Thai_name;
-        ReportResultOne.DOB = data[0].patient.dob;
-        ReportResultOne.age = data[0].patient.age;
-        ReportResultOne.gender = data[0].patient.gender;
-        ReportResultOne.pharm_verify = data[0].pharm_verify;
-        ReportResultOne.medtech_verify = data[0].medtech_verify;
-        ReportResultOne.note_id = data[0].note_id;
-        ReportResultOne.note_method = data[0].note.method;
-        ReportResultOne.index_rule = data[0].index_rule;
-        ReportResultOne.rule_id = data[0].rule_id;
-        ReportResultOne.rule_name = data[0].rule.Name;
-        ReportResultOne.rule_location = data[0].rule.location[ReportResultOne.index_rule];
-        ReportResultOne.rule_result_location = data[0].rule.result_location[ReportResultOne.index_rule];
-        if (data[0].rule.phenotype == null || data[0].rule.phenotype == undefined) {
-            ReportResultOne.rule_phenotype = "";
+        ReportResult[0].id = data[0].id;
+        if (data[0].specimens_id == null || data[0].specimen_id == undefined) {
+            ReportResult[0].specimens_id = "";
+            ReportResult[0].specimen_name = "";
+            ReportResult[0].specimens_expire_date = "";
         } else {
-            ReportResultOne.rule_phenotype = data[0].rule.phenotype[ReportResultOne.index_rule];
+            ReportResult[0].specimens_id = data[0].specimen_id;
+            ReportResult[0].specimen_name = data[0].specimen.name;
+            ReportResult[0].specimens_expire_date = data[0].specimen.expire_date;
         }
-        ReportResultOne.rule_predicted_genotype = data[0].rule.predicted_genotype[ReportResultOne.index_rule];
-        ReportResultOne.rule_predicted_phenotype = data[0].rule.predicted_phenotype[ReportResultOne.index_rule];
-        ReportResultOne.rule_recommendation = data[0].rule.recommend[ReportResultOne.index_rule];
-        ReportResultOne.pharmacist_id = data[0].pharmacist_id;
-        ReportResultOne.fullname_pharmacist = data[0].pharmacist.fullname;
-        ReportResultOne.pharmacist_license = data[0].pharmacist.license;
-        ReportResultOne.more_information = data[0].more_information;
-        ReportResultOne.medical_technician_id = data[0].medical_technician_id;
-        ReportResultOne.fullname_medtech = data[0].medical_technician.fullname;
-        ReportResultOne.medical_technician_license = data[0].medical_technician.license;
-        ReportResultOne.status = data[0].status;
-        ReportResultOne.request_date = data[0].request_date;
-        ReportResultOne.report_date = data[0].report_date;
-        ReportResultOne.created_at = data[0].created_at;
-        ReportResultOne.updated_at = data[0].updated_at;
+        if (data[0].doctor_id == null || data[0].doctor_id == undefined) {
+            ReportResult[0].doctor_id = "";
+            ReportResult[0].doctor_fullname = "";
+            ReportResult[0].doctor_license = "";
+        } else {
+            ReportResult[0].doctor_id = data[0].doctor_id;
+            ReportResult[0].doctor_fullname = data[0].doctor.fullname;
+            ReportResult[0].doctor_license = data[0].doctor.license;
+        }
+        if (data[0].patient_id == null || data[0].patient_id == undefined) {
+            ReportResult[0].patient_id = "";
+            ReportResult[0].Eng_name = "";
+            ReportResult[0].Thai_name = "";
+            ReportResult[0].DOB = "";
+            ReportResult[0].age = "";
+            ReportResult[0].gender = "";
+            ReportResult[0].phone = "";
+            ReportResult[0].address = "";
+        } else {
+            ReportResult[0].patient_id = data[0].patient_id;
+            ReportResult[0].Eng_name = data[0].patient.Eng_name;
+            ReportResult[0].Thai_name = data[0].patient.Thai_name;
+            ReportResult[0].DOB = data[0].patient.dob;
+            ReportResult[0].age = data[0].patient.age;
+            ReportResult[0].gender = data[0].patient.gender;
+            ReportResult[0].phone = data[0].patient.phone;
+            ReportResult[0].address = data[0].patient.address;
+        }
+        if (data[0].pharm_verify == null || data[0].pharm_verify == undefined) {
+            ReportResult[0].pharm_verify = false;
+        } else {
+            ReportResult[0].pharm_verify = data[0].pharm_verify;
+        }
+        if (data[0].medtech_verify == null || data[0].medtech_verify == undefined) {
+            ReportResult[0].medtech_verify = false;
+        } else {
+            ReportResult[0].medtech_verify = data[0].medtech_verify;
+        }
+        if (data[0].note_id == null || data[0].note_id == undefined) {
+            ReportResult[0].note_id = "";
+        } else {
+            ReportResult[0].note_id = data[0].note_id;
+        }
+        if (data[0].note == null || data[0].note == undefined) {
+            ReportResult[0].note_method = "";
+        } else {
+            ReportResult[0].note_method = data[0].note.method;
+        }
+        if (data[0].index_rule == null || data[0].index_rule == undefined) {
+            ReportResult[0].index_rule = 0;
+            ReportResult[0].rule_location = "";
+            ReportResult[0].rule_result_location = "";
+            ReportResult[0].rule_phenotype = "";
+            ReportResult[0].rule_predicted_genotype = "";
+            ReportResult[0].rule_predicted_phenotype = "";
+            ReportResult[0].rule_recommendation = "";
+        } else {
+            ReportResult[0].index_rule = data[0].index_rule;
+            ReportResult[0].rule_location = data[0].rule.location[ReportResult[0].index_rule];
+            ReportResult[0].rule_result_location = data[0].rule.result_location[ReportResult[0].index_rule];
+            if (data[0].rule.phenotype == null || data[0].rule.phenotype == undefined) {
+                ReportResult[0].rule_phenotype = "";
+            } else {
+                ReportResult[0].rule_phenotype = data[0].rule.phenotype[ReportResult[0].index_rule];
+            }
+            ReportResult[0].rule_predicted_genotype = data[0].rule.predicted_genotype[ReportResult[0].index_rule];
+            ReportResult[0].rule_predicted_phenotype = data[0].rule.predicted_phenotype[ReportResult[0].index_rule];
+            ReportResult[0].rule_recommendation = data[0].rule.recommend[ReportResult[0].index_rule];
+        }
+        if (data[0].rule_id == null || data[0].rule_id == undefined) {
+            ReportResult[0].rule_id = "";
+            ReportResult[0].rule_name = "";
+
+        } else {
+            ReportResult[0].rule_id = data[0].rule_id;
+            ReportResult[0].rule_name = data[0].rule.Name;
+        }
+        if (data[0].pharmacist_id == null || data[0].pharmacist_id == undefined) {
+            ReportResult[0].pharmacist_id = "";
+            ReportResult[0].fullname_pharmacist = "";
+            ReportResult[0].pharmacist_license = "";
+        } else {
+            ReportResult[0].pharmacist_id = data[0].pharmacist_id;
+            ReportResult[0].fullname_pharmacist = data[0].pharmacist.fullname;
+            ReportResult[0].pharmacist_license = data[0].pharmacist.license;
+        }
+        if (data[0].medical_technician_id == null || data[0].medical_technician_id == undefined) {
+            ReportResult[0].medical_technician_id = "";
+            ReportResult[0].fullname_medtech = "";
+            ReportResult[0].medical_technician_license = "";
+        } else {
+            ReportResult[0].medical_technician_id = data[0].medical_technician_id;
+            ReportResult[0].fullname_medtech = data[0].medical_technician.fullname;
+            ReportResult[0].medical_technician_license = data[0].medical_technician.license;
+        }
+        if (data[0].more_information == null || data[0].more_information == undefined) {
+            ReportResult[0].more_information = "";
+        } else {
+            ReportResult[0].more_information = data[0].more_information;
+        }
+        if (data[0].status == null || data[0].status == undefined) {
+            ReportResult[0].status = "";
+        } else {
+            ReportResult[0].status = data[0].status;
+        }
+        if (data[0].request_date == null || data[0].request_date == undefined) {
+            ReportResult[0].request_date = "";
+        } else {
+            ReportResult[0].request_date = data[0].request_date;
+        }
+        if (data[0].report_date == null || data[0].report_date == undefined) {
+            ReportResult[0].report_date = "";
+        } else {
+            ReportResult[0].report_date = data[0].report_date;
+        }
+        if (data[0].priority == null || data[0].priority == undefined) {
+            ReportResult[0].priority = "";
+        } else {
+            ReportResult[0].priority = data[0].priority;
+        }
+        if (data[0].ward_id == null || data[0].ward_id == undefined) {
+            ReportResult[0].ward_id = "";
+            ReportResult[0].contact_number = "";
+        } else {
+            ReportResult[0].ward_id = data[0].ward_id;
+            ReportResult[0].contact_number = data[0].ward.contact_number;
+        }
+        ReportResult[0].created_at = data[0].created_at;
+        if (data[0].updated_at == null || data[0].updated_at == undefined) {
+            ReportResult[0].updated_at = "";
+        } else {
+            ReportResult[0].updated_at = data[0].updated_at;
+        }
 
     } catch (err) {
         console.error("Failed to parse data" + err); //for Debug
         return { data: null, error: "Failed to parse data" + err, status: 500 };
     }
-    // console.log(ReportResultOne)
-    return { data: ReportResultOne, error: null };
+    // console.log(ReportResult[0])
+    return { data: ReportResult[0], error: null };
 }
