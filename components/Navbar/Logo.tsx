@@ -108,14 +108,14 @@ export default function Logo() {
       <Link
         href="/"
         aria-label="Homepage"
-        className="grid place-items-center size-12 rounded-xl"
+        className="grid place-items-center size-15  !rounded-3xl"
       >
         <Image
           src={logoSrc}
           alt="Logo"
-          width={48}
-          height={48}
-          className="object-contain size-12 rounded"
+          width={60}
+          height={60}
+          className="object-contain size-14 !rounded-full"
           priority
         />
       </Link>
