@@ -77,10 +77,10 @@ export default function Page() {
 
 
     const barcodeQuery = createBarcodeQueryOptions(activePatient?.id || "");
-const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
-  ...barcodeQuery,
-  enabled: false, // manual refetch
-});
+    const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
+        ...barcodeQuery,
+        enabled: false, // manual refetch
+    });
     const patientList: PatientWithId[] = useMemo(() => {
         // patients อาจเป็น Array หรือเป็น { data: [...] }
         const raw = patients as any;
@@ -292,18 +292,24 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
                         {loadingPatients ? (
                             <div style={{ padding: 12 }}>Loading patients…</div>
                         ) : (
-                            <div style={{ display: "grid", gap: 12 }}>
-                                {filtered.map((p) => (
-                                    <div key={p.id} className="patient-card">
-                                        <div className="patient-info">
-                                            <p className="patient-name">{p.name}</p>
-                                            <p className="patient-detail">
-                                                Phone: {p.phone ?? "—"} • Gender: {p.gender ?? "—"} • Age: {p.age ?? "—"} • Ethnicity: {p.Ethnicity ?? "—"}
-                                            </p>
+                            <div
+                                className="mt-6 max-h-[420px] overflow-y-auto pr-2 snap-y snap-mandatory scroll-pt-4"
+                            >
+                                <div className="flex flex-col gap-3">
+                                    {filtered.map((p) => (
+                                        <div key={p.id} className="patient-card snap-start">
+                                            <div className="patient-info">
+                                                <p className="patient-name">{p.name}</p>
+                                                <p className="patient-detail">
+                                                    Phone: {p.phone ?? "—"} • Gender: {p.gender ?? "—"} • Age: {p.age ?? "—"} • Ethnicity: {p.Ethnicity ?? "—"}
+                                                </p>
+                                            </div>
+                                            <button className="select-btn" onClick={() => setSelected(p)}>
+                                                Select
+                                            </button>
                                         </div>
-                                        <button className="select-btn" onClick={() => setSelected(p)}>Select</button>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -454,68 +460,67 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
             )}
 
             {/* STEP 3 */}
-             <div>
-      {/* STEP 3 */}
-      {currentStep === "3" && (
-        <div className="Barcodes">
-          <div className="bc-left">
-            <div className="bc-title">Barcode Preview</div>
-            <div className="bc-canvas">
-              {barcodeSvg ? (
-                <div
-                  className="bc-svg"
-                  // แสดง SVG ที่สร้างจาก JsBarcode
-                  dangerouslySetInnerHTML={{ __html: barcodeSvg }}
-                />
-              ) : (
-                <div className="bc-placeholder">No barcode yet</div>
-              )}
-            </div>
-            <button className="bc-generate" onClick={handleGenerateLocal}>
-              Generate Barcode (Local)
-            </button>
-          </div>
+            <div>
+                {/* STEP 3 */}
+                {currentStep === "3" && (
+                    <div className="Barcodes">
+                        <div className="bc-left">
+                            <div className="bc-title">Barcode Preview</div>
+                            <div className="bc-canvas">
+                                {barcodeSvg ? (
+                                    <div
+                                        className="bc-svg"
+                                        // แสดง SVG ที่สร้างจาก JsBarcode
+                                        dangerouslySetInnerHTML={{ __html: barcodeSvg }}
+                                    />
+                                ) : (
+                                    <div className="bc-placeholder">No barcode yet</div>
+                                )}
+                            </div>
+                            <button className="bc-generate" onClick={handleGenerateLocal}>
+                                Generate Barcode (Local)
+                            </button>
+                        </div>
 
-          <div className="bc-right">
-            <div className="bc-panel-title">Label Details</div>
-            <div className="bc-rows">
-              <div className="bc-row">
-                <span>Lab Number</span>
-                <b>{barcodeText || "Pending"}</b>
-              </div>
-              <div className="bc-row">
-                <span>Patient</span>
-                <b>{activePatient?.name ?? "—"}</b>
-              </div>
-              <div className="bc-row">
-                <span>Priority</span>
-                <b>{selectedPriority.toUpperCase()}</b>
-              </div>
+                        <div className="bc-right">
+                            <div className="bc-panel-title">Label Details</div>
+                            <div className="bc-rows">
+                                <div className="bc-row">
+                                    <span>Lab Number</span>
+                                    <b>{barcodeText || "Pending"}</b>
+                                </div>
+                                <div className="bc-row">
+                                    <span>Patient</span>
+                                    <b>{activePatient?.name ?? "—"}</b>
+                                </div>
+                                <div className="bc-row">
+                                    <span>Priority</span>
+                                    <b>{selectedPriority.toUpperCase()}</b>
+                                </div>
+                            </div>
+                            <p className="bc-note">
+                                This is a visual preview and supports printing via the browser’s print dialog.
+                            </p>
+                            <div className="bc-actions">
+                                <button className="bc-print" onClick={handlePrint}>
+                                    Print Label
+                                </button>
+                                <button
+                                    className="bc-register"
+                                    onClick={() =>
+                                        alert(
+                                            `Registered sample for ${activePatient?.name ?? "(unknown)"
+                                            } with ${barcodeText || "(no barcode)"}`
+                                        )
+                                    }
+                                >
+                                    Register Sample
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
-            <p className="bc-note">
-              This is a visual preview and supports printing via the browser’s print dialog.
-            </p>
-            <div className="bc-actions">
-              <button className="bc-print" onClick={handlePrint}>
-                Print Label
-              </button>
-              <button
-                className="bc-register"
-                onClick={() =>
-                  alert(
-                    `Registered sample for ${
-                      activePatient?.name ?? "(unknown)"
-                    } with ${barcodeText || "(no barcode)"}`
-                  )
-                }
-              >
-                Register Sample
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
         </div>
     );
 }

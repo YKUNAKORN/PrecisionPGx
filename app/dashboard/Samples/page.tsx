@@ -45,9 +45,8 @@ export default function Page() {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-6 py-2 rounded-full font-medium transition shadow-sm ${
-              activeTab === tab ? "bg-primary" : "hover:bg-primary/90"
-            }`}
+            className={`px-6 py-2 rounded-full font-medium transition shadow-sm ${activeTab === tab ? "bg-primary" : "hover:bg-primary/90"
+              }`}
           >
             {tab}
           </button>
@@ -205,23 +204,28 @@ function InventorySection({
         <div className="mt-6 text-sm">Loading storages…</div>
       ) : error ? (
         <div className="mt-6 text-sm text-red-400">Failed to load storages: {error.message}</div>
-      ) : (
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {filtered.map((s) => (
-            <SampleCard
-              key={s.id}
-              data={{
-                id: s.id,
-                type: s.specimen_type ?? "—",
-                location: s.location ?? "—",
-                status: s.status ?? "—",
-                date: formatDate(s.created_at as any),
-                time: formatTime(s.created_at as any),
-                test: s.specimen_type ?? "—",
-              }}
-            />
-          ))}
+        ) : (
+          <div
+            className="snap-x scroll-pl-6 mt-6 max-h-[600px] overflow-x-auto pr-2 snap-mandatory scroll-pt-4"
+          >
+            <div className="snap-start grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {filtered.map((s) => (
+              <SampleCard
+                key={s.id}
+                data={{
+                  id: s.id,
+                  type: s.specimen_type ?? "—",
+                  location: s.location ?? "—",
+                  status: s.status ?? "—",
+                  date: formatDate(s.created_at as any),
+                  time: formatTime(s.created_at as any),
+                  test: s.specimen_type ?? "—",
+                }}
+              />
+            ))}
+          </div>
         </div>
+
       )}
     </div>
   );
@@ -273,8 +277,8 @@ function SampleCard({
     data.status === "Active"
       ? "bg-green-500"
       : data.status === "Warning"
-      ? "bg-amber-400"
-      : "bg-blue-400";
+        ? "bg-amber-400"
+        : "bg-blue-400";
   return (
     <div className="border border-zinc-700 rounded-xl p-4 shadow-md hover:shadow-lg transition w-full">
       <div className="flex justify-between items-start">

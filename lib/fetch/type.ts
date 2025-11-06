@@ -32,22 +32,57 @@ export type RuleBased = {
 
 export type Report = {
     id: string;
-    status: string;
-    sepicimens_id: string;
-    doctor_id: string;
-    patient_id: string;
-    pharm_verify: boolean;
-    medtech_verify: boolean;
-    note_id: string;
-    rule_id: string;
-    index_rule: number;
-    more_information: string;
-    pharmacist_id: string;
-    medical_technologist_id: string;
-    request_date: Timestamp;
-    report_date: Timestamp;
-    create_at: Timestamp
-    update_at: Timestamp
+
+  specimens_id: string 
+  specimen_name: string 
+  specimens_expire_date: string 
+
+  doctor_id: string 
+  doctor_fullname: string 
+
+  patient_id: string;
+  Eng_name: string;
+  Thai_name: string;
+  DOB: string 
+  age: number 
+  gender: "Male" | "Female" | string;
+  phone: string 
+  address: string 
+
+  pharm_verify: boolean;
+  medtech_verify: boolean;
+
+  note_id: string 
+  note_method: string 
+
+  index_rule: number 
+  rule_location: string 
+  rule_result_location: string 
+  rule_phenotype: string 
+  rule_predicted_genotype: string 
+  rule_predicted_phenotype: string 
+  rule_recommendation: string 
+
+  rule_id: string 
+  rule_name: string 
+
+  pharmacist_id: string 
+  fullname_pharmacist: string 
+
+  medical_technician_id: string 
+  fullname_medtech: string 
+
+  more_information: string 
+  status: string 
+
+  request_date: string  // ISO datetime string
+  report_date: string   // ISO datetime string
+
+  priority: "Routine" | "Urgent" | "STAT" | string;
+  ward_id: string 
+
+  created_at: string;
+  updated_at: string 
 }
 
 export type Note = {
@@ -57,9 +92,27 @@ export type Note = {
 }
 
 export type Patient = {
-    name: string;
-    phone: string;
-    age: number;
-    gender: string;
-    Ethnicity: string;
+  id: string;
+  Eng_name: string;
+  Thai_name: string;
+  phone: string 
+  age: number 
+  gender: "Male" | "Female" | string; 
+  Ethnicity: string 
+  dob: string  
+  email: string 
+  address: string 
+  created_at: string;
+  updated_at: string;
+}
+
+export type HLA_B = {
+    id: string;
+    hla_gene: string[];
+    drug: string[];
+    typeof_scar: string[]; 
+    ethnic_group: string[];
+    odds_score: string[];
+    ref: string[];
+    created_at: Timestamp;
 }
