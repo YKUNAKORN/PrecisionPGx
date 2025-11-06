@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -224,6 +224,13 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
         }
     };
 
+    const [openAdd, setOpenAdd] = useState(false);
+
+    const onBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) setOpenAdd(false);
+    };
+    const dialogRef = useRef<HTMLDivElement>(null);
+
     if (errorPatients) return <div className="container">Failed to load patients.</div>;
 
     // -----------------------------
@@ -274,7 +281,9 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
                     <div className="topic-1-3-l">
                         <div className="row-top">
                             <div className="box-title">Patient Search</div>
-                            <button className="add-btn">Add New Patient</button>
+                            <button className="add-btn" onClick={() => setOpenAdd(true)}>
+                                Add New Patient
+                            </button>
                         </div>
 
                         <div className="row-search">
@@ -455,67 +464,153 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
 
             {/* STEP 3 */}
              <div>
-      {/* STEP 3 */}
-      {currentStep === "3" && (
-        <div className="Barcodes">
-          <div className="bc-left">
-            <div className="bc-title">Barcode Preview</div>
-            <div className="bc-canvas">
-              {barcodeSvg ? (
-                <div
-                  className="bc-svg"
-                  // แสดง SVG ที่สร้างจาก JsBarcode
-                  dangerouslySetInnerHTML={{ __html: barcodeSvg }}
-                />
-              ) : (
-                <div className="bc-placeholder">No barcode yet</div>
-              )}
-            </div>
-            <button className="bc-generate" onClick={handleGenerateLocal}>
-              Generate Barcode (Local)
-            </button>
-          </div>
+            {/* STEP 3 */}
+            {currentStep === "3" && (
+                <div className="Barcodes">
+                <div className="bc-left">
+                    <div className="bc-title">Barcode Preview</div>
+                    <div className="bc-canvas">
+                    {barcodeSvg ? (
+                        <div
+                        className="bc-svg"
+                        // แสดง SVG ที่สร้างจาก JsBarcode
+                        dangerouslySetInnerHTML={{ __html: barcodeSvg }}
+                        />
+                    ) : (
+                        <div className="bc-placeholder">No barcode yet</div>
+                    )}
+                    </div>
+                    <button className="bc-generate" onClick={handleGenerateLocal}>
+                    Generate Barcode (Local)
+                    </button>
+                </div>
 
-          <div className="bc-right">
-            <div className="bc-panel-title">Label Details</div>
-            <div className="bc-rows">
-              <div className="bc-row">
-                <span>Lab Number</span>
-                <b>{barcodeText || "Pending"}</b>
-              </div>
-              <div className="bc-row">
-                <span>Patient</span>
-                <b>{activePatient?.name ?? "—"}</b>
-              </div>
-              <div className="bc-row">
-                <span>Priority</span>
-                <b>{selectedPriority.toUpperCase()}</b>
-              </div>
+                <div className="bc-right">
+                    <div className="bc-panel-title">Label Details</div>
+                    <div className="bc-rows">
+                    <div className="bc-row">
+                        <span>Lab Number</span>
+                        <b>{barcodeText || "Pending"}</b>
+                    </div>
+                    <div className="bc-row">
+                        <span>Patient</span>
+                        <b>{activePatient?.name ?? "—"}</b>
+                    </div>
+                    <div className="bc-row">
+                        <span>Priority</span>
+                        <b>{selectedPriority.toUpperCase()}</b>
+                    </div>
+                    </div>
+                    <p className="bc-note">
+                    This is a visual preview and supports printing via the browser’s print dialog.
+                    </p>
+                    <div className="bc-actions">
+                    <button className="bc-print" onClick={handlePrint}>
+                        Print Label
+                    </button>
+                    <button
+                        className="bc-register"
+                        onClick={() =>
+                        alert(
+                            `Registered sample for ${
+                            activePatient?.name ?? "(unknown)"
+                            } with ${barcodeText || "(no barcode)"}`
+                        )
+                        }
+                    >
+                        Register Sample
+                    </button>
+                    </div>
+                </div>     
             </div>
-            <p className="bc-note">
-              This is a visual preview and supports printing via the browser’s print dialog.
+            )}
+            </div>
+        {openAdd && (
+            <div className="modal-backdrop" onMouseDown={onBackdropClick}>
+            <div
+            className="modal-sheet"
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-title"
+            >
+            <div className="modal-header">
+                <div className="modal-title">
+                    <span className="i-user-plus">👤</span>
+                    <span id="add-title">Add New Patient</span>
+                </div>
+                <button className="modal-close" onClick={() => setOpenAdd(false)}>
+                ✕
+                </button>
+            </div>
+
+            <p className="modal-desc">
+                Register a new patient in the system. All required fields must be completed.
             </p>
-            <div className="bc-actions">
-              <button className="bc-print" onClick={handlePrint}>
-                Print Label
-              </button>
-              <button
-                className="bc-register"
-                onClick={() =>
-                  alert(
-                    `Registered sample for ${
-                      activePatient?.name ?? "(unknown)"
-                    } with ${barcodeText || "(no barcode)"}`
-                  )
-                }
-              >
-                Register Sample
-              </button>
+
+            <div className="modal-body">
+                <div className="modal-section-title">Patient Information</div>
+
+                <div className="grid1">
+                    <label className="field">
+                        <span className="label-2">Thai Name <b className="req">*</b></span>
+                        <input className="input-2" placeholder="ชื่อ-นามสกุล (ภาษาไทย)" />
+                    </label> 
+                    <label className="field">
+                        <span className="label-2">English Name <b className="req">*</b></span>
+                        <input className="input-2" placeholder="First Last (English)" />
+                    </label>
+                </div>
+                <div className="grid2">
+                    <label className="field">
+                        <span className="label-2">Date of Birth <b className="req">*</b></span>
+                        <input className="input-2" type="date" />
+                    </label>
+                    <label className="field">
+                        <span className="label-2">Gender <b className="req">*</b></span>
+                        <div className="select-type-2">
+                        <select className="select-trigger-2">
+                            <option value="">Select gender</option>
+                            <option>Male</option>
+                            <option>Female</option>
+                            <option>Other</option>
+                        </select>
+                        </div>
+                    </label>
+                </div>
+
+                <div className="modal-section-title">Contact Information</div>
+                <div className="grid1">
+                <label className="field">
+                    <span className="label-2">Phone Number</span>
+                    <input className="input-2" placeholder="089-123-4567" />
+                </label>
+                <label className="field">
+                    <span className="label-2">Email Address</span>
+                    <input className="input-2" type="email" placeholder="patient@example.com" />
+                </label>
+                <label className="field" style={{ gridColumn: "1 / -1" }}>
+                    <span className="label-2">Address</span>
+                    <input className="input-2" placeholder="Enter full address" />
+                </label>
+                <p className="auto-id-hint">
+                    Automatic ID Generation: Hospital Number (HN) and Registration Number (RN)
+                    will be automatically generated upon registration.
+                </p>
+                </div>
             </div>
-          </div>
-        </div>
-      )}
-    </div>
+
+            <div className="modal-footer">
+                <button className="btn-ghost" onClick={() => setOpenAdd(false)}>Cancel</button>
+                <button className="btn-primary" onClick={() => setOpenAdd(false)}>
+                Add Patient
+                </button>
+            </div>
+            </div>
+            </div>
+        )}
+
+        
         </div>
     );
 }
