@@ -13,7 +13,7 @@ import Samples from "./Samples";
 export default function Navbar() {
   return (
       <aside
-        className="fixed top-0 left-0 h-dvh w-21 border-r
+        className="fixed top-0 left-0 h-dvh w-21 border-r-[0.5px]
                   flex flex-col justify-between items-center p-4 "
       >
         <nav aria-label="Primary" className="flex flex-col items-center gap-10  ">
@@ -23,11 +23,11 @@ export default function Navbar() {
           <Interpret />
           <Quality />
           <Samples />
+          <Account/>
         </nav>
 
         <nav aria-label="Utilities" className="mb-2 flex flex-col items-center gap-2  ">
           <div className="size-10"><Darkmode /></div>
-          <Account />
         </nav>
       </aside>
   );

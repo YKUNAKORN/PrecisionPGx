@@ -40,12 +40,12 @@ export default function Page() {
       </div>
 
       {/* Tabs */}
-      <div className="flex justify-center mt-6 space-x-2">
+      <div className="w-full inline-flex items-center justify-center border rounded-full mt-6 space-x-1">
         {(["Inventory", "Storage", "Clinical Controls", "Historical"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-6 py-2 rounded-full font-medium transition shadow-sm ${
+            className={`w-full inline-flex items-center justify-center  px-6 py-2 rounded-full font-medium transition shadow-sm ${
               activeTab === tab ? "bg-primary" : "hover:bg-primary/90"
             }`}
           >
@@ -161,7 +161,7 @@ function InventorySection({
           placeholder="Search by ID, patient, or test"
           value={filters.search}
           onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-          className="w-full placeholder-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
+          className="w-full placeholder-gray-500 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
         />
       </div>
 
@@ -173,7 +173,8 @@ function InventorySection({
             value={filters.location}
             onChange={(v) => setFilters((f) => ({ ...f, location: v }))}
             options={["All", "A", "B", "C"]}
-          />
+            className="border border-zinc-700"
+          />  
           <Filter
             label="Type"
             value={filters.type}
@@ -206,7 +207,7 @@ function InventorySection({
       ) : error ? (
         <div className="mt-6 text-sm text-red-400">Failed to load storages: {error.message}</div>
       ) : (
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 overflow-y-auto max-h-[25vh]">
           {filtered.map((s) => (
             <SampleCard
               key={s.id}

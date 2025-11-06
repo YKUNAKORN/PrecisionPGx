@@ -294,9 +294,9 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
                         ) : (
                             <div style={{ display: "grid", gap: 12 }}>
                                 {filtered.map((p) => (
-                                    <div key={p.id} className="patient-card">
+                                    <div key={p.id} className="patient-card ">
                                         <div className="patient-info">
-                                            <p className="patient-name">{p.name}</p>
+                                            <p className="patient-name ">{p.name}</p>
                                             <p className="patient-detail">
                                                 Phone: {p.phone ?? "—"} • Gender: {p.gender ?? "—"} • Age: {p.age ?? "—"} • Ethnicity: {p.Ethnicity ?? "—"}
                                             </p>

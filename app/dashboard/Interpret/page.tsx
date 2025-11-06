@@ -105,15 +105,17 @@ export default function Page() {
       try {
         const res = await fetch(`/api/user/report`, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data: ApiReport[] = await res.json();
+        const data = await res.json();
+        console.log("Fetched reports:", data.data);
 
-        const list = Array.isArray(data) ? data : [];
-        const mapped: ReportRow[] = list.map((it) => {
+        const list = Array.isArray(data.data) ? data.data : [];
+        console.log("Report list:", list);
+        const mapped: ReportRow[] = list.map((it: ReportRow) => {
           const norm = normalizeStatus(it.status);
           return {
             id: it.id,
             report_no: it.id, // 👉 Report Number = id
-            patient: it.patient_id ?? "-", // 👉 Patient = patient_id
+            patient: it.patient_id, // 👉 Patient = patient_id
             status: toDisplayStatus(norm), // 👉 Status
             is_approve: toApprove(norm), // 👉 สีวงกลม IsApprove
             mrn: null,
