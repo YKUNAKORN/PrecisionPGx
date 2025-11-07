@@ -121,15 +121,21 @@ export async function GetAllQualityMetricsPercent() {
                 fail++;
             } else if (q === "warning") {
                 warning++;
+            } else {
+                // แค่ log แล้วทำงานต่อ ไม่ต้อง return
+                console.warn("Quality type doesn't exist for item:", data[i]);
             }
         }
     } catch (err) {
         return { data: null, error: err };
     }
     const total = pass + fail + warning;
-    QualityCount.pass = (pass*100)/total;
-    QualityCount.warning = (warning*100)/total;
-    QualityCount.fail = (fail*100)/total;
+    if (total === 0) {
+        return { data: { pass: 0, fail: 0, warning: 0, total: 0 }, error: null };
+    }
+    QualityCount.pass = (pass * 100) / total;
+    QualityCount.warning = (warning * 100) / total;
+    QualityCount.fail = (fail * 100) / total;
     QualityCount.total = total;
     return { data: QualityCount, error: null };
 }
