@@ -104,8 +104,8 @@ export async function GetAllQualityMetricsPercent() {
         return { data: null, error }; //for User
     }
 
-    console.log("GetAllQualityMetrics - data:", data); // for Debug
-    console.log("GetAllQualityMetrics - error:", error); // for Debug
+    console.log("GetAllQualityMetricsPercent - data:", data); // for Debug
+    console.log("GetAllQualityMetricsPercent - error:", error); // for Debug
 
     if (!data || data.length === 0) {
         return { data: { pass: 0, fail: 0, warning: 0, total: 0 }, error: null };

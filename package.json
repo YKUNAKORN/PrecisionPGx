@@ -24,6 +24,8 @@
     "bwip-js": "^3.4.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "express": "^5.1.0",
     "jose": "^6.1.0",
     "jsbarcode": "^3.11.5",
