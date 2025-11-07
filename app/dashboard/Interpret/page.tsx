@@ -23,7 +23,7 @@ type StepKey = (typeof STEPS)[number]["slug"];
 /** ---------- API types & local model ---------- */
 type ApiReport = {
   id: string;        // ใช้แสดงในคอลัมน์ Report Number
-  patient_id: string;  // ใช้แสดงในคอลัมน์ Patient
+  Eng_name: string;  // ใช้แสดงในคอลัมน์ Patient
   status?: string;   // complete | in progress | failed | (อาจไม่มี)
   // อื่น ๆ ตาม API จริง เพิ่มได้
 };
@@ -33,7 +33,7 @@ type StatusNorm = "complete" | "in progress" | "failed" | "unknown";
 type ReportRow = {
   id: string;
   report_no: string;  // แสดง id อีกชุด
-  patient: string;
+  patient_name: string;
   status: "Completed" | "In Progress" | "Failed";
   is_approve: "approved" | "pending" | "rejected";
   mrn?: string | null;
@@ -112,7 +112,7 @@ export default function Page() {
           return {
             id: it.id,
             report_no: it.id,               // 👉 Report Number = id
-            patient: it.patient_id ?? "-",    // 👉 Patient = patient_id
+            patient_name: it.Eng_name ?? "-",    // 👉 Patient = Eng_name
             status: toDisplayStatus(norm),  // 👉 Status
             is_approve: toApprove(norm),    // 👉 สีวงกลม IsApprove
             mrn: null,
@@ -265,7 +265,7 @@ export default function Page() {
                                 setActive(1);
                               }}
                             >
-                              {r.patient}
+                              {r.patient_name}
                             </td>
 
                             {/* Status (text) */}
@@ -349,10 +349,10 @@ export default function Page() {
               <div className="border rounded-2xl px-4 py-4 flex flex-wrap gap-6 items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className="size-12 rounded-full border flex items-center justify-center text-sm font-semibold">
-                    {initials(selectedReport.patient)}
+                    {initials(selectedReport.patient_name)}
                   </div>
                   <div>
-                    <div className="text-base font-semibold leading-tight">{selectedReport.patient}</div>
+                    <div className="text-base font-semibold leading-tight">{selectedReport.patient_name}</div>
                     <div className="text-sm">
                       {selectedReport.gender ? selectedReport.gender : "—"}{" "}
                       {selectedReport.age ? `• ${selectedReport.age}` : ""}
@@ -593,7 +593,7 @@ chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
                     <div>
                       Patient:
                       <br />
-                      {selectedReport ? selectedReport.patient : "-"}
+                      {selectedReport ? selectedReport.patient_name : "-"}
                     </div>
                     <div>
                       Test Type:
