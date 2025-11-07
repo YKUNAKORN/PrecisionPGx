@@ -1,6 +1,6 @@
 import { Fridge} from '@/lib/model/Fridge';
 import { CreateClientSecret } from "@/lib/supabase/client";
-import { GetAll, GetById, Update } from "@/lib/supabase/crud";
+import { GetAll, GetById, Update, Create, Delete } from "@/lib/supabase/crud";
 
 const db = CreateClientSecret();
 
@@ -116,6 +116,14 @@ export async function DeleteFridge(id) {
     const { data, error } = await Delete(db, "fridge", id);
     if (error) {
         return { data: null, error: error }; //for User
+    }
+    return { data: data, error: null };
+}
+
+export async function CreateFridge(row) {
+    const { data, error } = await Create(db, "fridge", row);
+    if (error) {
+        return { data: null, error: error };
     }
     return { data: data, error: null };
 }

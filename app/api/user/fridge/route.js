@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ResponseModel } from '@/lib/model/Response';
-import { GetAllFridges, UpdateFridge } from '../service/fridge_service';
+import { GetAllFridges, UpdateFridge, DeleteFridge, CreateFridge } from '../service/fridge_service';
 
 /**
  * @swagger
@@ -186,5 +186,67 @@ export async function DELETE(request) {
         ResponseModel.message = 'Delete Successful';
         ResponseModel.data = data;
         return NextResponse.json(ResponseModel, { status: 200 }) //for User
+    }
+}
+
+/**
+ * @swagger
+ * /api/user/fridge:
+ *   post:
+ *     summary: Create a new fridge
+ *     description: Create a new fridge in the database
+ *     tags:
+ *       - Fridge
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "My Fridge"
+ *               capacity:
+ *                 type: integer
+ *                 example: "200"
+ *               item:
+ *                 type: integer
+ *                 example: 0
+ *               remaining:
+ *                 type: integer
+ *                 example: 200
+ *     responses:
+ *       200:
+ *         description: Creation Successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "200"
+ *                 message:
+ *                   type: string
+ *                   example: Creation Successful
+ *                 data:
+ *                   type: object
+ */
+
+export async function POST(request) {
+    const req = await request.json();
+    const { data, error } = await CreateFridge(req);
+    if (error) {
+        ResponseModel.status = '500'
+        ResponseModel.message = 'Failed to create fridge' + error
+        ResponseModel.data = null;
+        return NextResponse.json(ResponseModel, { status: 500 }) //for User
+    }
+    {
+        ResponseModel.status = '201';
+        ResponseModel.message = 'Creation Successful';
+        ResponseModel.data = data;
+        return NextResponse.json(ResponseModel, { status: 201 }) //for User
     }
 }
