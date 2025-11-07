@@ -197,3 +197,4 @@ export async function DELETE(request) {
     ResponseModel.data = data;
     return NextResponse.json(ResponseModel, { status: 200 });
 }
+
