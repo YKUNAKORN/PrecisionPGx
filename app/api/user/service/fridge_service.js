@@ -1,4 +1,4 @@
-import { Fridge} from '@/lib/model/Fridge';
+import { Fridge, ReportCapacity} from '@/lib/model/Fridge';
 import { CreateClientSecret } from "@/lib/supabase/client";
 import { GetAll, GetById, Update, Create, Delete } from "@/lib/supabase/crud";
 
@@ -126,4 +126,46 @@ export async function CreateFridge(row) {
         return { data: null, error: error };
     }
     return { data: data, error: null };
+}
+
+export async function CalculateFridge() {
+    const { data, error } = await GetAllFridges();
+    if (error) {
+        return { data: null, error: error }; //for User
+    }
+    let capacity = 0;
+    try {
+        for (let i = 0; i < data.length; i++) {
+            capacity += data[i].capacity;
+        }
+    } catch (error) {
+        return { data: null, error: error };
+    }
+    let item = 0;
+    try {
+        for (let i = 0; i < data.length; i++) {
+            item += data[i].item;
+        }
+    } catch (error) {
+        return { data: null, error: error };
+    }
+    let remaining = 0;
+    try {
+        for (let i = 0; i < data.length; i++) {
+            remaining += data[i].remaining;
+        }
+    } catch (error) {
+        return { data: null, error: error };
+    }
+    let PercentRemaining = 0;
+    try {
+        PercentRemaining = (item / capacity) * 100;
+    } catch (error) {
+        return { data: null, error: error };
+    }
+        ReportCapacity.PercentRemaining = PercentRemaining;
+        ReportCapacity.Remaining = remaining;
+        ReportCapacity.Item = item;
+        ReportCapacity.Capacity = capacity;
+        return { data: ReportCapacity, error: null };
 }
