@@ -61,15 +61,17 @@ export async function UpdateFridge(id, row) {
     }
     try {
         Fridge[0] = {};
-        Fridge[0].id = data.id;
-        Fridge[0].name = data.name;
-        Fridge[0].capacity = data.capacity;
-        Fridge[0].item = data.item;
-        Fridge[0].remaining = data.remaining;
+        Fridge[0].id = data[0].id;
+        Fridge[0].name = data[0].name;
+        Fridge[0].capacity = data[0].capacity;
+        Fridge[0].item = data[0].item;
+        Fridge[0].remaining = data[0].remaining;
     } catch (err) {
         return { data: null, error: err };
     }
-    return { data: Fridge[0], error: null };
+    console.log("Updated Fridge:", Fridge);
+
+    return { data: Fridge, error: null };
 }
 
 export async function IncreaseFridgeItem(id, updated_data) {

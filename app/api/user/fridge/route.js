@@ -80,7 +80,7 @@ export async function GET() {
  *                 example: "My Fridge"
  *               capacity:
  *                 type: string
- *                 example: "100L"
+ *                 example: "100"
  *               item:
  *                 type: integer
  *                 example: 1
