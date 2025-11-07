@@ -411,86 +411,134 @@ export async function GetReportById(id) {
 
 
 export async function GetAllReportsDashboard() {
-    const { data, error } = await GetAll(db, "reports");
+  const { data, error } = await GetAll(db, "reports");
 
-    let submited_inspection = 0;
-    let awaiting_inspection = 0;
-    let inprogress = 0;
-    let completed = 0;
-    let awaiting_approve = 0;
-    let sample_received = 0;
-    let tests_completed = 0;
-    let results_interpret = 0;
-    // คำนวณช่วง "วันนี้" ตามโซน Asia/Bangkok แล้วแปลงเป็น UTC ISO
-    const now = new Date();
-    const zonedNow = toZonedTime(now, TZ);
-    const startLocal = startOfDay(zonedNow);
-    const endLocal = addDays(startLocal, 1);
-    const startUtcISO = fromZonedTime(startLocal, TZ).toISOString();
-    const endUtcISO = fromZonedTime(endLocal, TZ).toISOString();
+  let submited_inspection = 0;
+  let awaiting_inspection = 0;
+  let inprogress = 0;
+  let completed = 0;
+  let awaiting_approve = 0;
 
-    // แปลงเป็น timestamp ล่วงหน้าเพื่อเทียบเร็วขึ้น
-    const startTs = Date.parse(startUtcISO);
-    const endTs = Date.parse(endUtcISO);
+  let sample_received = 0;     // วันนี้
+  let tests_completed = 0;
+  let results_interpret = 0;
 
-    if (error) {
-        return { data: null, error }; //for User
-    }
+  // === ช่วงวันนี้ (BKK) ===
+  const now = new Date();
+  const zonedNow = toZonedTime(now, TZ);
+  const startLocal = startOfDay(zonedNow);
+  const endLocal = addDays(startLocal, 1);
+  const startUtcISO = fromZonedTime(startLocal, TZ).toISOString();
+  const endUtcISO   = fromZonedTime(endLocal, TZ).toISOString();
+  const startTs = Date.parse(startUtcISO);
+  const endTs   = Date.parse(endUtcISO);
 
-    console.log("GetAllReportsDashboard - data:", data);
-    console.log("GetAllReportsDashboard - error:", error);
+  if (error) return { data: null, error };
 
-    if (!data || data.length === 0) {
-        return {
-            data: { submited_inspection: 0, awaiting_inspection: 0, inprogress: 0, completed: 0, awaiting_approve: 0, sample_received: 0, }, error: null
-        };
-    }
-    try {
-        for (let i = 0; i < data.length; i++) {
-            const row = data[i];
-            // --- 1) นับสถานะ ---
-            const q = String(row?.status ?? "").toLowerCase().trim();
+  // === เตรียมคีย์วันย้อนหลัง 7 วัน (BKK) ===
+  // last7Days: เรียงจากเก่า -> ใหม่ (ดัชนี 0 = d6, 6 = d0/today)
+  const last7Days = [];
+  const last7Map = {};
+  for (let i = 6; i >= 0; i--) {
+    const dLocal = addDays(startLocal, -i); // 00:00 ของแต่ละวัน (BKK)
+    const key = dLocal.toLocaleDateString('en-CA', { timeZone: TZ }); // YYYY-MM-DD
+    last7Days.push(key);
+    last7Map[key] = 0;
+  }
 
-            if (q === "summited inspection" || q === "submitted inspection") {
-                submited_inspection++;
-            } else if (q === "awaiting inspection") {
-                awaiting_inspection++;
-            } else if (q === "inprogress" || q === "in progress") {
-                inprogress++;
-            } else if (q === "completed") {
-                completed++;
-            } else if (q === "awaiting approve" || q === "awaiting approval") {
-                awaiting_approve++;
-            } else {
-                console.warn("Status type doesn't exist for item:", row);
-            }
-
-            // today output
-            const createdISO = row?.created_at ? String(row.created_at) : "";
-            const ts = Date.parse(createdISO); // แปลงเป็น ms since epoch
-            if (!Number.isNaN(ts)) {
-                if (ts >= startTs && ts < endTs) {
-                    sample_received++;
-                    if (q === "completed") {
-                        tests_completed++
-                    }
-                    if (q === "inprogress") {
-                        results_interpret++
-                    }
-                }
-            }
-
-        }
-    } catch (err) {
-        return { data: null, error: err };
-    }
-    ReportDashboard.sample_received = sample_received;
-    ReportDashboard.tests_completed = tests_completed;
-    ReportDashboard.results_interpret = results_interpret;
-    ReportDashboard.submitted_inspection = submited_inspection;
-    ReportDashboard.awaiting_inspection = awaiting_inspection;
-    ReportDashboard.inprogress = inprogress;
-    ReportDashboard.completed = completed;
-    ReportDashboard.awaiting_approve = awaiting_approve;
+  if (!data || data.length === 0) {
+    // กรณีไม่มีข้อมูล คืนตัวแปร 7 ตัวเป็น 0 ทั้งหมด
+    const ReportDashboard = {
+      submitted_inspection: 0,
+      awaiting_inspection: 0,
+      inprogress: 0,
+      completed: 0,
+      awaiting_approve: 0,
+      sample_received: 0,
+      tests_completed: 0,
+      results_interpret: 0,
+      sample_received_d6: 0,
+      sample_received_d5: 0,
+      sample_received_d4: 0,
+      sample_received_d3: 0,
+      sample_received_d2: 0,
+      sample_received_d1: 0,
+      sample_received_d0: 0,
+    };
     return { data: ReportDashboard, error: null };
+  }
+
+  try {
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+
+      // --- นับสถานะรวม ---
+      const q = String(row?.status ?? "").toLowerCase().trim();
+      if (q === "summited inspection" || q === "submitted inspection") {
+        submited_inspection++;
+      } else if (q === "awaiting inspection") {
+        awaiting_inspection++;
+      } else if (q === "inprogress" || q === "in progress") {
+        inprogress++;
+      } else if (q === "completed") {
+        completed++;
+      } else if (q === "awaiting approve" || q === "awaiting approval") {
+        awaiting_approve++;
+      } else {
+        console.warn("Status type doesn't exist for item:", row);
+      }
+
+      const createdISO = row?.created_at ? String(row.created_at) : "";
+      const ts = Date.parse(createdISO);
+      if (Number.isNaN(ts)) continue;
+
+      // วันนี้ (BKK)
+      if (ts >= startTs && ts < endTs) {
+        sample_received++;
+        if (q === "completed") tests_completed++;
+        if (q === "inprogress") results_interpret++;
+      }
+
+      // 7 วัน (BKK)
+      const keyBkk = new Date(createdISO).toLocaleDateString('en-CA', { timeZone: TZ });
+      if (last7Map[keyBkk] !== undefined) {
+        last7Map[keyBkk] += 1;
+      }
+    }
+  } catch (err) {
+    return { data: null, error: err };
+  }
+
+  // === แตกเป็นตัวแปร 7 ตัว ===
+  // last7Days: [d6, d5, d4, d3, d2, d1, d0]
+  //Mapping Data
+  const sample_received_d6 = last7Map[last7Days[0]] ?? 0; // 6 วันก่อน
+  const sample_received_d5 = last7Map[last7Days[1]] ?? 0;
+  const sample_received_d4 = last7Map[last7Days[2]] ?? 0;
+  const sample_received_d3 = last7Map[last7Days[3]] ?? 0;
+  const sample_received_d2 = last7Map[last7Days[4]] ?? 0;
+  const sample_received_d1 = last7Map[last7Days[5]] ?? 0; // เมื่อวาน
+  const sample_received_d0 = last7Map[last7Days[6]] ?? 0; // วันนี้
+
+  const ReportDashboard = {
+    sample_received,          // วันนี้รวม (ซ้ำกับ d0 ก็ได้ตามที่คุณใช้)
+    tests_completed,
+    results_interpret,
+    submitted_inspection: submited_inspection,
+    awaiting_inspection,
+    inprogress,
+    completed,
+    awaiting_approve,
+
+    // 7 ตัวแยกวัน
+    sample_received_d6,
+    sample_received_d5,
+    sample_received_d4,
+    sample_received_d3,
+    sample_received_d2,
+    sample_received_d1,
+    sample_received_d0,
+  };
+
+  return { data: ReportDashboard, error: null };
 }
