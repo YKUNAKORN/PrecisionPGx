@@ -30,6 +30,7 @@ export type RuleBased ={
 }
 
 export type Report = {
+    id?: string;
     sepicimens_id: string;
     doctor_id: string;
     patient_id: string;
@@ -42,6 +43,7 @@ export type Report = {
     medical_technologist_id: string;
     request_date: Timestamp;
     report_date: Timestamp;
+    status?: string;
 }
 
 export type Note = {
@@ -51,9 +53,11 @@ export type Note = {
 }
 
 export type Patient = {
-    name: string;
-    phone: string;
-    age: number;
-    gender: string;
-    Ethnicity: string;
+    id?: string;
+    name?: string;
+    Eng_name?: string;
+    phone?: string;
+    age?: number;
+    gender?: string;
+    Ethnicity?: string;
 }

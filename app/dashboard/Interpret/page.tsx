@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Search, Edit, CheckCircle, AlertCircle, XCircle, User, Calendar, MapPin, Phone, FileText, X, ChevronDown, ChevronUp, Info, TrendingUp, Shield, BookOpen } from "lucide-react";
+
+// ✅ Import Query Options จาก lib/fetch
+import { createReportQueryOptions } from "@/lib/fetch/Report";
+import { createPatientQueryOptions } from "@/lib/fetch/Patient";
+import { Report, Patient } from "@/lib/fetch/type";
+
+// Type สำหรับข้อมูลที่แสดงในตาราง
+type ReportWithPatient = Report & {
+  patient?: Patient;
+};
 
 const stepLabels = [
   { number: 1, label: "Patient", active: true },
@@ -194,6 +205,56 @@ export function ResultInterpretation() {
     qualityScore: { value: 92, threshold: 90, passed: false }
   });
 
+  // -----------------------------
+  // ✅ React Query: Fetch Reports และ Patients
+  // -----------------------------
+  const qc = useQueryClient();
+
+  const {
+    data: reports,
+    isLoading: loadingReports,
+    error: errorReports,
+  } = useQuery(createReportQueryOptions.all());
+
+  const {
+    data: patients,
+    isLoading: loadingPatients,
+    error: errorPatients,
+  } = useQuery(createPatientQueryOptions.all());
+
+  // -----------------------------
+  // ✅ Process data: Combine Reports with Patient info
+  // -----------------------------
+  const reportsWithPatients: ReportWithPatient[] = useMemo(() => {
+    const reportsRaw = reports as any;
+    const patientsRaw = patients as any;
+    
+    const reportsArray = Array.isArray(reportsRaw) ? reportsRaw : reportsRaw?.data || [];
+    const patientsArray = Array.isArray(patientsRaw) ? patientsRaw : patientsRaw?.data || [];
+
+    return reportsArray.map((report: Report) => {
+      const patient = patientsArray.find((p: Patient) => p.id === report.patient_id);
+      return {
+        ...report,
+        patient,
+      };
+    });
+  }, [reports, patients]);
+
+  // Filter reports based on search query
+  const filteredReports = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return reportsWithPatients;
+
+    return reportsWithPatients.filter((report) => {
+      const reportId = report.id?.toLowerCase() || "";
+      const patientName = report.patient?.Eng_name?.toLowerCase() || report.patient?.name?.toLowerCase() || "";
+      const status = report.status?.toLowerCase() || "";
+      
+      return reportId.includes(query) || patientName.includes(query) || status.includes(query);
+    });
+  }, [reportsWithPatients, searchQuery]);
+
   const updateStepStatus = (stepNumber: number) => {
     return stepLabels.map(step => ({
       ...step,
@@ -225,30 +286,51 @@ export function ResultInterpretation() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "Completed":
+  const getStatusBadge = (status?: string) => {
+    if (!status) return <Badge variant="outline">Unknown</Badge>;
+    
+    switch (status.toLowerCase()) {
+      case "completed":
         return <Badge className="text-white" style={{ backgroundColor: '#7864B4' }}>Completed</Badge>;
-      case "In Progress": 
-        return <Badge className="text-white" style={{ backgroundColor: '#9682C8' }}>In Progress</Badge>;
-      case "Failed":
-        return <Badge variant="outline" className="bg-[#FFF0F0]" style={{ borderColor: '#DC6464', color: '#DC6464' }}>Failed</Badge>;
+      
+      case "in progress":
+      case "in_progress":
+      case "inprogress":
+      case "pending":
+        return <Badge className="text-white" style={{ backgroundColor: '#50C878' }}>In Progress</Badge>;
+      
+      case "submitted for inspection":
+      case "submitted_for_inspection":
+        return <Badge className="text-white" style={{ backgroundColor: '#FFD966' }}>Submitted for Inspection</Badge>;
+      
+      case "awaiting inspection":
+      case "awaiting_inspection":
+        return <Badge className="text-white" style={{ backgroundColor: '#45A2E7' }}>Awaiting Inspection</Badge>;
+      
+      case "awaiting approve":
+      case "awaiting_approve":
+        return <Badge className="text-white" style={{ backgroundColor: '#F89C4E' }}>Awaiting Approve</Badge>;
+      
+      case "failed":
+      case "rejected":
+        return <Badge variant="outline" className="bg-[#FFF0F0]" style={{ borderColor: '#E94D6A', color: '#E94D6A' }}>Failed</Badge>;
+      
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
   };
 
-  const getApprovalIcon = (approval: string) => {
-    switch (approval) {
-      case "approved":
-        return <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#64B464' }}></div>;
-      case "pending":
-        return <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#DCB450' }}></div>;
-      case "rejected":
-        return <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#DC6464' }}></div>;
-      default:
-        return null;
+  const getApprovalIcon = (pharmVerify?: boolean, medtechVerify?: boolean) => {
+    // approved = ทั้ง pharm และ medtech verify แล้ว
+    if (pharmVerify && medtechVerify) {
+      return <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#64B464' }}></div>;
     }
+    // rejected = ถ้าไม่มีการ verify เลย
+    if (!pharmVerify && !medtechVerify) {
+      return <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#DC6464' }}></div>;
+    }
+    // pending = verify แค่อันใดอันหนึ่ง
+    return <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#DCB450' }}></div>;
   };
 
   // Enhanced phenotype prediction helper functions
@@ -282,120 +364,158 @@ export function ResultInterpretation() {
     setShowRuleDetails(true);
   };
 
-  const renderPatientReports = () => (
-    <>
-      {/* Search and Filters */}
-      <div className="p-6 border-b" style={{ backgroundColor: '#EDE9FE', borderColor: '#DCDCE6' }}>
-        <div className="flex items-center space-x-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4" style={{ color: '#969696' }} />
-            <Input
-              placeholder="Search reports, patients..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white placeholder:text-[#969696]"
-              style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
-            />
-          </div>
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
-            style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
-          >
-            Clear All (Test 0 patients)
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
-            style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
-          >
-            Reset Data
-          </Button>
+  const renderPatientReports = () => {
+    // Show loading state
+    if (loadingReports || loadingPatients) {
+      return (
+        <div className="p-6 text-center" style={{ color: '#505050' }}>
+          <p>Loading reports...</p>
         </div>
-      </div>
-      
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="border-b" style={{ backgroundColor: '#EDE9FE', borderColor: '#DCDCE6' }}>
-            <tr>
-              <th className="text-left p-4 font-medium" style={{ color: '#1E1E1E' }}>Report Number</th>
-              <th className="text-left p-4 font-medium" style={{ color: '#1E1E1E' }}>Patient</th>
-              <th className="text-left p-4 font-medium" style={{ color: '#1E1E1E' }}>Status</th>
-              <th className="text-left p-4 font-medium" style={{ color: '#1E1E1E' }}>IsApprove</th>
-              <th className="text-left p-4 font-medium" style={{ color: '#1E1E1E' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {patientReports.map((report, index) => (
-              <tr key={report.reportNumber} className="bg-white border-b" style={{ borderColor: '#DCDCE6' }}>
-                <td className="p-4" style={{ color: '#1E1E1E' }}>{report.reportNumber}</td>
-                <td className="p-4" style={{ color: '#1E1E1E' }}>{report.patient}</td>
-                <td className="p-4">
-                  {getStatusBadge(report.status)}
-                </td>
-                <td className="p-4">
-                  {getApprovalIcon(report.isApprove)}
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center space-x-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
-                      style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
-                      onClick={() => {
-                        // Handle edit action
-                        setSelectedReport(report.reportNumber);
-                        setSelectedPatientData(report);
-                        setCurrentStep(2);
-                      }}
-                    >
-                      <Edit className="h-3 w-3 mr-1" />
-                      EDIT
-                    </Button>
-                    
-                    <Button 
-                      size="sm"
-                      variant="outline" 
-                      className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
-                      style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
-                      onClick={() => {
-                        setApprovalReportData(report);
-                        setIsApprovalDialogOpen(true);
-                      }}
-                    >
-                      Approval
-                    </Button>
-                    
-                    <Button 
-                      size="sm"
-                      className="text-white cursor-pointer"
-                      style={{ backgroundColor: '#7864B4' }}
-                      onClick={() => {
-                        setSelectedReport(report.reportNumber);
-                        setSelectedPatientData(report);
-                        setCurrentStep(2);
-                      }}
-                    >
-                      {report.status === "Completed" ? "Preview" : "Continue"}
-                    </Button>
-                  </div>
-                </td>
+      );
+    }
+
+    // Show error state
+    if (errorReports || errorPatients) {
+      return (
+        <div className="p-6 text-center" style={{ color: '#DC6464' }}>
+          <p>Error loading reports. Please try again.</p>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {/* Search and Filters */}
+        <div className="p-6 border-b" style={{ backgroundColor: '#EDE9FE', borderColor: '#DCDCE6' }}>
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4" style={{ color: '#969696' }} />
+              <Input
+                placeholder="Search reports, patients..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-white placeholder:text-[#969696]"
+                style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
+              />
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
+              style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
+              onClick={() => setSearchQuery("")}
+            >
+              Clear All ({filteredReports.length} reports)
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
+              style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
+              onClick={() => {
+                qc.invalidateQueries({ queryKey: ["reports"] });
+                qc.invalidateQueries({ queryKey: ["patients"] });
+              }}
+            >
+              Reset Data
+            </Button>
+          </div>
+        </div>
+        
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="border-b" style={{ backgroundColor: '#EDE9FE', borderColor: '#DCDCE6' }}>
+              <tr>
+                <th className="text-left p-4 font-medium" style={{ color: '#1E1E1E' }}>Report Number</th>
+                <th className="text-left p-4 font-medium" style={{ color: '#1E1E1E' }}>Patient</th>
+                <th className="text-left p-4 font-medium" style={{ color: '#1E1E1E' }}>Status</th>
+                <th className="text-left p-4 font-medium" style={{ color: '#1E1E1E' }}>IsApprove</th>
+                <th className="text-left p-4 font-medium" style={{ color: '#1E1E1E' }}>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      
-      {/* Footer */}
-      <div className="p-4 border-t" style={{ backgroundColor: '#EDE9FE', borderColor: '#DCDCE6' }}>
-        <p className="text-sm" style={{ color: '#1E1E1E' }}>Showing 6 of 6 reports</p>
-      </div>
-    </>
-  );
+            </thead>
+            <tbody>
+              {filteredReports.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center" style={{ color: '#505050' }}>
+                    No reports found
+                  </td>
+                </tr>
+              ) : (
+                filteredReports.map((report, index) => (
+                  <tr key={report.id || index} className="bg-white border-b hover:bg-[#F5F3FF] transition-colors" style={{ borderColor: '#DCDCE6' }}>
+                    <td className="p-4" style={{ color: '#1E1E1E' }}>
+                      {report.id || 'N/A'}
+                    </td>
+                    <td className="p-4" style={{ color: '#1E1E1E' }}>
+                      {report.patient?.Eng_name || report.patient?.name || 'Unknown Patient'}
+                    </td>
+                    <td className="p-4">
+                      {getStatusBadge(report.status)}
+                    </td>
+                    <td className="p-4">
+                      {getApprovalIcon(report.pharm_verify, report.medtech_verify)}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
+                          style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
+                          onClick={() => {
+                            setSelectedReport(report.id || null);
+                            setSelectedPatientData(report);
+                            setCurrentStep(2);
+                          }}
+                        >
+                          <Edit className="h-3 w-3 mr-1" />
+                          EDIT
+                        </Button>
+                        
+                        <Button 
+                          size="sm"
+                          variant="outline" 
+                          className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
+                          style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
+                          onClick={() => {
+                            setApprovalReportData(report);
+                            setIsApprovalDialogOpen(true);
+                          }}
+                        >
+                          Approval
+                        </Button>
+                        
+                        <Button 
+                          size="sm"
+                          className="text-white cursor-pointer"
+                          style={{ backgroundColor: '#7864B4' }}
+                          onClick={() => {
+                            setSelectedReport(report.id || null);
+                            setSelectedPatientData(report);
+                            setCurrentStep(2);
+                          }}
+                        >
+                          {report.status?.toLowerCase() === "completed" ? "Preview" : "Continue"}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        
+        {/* Footer */}
+        <div className="p-4 border-t" style={{ backgroundColor: '#EDE9FE', borderColor: '#DCDCE6' }}>
+          <p className="text-sm" style={{ color: '#1E1E1E' }}>
+            Showing {filteredReports.length} of {reportsWithPatients.length} reports
+          </p>
+        </div>
+      </>
+    );
+  };
 
   const renderRawData = () => (
     <div className="p-6 space-y-6 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
@@ -1279,15 +1399,21 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p style={{ color: '#505050' }}>Patient:</p>
-              <p style={{ color: '#1E1E1E' }}>{selectedPatientData?.patient || 'N/A'}</p>
+              <p style={{ color: '#1E1E1E' }}>
+                {selectedPatientData?.patient?.Eng_name || 
+                 selectedPatientData?.patient?.name || 
+                 'N/A'}
+              </p>
             </div>
             <div>
               <p style={{ color: '#505050' }}>Report Number:</p>
-              <p style={{ color: '#1E1E1E' }}>{selectedPatientData?.reportNumber || 'N/A'}</p>
+              <p style={{ color: '#1E1E1E' }}>
+                {selectedPatientData?.id || 'N/A'}
+              </p>
             </div>
             <div>
               <p style={{ color: '#505050' }}>Test Type:</p>
-              <p style={{ color: '#1E1E1E' }}>{selectedPatientData?.testType || 'N/A'}</p>
+              <p style={{ color: '#1E1E1E' }}>Pharmacogenomics Panel</p>
             </div>
             <div>
               <p style={{ color: '#505050' }}>Status:</p>
@@ -1389,6 +1515,7 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
     };
 
     const formatDate = (dateString: string) => {
+      if (!dateString) return 'N/A';
       return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -1396,21 +1523,30 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
       });
     };
 
+    // Get patient name from selectedPatientData
+    const patientName = selectedPatientData.patient?.Eng_name || 
+                       selectedPatientData.patient?.name || 
+                       'Unknown Patient';
+    
+    const patientGender = selectedPatientData.patient?.gender || 'N/A';
+    const patientDOB = selectedPatientData.patient?.dob || '';
+    const patientAge = patientDOB ? calculateAge(patientDOB) : 'N/A';
+
     return (
       <Card className="elevation-1 bg-white border" style={{ borderColor: '#DCDCE6' }}>
         <div className="p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <Avatar className="h-12 w-12">
-                <AvatarImage src="" alt={selectedPatientData.patient} />
+                <AvatarImage src="" alt={patientName} />
                 <AvatarFallback className="text-white" style={{ backgroundColor: '#7864B4' }}>
-                  {selectedPatientData.patient.split(' ').map((n: string) => n[0]).join('')}
+                  {patientName.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h3 className="font-medium" style={{ color: '#1E1E1E' }}>{selectedPatientData.patient}</h3>
+                <h3 className="font-medium" style={{ color: '#1E1E1E' }}>{patientName}</h3>
                 <p className="text-sm" style={{ color: '#505050' }}>
-                  {selectedPatientData.gender} • {calculateAge(selectedPatientData.dateOfBirth)} years old
+                  {patientGender} • {patientAge} years old
                 </p>
               </div>
             </div>
@@ -1440,15 +1576,19 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
                 <FileText className="h-4 w-4" style={{ color: '#505050' }} />
                 <span style={{ color: '#505050' }}>Report</span>
               </div>
-              <p className="text-sm font-medium" style={{ color: '#1E1E1E' }}>{selectedPatientData.reportNumber}</p>
+              <p className="text-sm font-medium" style={{ color: '#1E1E1E' }}>
+                {selectedPatientData.id || 'N/A'}
+              </p>
             </div>
 
             <div className="space-y-1">
               <div className="flex items-center space-x-2 text-sm">
                 <User className="h-4 w-4" style={{ color: '#505050' }} />
-                <span style={{ color: '#505050' }}>MRN</span>
+                <span style={{ color: '#505050' }}>Patient ID</span>
               </div>
-              <p className="text-sm font-medium" style={{ color: '#1E1E1E' }}>{selectedPatientData.mrn}</p>
+              <p className="text-sm font-medium" style={{ color: '#1E1E1E' }}>
+                {selectedPatientData.patient_id || 'N/A'}
+              </p>
             </div>
 
             <div className="space-y-1">
@@ -1456,15 +1596,19 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
                 <Calendar className="h-4 w-4" style={{ color: '#505050' }} />
                 <span style={{ color: '#505050' }}>DOB</span>
               </div>
-              <p className="text-sm font-medium" style={{ color: '#1E1E1E' }}>{formatDate(selectedPatientData.dateOfBirth)}</p>
+              <p className="text-sm font-medium" style={{ color: '#1E1E1E' }}>
+                {formatDate(patientDOB)}
+              </p>
             </div>
 
             <div className="space-y-1">
               <div className="flex items-center space-x-2 text-sm">
                 <User className="h-4 w-4" style={{ color: '#505050' }} />
-                <span style={{ color: '#505050' }}>Physician</span>
+                <span style={{ color: '#505050' }}>Phone</span>
               </div>
-              <p className="text-sm font-medium" style={{ color: '#1E1E1E' }}>{selectedPatientData.orderingPhysician}</p>
+              <p className="text-sm font-medium" style={{ color: '#1E1E1E' }}>
+                {selectedPatientData.patient?.phone || 'N/A'}
+              </p>
             </div>
           </div>
         </div>
@@ -1650,7 +1794,9 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
                     </div>
                     <div>
                       <p className="text-sm font-medium" style={{ color: '#505050' }}>Report Number</p>
-                      <p className="font-semibold" style={{ color: '#1E1E1E' }}>{approvalReportData.reportNumber}</p>
+                      <p className="font-semibold" style={{ color: '#1E1E1E' }}>
+                        {approvalReportData.id || 'N/A'}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -1658,14 +1804,16 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
                       <User className="h-4 w-4" style={{ color: '#505050' }} />
                       <div>
                         <p className="text-sm font-medium" style={{ color: '#505050' }}>Patient</p>
-                        <p className="font-semibold" style={{ color: '#1E1E1E' }}>{approvalReportData.patient}</p>
+                        <p className="font-semibold" style={{ color: '#1E1E1E' }}>
+                          {approvalReportData.patient?.Eng_name || approvalReportData.patient?.name || 'Unknown Patient'}
+                        </p>
                       </div>
                     </div>
                   </div>
                   <div>
                     <p className="text-sm font-medium mb-1" style={{ color: '#505050' }}>Status</p>
                     <Badge className="text-white" style={{ backgroundColor: '#7864B4' }}>
-                      {approvalReportData.status}
+                      {approvalReportData.status || 'N/A'}
                     </Badge>
                   </div>
                 </div>
