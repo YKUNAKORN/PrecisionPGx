@@ -398,7 +398,7 @@ export function ResultInterpretation() {
   );
 
   const renderRawData = () => (
-    <div className="p-6 space-y-6 rounded-[20px]" style={{ backgroundColor: '#F5F3FF' }}>
+    <div className="p-6 space-y-6 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
       <div>
         <h3 className="font-medium mb-4" style={{ color: '#1E1E1E' }}>Raw Variant Data (VCF excerpt)</h3>
         
@@ -452,7 +452,7 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
       </div>
     </div>
   );  const renderGenotype = () => (
-    <div className="p-6 space-y-6 rounded-[20px]" style={{ backgroundColor: '#F5F3FF' }}>
+    <div className="p-6 space-y-6 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -838,7 +838,7 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
   const renderPhenotype = () => {
 
     return (
-      <div className="p-6 space-y-6 rounded-[20px]" style={{ backgroundColor: '#F5F3FF' }}>
+      <div className="p-6 space-y-6 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
         {/* Main Phenotype Classification Card */}
         <Card className="p-8 bg-white border elevation-1" style={{ borderColor: '#C8C8D2' }}>
           <div className="space-y-8">
@@ -999,7 +999,7 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
   };
 
   const renderRecommendations = () => (
-    <div className="p-6 space-y-6 rounded-[20px]" style={{ backgroundColor: '#F5F3FF' }}>
+    <div className="p-6 space-y-6 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
       {/* Quality Review Section */}
       <Card className="p-6 border elevation-1 bg-white" style={{ borderColor: '#C8C8D2' }}>
         <div className="space-y-6">
@@ -1199,7 +1199,7 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
   );
 
   const renderApproval = () => (
-    <div className="p-6 space-y-8 rounded-[20px]" style={{ backgroundColor: '#F5F3FF' }}>
+    <div className="p-6 space-y-8 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
       {/* Quality Review Section */}
       <div>
         <h3 className="font-medium mb-6" style={{ color: '#1E1E1E' }}>Quality Review</h3>
@@ -1269,7 +1269,7 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
   );
 
   const renderExportPDF = () => (
-    <div className="p-6 space-y-6 rounded-[20px]" style={{ backgroundColor: '#F5F3FF' }}>
+    <div className="p-6 space-y-6 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
       <div>
         <h3 className="font-medium mb-6" style={{ color: '#1E1E1E' }}>Export PDF Report</h3>
         
@@ -1597,7 +1597,7 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
   };
 
   return (
-    <div className="h-full" style={{ backgroundColor: '#F5F3FF' }}>
+    <div className="h-full w-full overflow-x-hidden" style={{ backgroundColor: '#F5F3FF' }}>
       {/* Header */}
       <div className="flex items-center justify-between p-6 border-b" style={{ backgroundColor: '#F5F3FF', borderColor: '#DCDCE6' }}>
         <div>
@@ -1617,7 +1617,7 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
       )}
 
       {/* Main Content */}
-      <div className="flex-1" style={{ backgroundColor: '#F5F3FF' }}>
+      <div className="flex-1 w-full max-w-full" style={{ backgroundColor: '#F5F3FF' }}>
         {renderContent()}
       </div>
 
