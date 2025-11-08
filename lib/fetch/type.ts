@@ -3,7 +3,7 @@ import { Timestamp } from "next/dist/server/lib/cache-handlers/types";
 export type Storage ={
     id: string;
     patient_id: string;
-    location: string;
+    fridge_id: string;
     specimen_type: string;
     collected_at: Timestamp;
     expiry_at: Timestamp;

@@ -204,14 +204,14 @@ export async function GET() {
     const { data, error } = await GetAllReports();
     if (!data || data.length === 0) {
         ResponseModel.status = '404'
-        ResponseModel.message = 'Note Not Found with ID: ' + id
+        ResponseModel.message = 'not Found Reports'
         ResponseModel.data = null;
-        console.error("Reports Not Found with ID: " + id) //for Debug
+        console.error("Reports Not Found") //for Debug
         return NextResponse.json(ResponseModel, { status: 404 }) //for User
     }
     if (error) {
         ResponseModel.status = '500'
-        ResponseModel.message = 'Failed to retrieve notes' + error
+        ResponseModel.message = 'Failed to retrieve reports' + error
         ResponseModel.data = null;
         return NextResponse.json(ResponseModel, { status: 500 }) //for User
     }
