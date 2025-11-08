@@ -1,14 +1,15 @@
 import { Qualityper } from "./type";
 import { queryOptions } from "@tanstack/react-query";
 
-export async function getQualityPec(): Promise<Quality> {
+export async function getQualityPec(): Promise<Qualityper> {
   const res = await fetch(`/api/user/quality/percent`);
   if (!res.ok) throw new Error("Failed to fetch quality");
-  return res.json();
+  const body = await res.json();
+  return body.data;
 }
 
 export const createQualityQueryOptions = {
-  pec: 
+  pec: () =>
     queryOptions({
           queryKey: ["QualityPec"],
           queryFn: getQualityPec,
