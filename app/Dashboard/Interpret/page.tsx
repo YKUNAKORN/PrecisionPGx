@@ -593,7 +593,7 @@ chr22   42130797 rs11355840  C   G   99   PASS   GENE=CYP2D6;IMPACT=LOW`}
                     <div>
                       Patient:
                       <br />
-                      {selectedReport ? selectedReport.patient_name : "-"}
+                      {selectedReport ? selectedReport.patient : "-"}
                     </div>
                     <div>
                       Test Type:
