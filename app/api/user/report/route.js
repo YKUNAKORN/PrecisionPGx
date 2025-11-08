@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ResponseModel } from '../../../../lib/model/Response'
 import { CreateReport, GetAllReports, UpdateReportByID, DeleteReportByID, EditReportByID } from '../service/report_service';
-import { ReportModel, ReportUpdate } from '../../../../lib/model/Report';
+import { ReportModel, ReportUpdate, CreateReportModel } from '../../../../lib/model/Report';
 
 /**
  * @swagger
@@ -72,29 +72,25 @@ import { ReportModel, ReportUpdate } from '../../../../lib/model/Report';
  *           schema:
  *             type: object
  *             properties:
- *               specimens_id:
+ *               specimens:
  *                 type: string
  *               doctor_id:
  *                 type: string
  *               patient_id:
  *                 type: string
- *               pharm_verify:
+ *               priority:
  *                 type: string
- *               medtech_verify:
+ *               ward_id:
  *                 type: string
- *               note_id:
+ *               contact_number:
  *                 type: string
- *               rule_id:
+ *               collected_at:
  *                 type: string
- *               more_information:
- *                 type: string
- *               pharmacist_id:
+ *               fridge_id:
  *                 type: string
  *               medical_technician_id:
  *                 type: string
- *               request_date:
- *                 type: string
- *               report_date:
+ *               note:
  *                 type: string
  *     responses:
  *       201:
@@ -117,17 +113,24 @@ import { ReportModel, ReportUpdate } from '../../../../lib/model/Report';
 
 export async function POST(req) {
     const body = await req.json()
-    if (!body || !body.specimens_id || !body.patient_id) {
+    if (!body || !body.specimens || !body.patient_id || !body.priority || !body.doctor_id || !body.ward_id || !body.contact_number || !body.collected_at || !body.fridge_id || !body.medical_technician_id ) {
         ResponseModel.status = '400'
         ResponseModel.message = 'Invalid Data'
         ResponseModel.data = null;
         console.error("Invalid Data") //for Debug
         return NextResponse.json(ResponseModel, { status: 400 }) //for User
     }
-    ReportModel.specimens_id = body.specimens_id;
-    ReportModel.patient_id = body.patient_id;
-    ReportModel.status = 'in progress'
-    const { data, error } = await CreateReport(ReportModel)
+    CreateReportModel.specimens = body.specimens;
+    CreateReportModel.patient_id = body.patient_id;
+    CreateReportModel.priority =  body.priority;
+    CreateReportModel.doctor_id = body.doctor_id;
+    CreateReportModel.ward_id = body.ward_id;
+    CreateReportModel.contact_number = body.contact_number;
+    CreateReportModel.note = body.note;
+    CreateReportModel.collected_at = body.collected_at;
+    CreateReportModel.fridge_id = body.fridge_id;
+    CreateReportModel.medical_technician_id = body.medical_technician_id;
+    const { data, error } = await CreateReport(CreateReportModel)
     if (error) {
         ResponseModel.status = '500'
         ResponseModel.message = 'Created Failed' + error
