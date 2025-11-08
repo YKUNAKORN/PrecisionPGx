@@ -1,15 +1,10 @@
 .title-1 {
-  margin-left: 108px; 
   font-size: 24px;    
-  color: #ffffff;
-  padding-top: 24px;
   font-weight: bold;
 }
 
 .title-2 {
-  margin-left: 108px; 
   font-size: 16px;  
-  color: #c1c1c7;
 }
 
 .card-c1-container {
@@ -17,31 +12,25 @@
   grid-template-columns: repeat(3, 1fr); 
   gap: 24px;
   padding-top: 23.5px;
-  padding-left: 104px;
-  padding-right: 24px;
 }
 
-.card-c1 {
-  background: #1f1c21;         
+.card-c1 {         
   border: 1px solid #333;      
   border-radius: 12px;         
   padding-left: 24px;
   padding-right: 15px;
   padding-top: 24px;
   padding-bottom: 10px;
-  border: 1px solid #ffffff20;
 }
 
 .card-label-c1 {
   font-size: 16px;
-  color: #aaa;
   margin-bottom: 9px;                 
 }
 
 .card-value-c1 {
   font-size: 33px;
-  font-weight: bold;
-  color: #fff;        
+  font-weight: bold;      
 }
 
 .card-c1-progress{
@@ -49,14 +38,14 @@
   margin-right: 10px;
   height: 5px;
   margin-bottom: 12px;
-  background: #ffffff20;     /* รางจางๆ */
+  background: #ffffff20;     
   border-radius: 90px;
   overflow: hidden;
 }
 .card-c1-progress .fill{
   height: 100%;
-  width: 100%;     /* ปรับเปอร์เซ็นต์ด้วยตัวแปรนี้ */
-  background: #cdb6ff;        /* หรือ #6b4eff; #f1b5d4 ตามธีม */
+  width: 100%;     
+  background: #cdb6ff;        
   border-radius: inherit;
 }
 
@@ -65,14 +54,11 @@
   grid-template-columns: repeat(2, 1fr); 
   gap: 24px;                             
   padding-top: 23.5px;
-  padding-left: 104px;
-  padding-right: 24px;
   height: auto;
 }
 
-.card-c2 {
-  background: #1f1c21;           
-  border: 1px solid #ffffff20;   
+.card-c2 {         
+  border: 1px solid #333; 
   border-radius: 12px;           
   padding: 20px;                 
 }
@@ -82,15 +68,13 @@
     justify-content: space-between;
     align-items: center;
     font-size: 22px;  
-    font-weight: bold;
-    color: #fff;   
+    font-weight: bold; 
     padding: 5px 5px 0px 5px;
 }
 
 .card-value-c2-l{
     font-size: 16px; 
     font-weight: normal;
-    color: #c1c1c7;
     padding: 0px 5px 18px 5px;
 }
 
@@ -121,7 +105,6 @@
 
 .bar-label{
   margin-top: 8px;
-  color: #c1c1c7;
   font-size: 12px;
 }
 
@@ -145,7 +128,6 @@
 
 .status-label {
   position: relative;
-  color: #ffffff;
   font-size: 16px;
   padding-left: 18px; /* เผื่อที่ให้จุด */
 }
@@ -158,13 +140,11 @@
   transform: translateY(-50%);
   width: 8px;
   height: 8px;
-  background-color: #8a8a8a; /* สีเทาแบบในภาพ */
   border-radius: 50%;
 }
 
 
 .status-val{
-  color: #c1c1c7;
   font-size: 14px;
   white-space: nowrap;
   margin-left: auto;
@@ -181,11 +161,10 @@
 .status-fill{
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg,#bfa8ff,#f3b8d1); /* โทนม่วง-ชมพู */
+  background: linear-gradient(90deg,#bfa8ff,#f3b8d1); 
   transition: width .3s ease;
 }
 
-/* ถ้าอยากให้แต่ละสถานะคนละโทนสี */
 .status-fill.s1{ background: #a7a7b4; }   /* Submitted */
 .status-fill.s2{ background: #a7a7b4; }   /* Awaiting */
 .status-fill.s3{ background: #f1b5d4; }   /* In Progress */
@@ -203,14 +182,11 @@
   grid-template-columns: repeat 1fr; 
   gap: 24px;                             
   padding-top: 23.5px;
-  padding-left: 104px;
-  padding-right: 24px;
   height: auto;
 }
 
-.card-c3{
-  background: #1f1c21;            
-  border: 1px solid #ffffff20;   
+.card-c3{          
+  border: 1px solid #333;    
   border-radius: 12px;           
   padding: 20px;    
 }
@@ -220,8 +196,7 @@
     justify-content: space-between;
     align-items: center;
     font-size: 22px;  
-    font-weight: bold;
-    color: #fff;   
+    font-weight: bold;  
     padding: 10px 0px 10px 5px;
 }
 
@@ -229,22 +204,18 @@
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
     font-size: 16px;
-    color: #c1c1c7;
     padding: 14px 0px 0px 15px;
     gap: 10px;
     white-space: nowrap;
 }
 
-/* ให้หัวตารางดูต่างจากแถวข้อมูล */
 .card-value-c3-subt.header {
-  color: #c1c1c7;
   font-weight: bold;
   padding-bottom: 8px;
   border-bottom: 1px solid #ffffff20;
   font-size:16px
 }
 
-/* เพิ่มเส้นแบ่งระหว่างแต่ละแถว */
 .card-value-c3-subt:not(.header) {
   border-bottom: 2px solid #ffffff10;
   padding-top: 10px;
@@ -256,7 +227,6 @@
   transition: background 0.2s ease;
 }
 
-/* แท็กสถานะ (badge) */
 .status {
   display: inline-block;
   font-size: 12px;

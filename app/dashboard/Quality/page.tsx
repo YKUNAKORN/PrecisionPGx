@@ -2,15 +2,15 @@ import { AlertTriangle, Info } from "lucide-react";
 
 const Page = () => {
   return (
-    <div className="p-5 bg-[#F6F2FA] min-h-screen text-[#4A4458]">
+    <div className="p-8 bg-[#F6F2FA] min-h-screen text-[#4A4458]">
       {/* Header */}
-      <h1 className="text-2xl font-bold text-[#000000]">Quality Control</h1>
-      <h3 className="text-[#000000]">
+      <h1 className="text-2xl font-bold text-[#000000] mb-1">Quality Control</h1>
+      <h3 className="text-[#000000] text-base mb-6">
         Real-time control monitoring, Westgard rules, and inventory status.
       </h3>
 
       {/* Cards */}
-      <div className="flex flex-wrap justify-start gap-5 mt-5">
+      <div className="flex flex-wrap justify-center gap-6 mb-8">
         <Card title="Pass Rate" value="96.4%" />
         <Card title="Warnings (24h)" value="1" />
         <Card title="Failures (24h)" value="0" />
@@ -18,7 +18,7 @@ const Page = () => {
       </div>
 
       {/* Main content grid */}
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left: Chart (2 cols) */}
         <div className="lg:col-span-2">
           <Chart
@@ -27,42 +27,45 @@ const Page = () => {
           />
         </div>
 
-        {/* Right: Alerts */}
-        <div className="space-y-5">
+        {/* Right: Alerts + Inventory */}
+        <div className="space-y-6">
           <Alerts />
           <Inventory />
         </div>
       </div>
 
       {/* Status */}
-      <div className="mt-5 flex justify-center">
+      <div className="mt-8 flex justify-center">
         <Status value="Status colors: Pass green, Warning orange, Failure red, Info blue. Control limits and target lines follow high-contrast styling for accessibility." />
       </div>
     </div>
   );
 };
 
+// ✅ Card
 function Card({ title, value }) {
   return (
-    <div className="bg-[#F9F6FF] border border-[#CCC2DC] rounded-xl p-5 shadow-sm w-60">
-      <h3 className="text-sm text-[#000000]">{title}</h3>
-      {value && <p className="text-lg font-semibold text-[#4F378B] mt-1">{value}</p>}
+    <div className="bg-[#F9F6FF] border border-[#CCC2DC] rounded-xl p-6 shadow-sm w-75 hover:shadow-md transition">
+      <h3 className="text-sm text-[#000000] font-medium">{title}</h3>
+      {value && <p className="text-xl font-semibold text-[#4F378B] mt-2">{value}</p>}
     </div>
   );
 }
 
+// ✅ Chart
 function Chart({ title, value }) {
   return (
     <div className="bg-[#F9F6FF] border border-[#CCC2DC] rounded-xl p-6 shadow-md w-full">
-      <h3 className="text-sm font-bold text-[#000000]">{title}</h3>
-      {value && <p className="text-sm text-[#938F99] mt-3">{value}</p>}
-      <div className="h-56 bg-[#D0BCFF1A] mt-4 rounded-md flex items-center justify-center text-[#938F99] text-xs border border-[#CCC2DC]">
+      <h3 className="text-base font-bold text-[#000000]">{title}</h3>
+      {value && <p className="text-sm text-[#938F99] mt-3 leading-relaxed">{value}</p>}
+      <div className="h-64 bg-[#D0BCFF1A] mt-5 rounded-lg flex items-center justify-center text-[#938F99] text-sm border border-[#CCC2DC]">
         Chart Area
       </div>
     </div>
   );
 }
 
+// ✅ Alerts
 function Alerts() {
   const alertsData = [
     {
@@ -93,9 +96,9 @@ function Alerts() {
   };
 
   return (
-    <div className="bg-[#F9F6FF] rounded-xl p-4 shadow-md w-full border border-[#CCC2DC]">
-      <h2 className="mb-3 text-lg font-semibold text-[#000000]">Alerts</h2>
-      <div className="space-y-2">
+    <div className="bg-[#F9F6FF] rounded-xl p-5 shadow-md w-full border border-[#CCC2DC]">
+      <h2 className="mb-4 text-lg font-semibold text-[#000000]">Alerts</h2>
+      <div className="space-y-3">
         {alertsData.map((alert) => (
           <div
             key={alert.id}
@@ -108,7 +111,7 @@ function Alerts() {
                 <p className="text-xs text-[#000000]">{alert.description}</p>
               </div>
             </div>
-            <span className="text-xs text-[#000000]">{alert.time}</span>
+            <span className="text-xs text-[#000000] whitespace-nowrap">{alert.time}</span>
           </div>
         ))}
       </div>
@@ -116,6 +119,7 @@ function Alerts() {
   );
 }
 
+// ✅ Inventory
 function Inventory() {
   const inventoryData = [
     { analyte: "HbA1c L2", lot: "AS-2405", expires: "2026-01-31", stock: 18 },
@@ -123,13 +127,13 @@ function Inventory() {
   ];
 
   const getStockColor = (stock) => {
-    if (stock < 10) return "text-[#000000] font-semibold";
-    if (stock < 20) return "text-[#000000] font-semibold";
-    return "text-[#000000] font-semibold";
+    if (stock < 10) return "text-[#D32F2F] font-semibold";
+    if (stock < 20) return "text-[#F57C00] font-semibold";
+    return "text-[#388E3C] font-semibold";
   };
 
   return (
-    <div className="bg-[#F9F6FF] rounded-xl p-4 shadow-md w-full border border-[#CCC2DC]">
+    <div className="bg-[#F9F6FF] rounded-xl p-5 shadow-md w-full border border-[#CCC2DC]">
       <h3 className="text-lg font-semibold mb-4 text-[#000000]">Control Inventory</h3>
       <table className="w-full text-sm text-left border-collapse">
         <thead>
@@ -137,7 +141,7 @@ function Inventory() {
             <th className="pb-2 pt-1">Analyte</th>
             <th className="pb-2 pt-1">Lot</th>
             <th className="pb-2 pt-1">Expires</th>
-            <th className="pb-2 pt-1">Stock</th>
+            <th className="pb-2 pt-1 text-right">Stock</th>
           </tr>
         </thead>
         <tbody>
@@ -149,7 +153,7 @@ function Inventory() {
               <td className="py-2 text-[#4A4458]">{item.analyte}</td>
               <td className="py-2 text-[#4A4458]">{item.lot}</td>
               <td className="py-2 text-[#4A4458]">{item.expires}</td>
-              <td className={`py-2 ${getStockColor(item.stock)}`}>{item.stock}</td>
+              <td className={`py-2 text-right ${getStockColor(item.stock)}`}>{item.stock}</td>
             </tr>
           ))}
         </tbody>
@@ -158,9 +162,10 @@ function Inventory() {
   );
 }
 
+// ✅ Status
 function Status({ value }) {
   return (
-    <div className="bg-[#F9F6FF] border border-[#CCC2DC] rounded-lg p-4 shadow-sm w-full max-w-4xl">
+    <div className="bg-[#F9F6FF] border border-[#CCC2DC] rounded-lg p-4 shadow-sm w-full max-w-7xl text-start">
       {value && <p className="text-xs text-[#000000]">{value}</p>}
     </div>
   );

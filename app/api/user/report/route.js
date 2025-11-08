@@ -11,15 +11,6 @@ import { ReportModel, ReportUpdate } from '../../../../lib/model/Report';
  *     description: Retrieve a specific report by its ID from the database
  *     tags:
  *       - Report
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *         description: The unique identifier of the report
- *         example: 60b3d5cb-0c24-4bc4-95c2-a733c2b65175
  *     responses:
  *       200:
  *         description: Query Successful
@@ -187,8 +178,7 @@ import { ReportModel, ReportUpdate } from '../../../../lib/model/Report';
 
 export async function POST(req) {
     const body = await req.json()
-    // const { specimens_id, doctor_id, patient_id, pharm_verify, medtech_verify, note_id, rule_id, more_information, pharmacist_id, pharmacist_license, medical_technician_id, medtech_license, request_date, report_date } = row
-    if (!body || !body.specimens_id || !body.doctor_id || !body.patient_id || !body.pharm_verify || !body.medtech_verify || !body.note_id || !body.rule_id || !body.more_information || !body.pharmacist_id || !body.pharmacist_license || !body.medical_technician_id || !body.medtech_license || !body.request_date || !body.report_date) {
+    if (!body || !body.specimens_id || !body.patient_id) {
         ResponseModel.status = '400'
         ResponseModel.message = 'Invalid Data'
         ResponseModel.data = null;
@@ -196,16 +186,8 @@ export async function POST(req) {
         return NextResponse.json(ResponseModel, { status: 400 }) //for User
     }
     ReportModel.specimens_id = body.specimens_id;
-    ReportModel.doctor_id = body.doctor_id;
     ReportModel.patient_id = body.patient_id;
-    ReportModel.pharm_verify = body.pharm_verify;
-    ReportModel.medtech_verify = body.medtech_verify;
-    ReportModel.note_id = body.note_id;
-    ReportModel.rule_id = body.rule_id;
-    ReportModel.pharmacist_id = body.pharmacist_id;
-    ReportModel.medical_technician_id = body.medical_technician_id;
-    ReportModel.request_date = body.request_date;
-    ReportModel.report_date = body.report_date;
+    ReportModel.status = 'in progress'
     const { data, error } = await CreateReport(ReportModel)
     if (error) {
         ResponseModel.status = '500'
@@ -223,14 +205,14 @@ export async function GET() {
     const { data, error } = await GetAllReports();
     if (!data || data.length === 0) {
         ResponseModel.status = '404'
-        ResponseModel.message = 'Note Not Found with ID: ' + id
+        ResponseModel.message = 'not Found Reports'
         ResponseModel.data = null;
-        console.error("Reports Not Found with ID: " + id) //for Debug
+        console.error("Reports Not Found") //for Debug
         return NextResponse.json(ResponseModel, { status: 404 }) //for User
     }
     if (error) {
         ResponseModel.status = '500'
-        ResponseModel.message = 'Failed to retrieve notes' + error
+        ResponseModel.message = 'Failed to retrieve reports' + error
         ResponseModel.data = null;
         return NextResponse.json(ResponseModel, { status: 500 }) //for User
     }
@@ -247,25 +229,27 @@ export async function PUT(req) {
     const { searchParams } = new URL(req.url); //querystring
     const id = searchParams.get('id');
     const body = await req.json()
-    if (!body || !body.specimens_id || !body.doctor_id || !body.patient_id || !body.pharm_verify || !body.medtech_verify || !body.note_id || !body.rule_id || !body.more_information || !body.pharmacist_id || !body.medical_technician_id || !body.request_date || !body.report_date) {
+    if (!body || !body.doctor_id || !body.pharm_verify || !body.medtech_verify || !body.note_id || !body.rule_id || !body.index_rule || !body.more_information || !body.pharmacist_id || !body.medical_technician_id || !body.request_date || !body.report_date) {
         ResponseModel.status = '400'
         ResponseModel.message = 'Invalid Data'
         ResponseModel.data = null;
         console.error("Invalid Data") //for Debug
         return NextResponse.json(ResponseModel, { status: 400 }) //for User
     }
-    ReportUpdate.specimens_id = body.specimens_id;
     ReportUpdate.doctor_id = body.doctor_id;
-    ReportUpdate.patient_id = body.patient_id;
     ReportUpdate.pharm_verify = body.pharm_verify;
     ReportUpdate.medtech_verify = body.medtech_verify;
     ReportUpdate.note_id = body.note_id;
     ReportUpdate.rule_id = body.rule_id;
+    ReportUpdate.index_rule = parseInt(body.index_rule); // แปลงเป็น integer
+    ReportUpdate.more_information = body.more_information;
     ReportUpdate.pharmacist_id = body.pharmacist_id;
     ReportUpdate.medical_technician_id = body.medical_technician_id;
+    ReportUpdate.status = 'finished'
     ReportUpdate.request_date = body.request_date;
     ReportUpdate.report_date = body.report_date;
-    // console.log(ReportUpdate)
+    ReportUpdate.updated_at = new Date().toISOString();
+    console.log(ReportUpdate)
     try {
         const { data, error } = await UpdateReportByID(id, ReportUpdate)
         if (!data || data.length === 0) {
@@ -318,3 +302,37 @@ export async function DELETE(req) {
     return NextResponse.json(ResponseModel, { status: 200 });
 }
 
+// // app/api/user/report/route.ts
+// import { NextResponse } from "next/server";
+// import { createClient } from "@supabase/supabase-js";
+
+// const supabase = createClient(
+//   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+//   process.env.SUPABASE_SERVICE_ROLE_KEY! // ใช้ฝั่ง server เท่านั้น
+// );
+
+// export async function GET() {
+//   // FK สมมติชื่อ reports_patient_id_fkey (ดูชื่อจริงใน DB)
+//   const { data, error } = await supabase
+//     .from("reports")
+//     .select(`
+//       id,
+//       status,
+//       patient:patients!reports_patient_id_fkey (
+//         Eng_name,
+//         eng_name
+//       )
+//     `)
+//     .limit(200);
+
+//   if (error) return NextResponse.json({ error: error.message, data: [] }, { status: 500 });
+
+//   // แปลงชื่อให้ง่ายต่อฝั่ง UI (Eng_name รองรับ 2 สไตล์)
+//   const mapped = (data ?? []).map((r) => ({
+//     id: r.id,
+//     status: r.status,
+//     Eng_name: r.patient?.Eng_name ?? r.patient?.eng_name ?? null,
+//   }));
+
+//   return NextResponse.json(mapped, { status: 200 });
+// }
