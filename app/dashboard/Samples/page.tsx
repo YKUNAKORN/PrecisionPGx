@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 
 // ✅ ปรับ path ให้ตรงโปรเจ็กต์คุณ
 import { createStorageQueryOptions } from "../../../lib/fetch/Storage";
-import type { Storage } from "@/type";
+import type { Storage } from "../../../lib/fetch/type";
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState<"Inventory" | "Storage" | "Clinical Controls" | "Historical">("Inventory");
