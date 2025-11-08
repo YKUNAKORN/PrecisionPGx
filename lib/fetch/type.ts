@@ -103,3 +103,10 @@ export type HLA_B = {
     ref: string[];
     created_at: Timestamp;
 }
+
+export type Quality = {
+    pass: number,
+    fail: number,
+    warning: number,
+    total: number
+}
