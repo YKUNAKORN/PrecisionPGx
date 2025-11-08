@@ -10,7 +10,7 @@ import type { Storage } from "@/type";
 export default function Page() {
   const [activeTab, setActiveTab] = useState<"Inventory" | "Storage" | "Clinical Controls" | "Historical">("Inventory");
   const [filters, setFilters] = useState({
-    location: "All",
+    fridge_id: "All",
     type: "All",
     status: "All",
     sortBy: "ID",
@@ -103,7 +103,7 @@ function InventorySection({
   error,
 }: {
   filters: {
-    location: string;
+    fridge_id: string;
     type: string;
     status: string;
     sortBy: "ID" | "Date" | "Status" | "Type";
@@ -118,8 +118,8 @@ function InventorySection({
     const t = filters.search.trim().toLowerCase();
     let list = [...storages];
 
-    if (filters.location !== "All") {
-      list = list.filter((s) => (s.location ?? "").toLowerCase().includes(filters.location.toLowerCase()));
+    if (filters.fridge_id !== "All") {
+      list = list.filter((s) => (s.fridge_id ?? "").toLowerCase().includes(filters.fridge_id.toLowerCase()));
     }
     if (filters.type !== "All") {
       list = list.filter((s) => (s.specimen_type ?? "").toLowerCase().includes(filters.type.toLowerCase()));
@@ -129,7 +129,7 @@ function InventorySection({
     }
     if (t) {
       list = list.filter((s) =>
-        `${s.id} ${s.location ?? ""} ${s.specimen_type ?? ""} ${s.status ?? ""}`.toLowerCase().includes(t)
+        `${s.id} ${s.fridge_id ?? ""} ${s.specimen_type ?? ""} ${s.status ?? ""}`.toLowerCase().includes(t)
       );
     }
 
@@ -169,9 +169,9 @@ function InventorySection({
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div className="flex flex-wrap items-center gap-4 text-sm md:justify-start">
           <Filter
-            label="Location"
-            value={filters.location}
-            onChange={(v) => setFilters((f) => ({ ...f, location: v }))}
+            label="Fridge ID"
+            value={filters.fridge_id}
+            onChange={(v) => setFilters((f) => ({ ...f, fridge_id: v }))}
             options={["All", "A", "B", "C"]}
           />
           <Filter
@@ -213,7 +213,7 @@ function InventorySection({
               data={{
                 id: s.id,
                 type: s.specimen_type ?? "—",
-                location: s.location ?? "—",
+                fridge_id: s.fridge_id ?? "—",
                 status: s.status ?? "—",
                 date: formatDate(s.created_at as any),
                 time: formatTime(s.created_at as any),
@@ -262,7 +262,7 @@ function SampleCard({
   data: {
     id: string;
     type: string;
-    location: string;
+    fridge_id: string;
     status: string;
     date: string;
     time: string;
@@ -287,7 +287,7 @@ function SampleCard({
 
       <div className="mt-1 space-y-1 text-xs md:text-sm">
         <p>Type: {data.type}</p>
-        <p>Location: {data.location}</p>
+        <p>Fridge ID: {data.fridge_id}</p>
         <p>Collected: {data.date}</p>
         <p>Time: {data.time}</p>
         <p>Test: {data.test}</p>

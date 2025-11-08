@@ -3,7 +3,7 @@ import { Storage } from "./type";
 
 export type CreateStorageDTO = {
   patient_id: string;
-  location: string;
+  fridge_id: string;
   specimen_id: string;
   status: string;       // เช่น "stored"
 };

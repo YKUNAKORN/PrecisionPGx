@@ -1,5 +1,5 @@
 import { GetAll, GetById, Create, Update, Delete } from "@/lib/supabase/crud";
-import { Quality, UpdateQuality, ResponseQuality } from "@/lib/model/Quality";
+import { Quality, UpdateQuality, ResponseQuality, QualityCount } from "@/lib/model/Quality";
 import { CreateClientSecret } from "@/lib/supabase/client";
 
 const db = CreateClientSecret();
@@ -17,7 +17,7 @@ export async function GetAllQualityMetrics() {
     if (data.length === 0) {
         return { data: [], error: new Error("Data Not Found ") };
     }
-    
+
     try {
         for (let i = 0; i < data.length; i++) {
             Quality[i] = {};
@@ -92,4 +92,48 @@ export async function DeleteQualityMetrics(id) {
         return { data: null, error: error }; //for User
     }
     return { data: data, error: null };
+}
+
+export async function GetAllQualityMetricsPercent() {
+    const { data, error } = await GetAll(db, "quality");
+    let pass = 0;
+    let fail = 0;
+    let warning = 0;
+
+    if (error) {
+        return { data: null, error }; //for User
+    }
+
+
+    if (!data || data.length === 0) {
+        return { data: { pass: 0, fail: 0, warning: 0, total: 0 }, error: null };
+    }
+
+    try {
+        for (let i = 0; i < data.length; i++) {
+            const q = String(data[i]?.quality ?? "").toLowerCase();
+
+            if (q === "pass") {
+                pass++;
+            } else if (q === "fail") {
+                fail++;
+            } else if (q === "warning") {
+                warning++;
+            } else {
+                // แค่ log แล้วทำงานต่อ ไม่ต้อง return
+                console.warn("Quality type doesn't exist for item:", data[i]);
+            }
+        }
+    } catch (err) {
+        return { data: null, error: err };
+    }
+    const total = pass + fail + warning;
+    if (total === 0) {
+        return { data: { pass: 0, fail: 0, warning: 0, total: 0 }, error: null };
+    }
+    QualityCount.pass = (pass * 100) / total;
+    QualityCount.warning = (warning * 100) / total;
+    QualityCount.fail = (fail * 100) / total;
+    QualityCount.total = total;
+    return { data: QualityCount, error: null };
 }
