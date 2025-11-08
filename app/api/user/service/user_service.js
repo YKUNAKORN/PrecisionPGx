@@ -1,4 +1,4 @@
-import { Create, GetAll, GetById, Update } from '@/lib/supabase/crud'
+import { Create, GetAll, GetById, GetJoinWithId, Update } from '@/lib/supabase/crud'
 import { CreateClientSecret } from '@/lib/supabase/client'
 
 const db = CreateClientSecret()
@@ -20,7 +20,7 @@ export async function GetAllUsers() {
 }
 
 export async function GetUserById(id) {
-    const { data, error } = await GetById(db, "user", id)
+    const { data, error } = await GetJoinWithId(db, "user", id, "*, ward(name)")
     if (error) {
         throw new Error(`Failed to fetch user: ${error.message}`)
     }
