@@ -227,56 +227,62 @@ export async function PUT(req) {
     const { searchParams } = new URL(req.url); //querystring
     const id = searchParams.get('id');
     const body = await req.json()
+    
     // these for debug when hit Validate-btn    
     console.log('PUT /api/user/report - Received body:', body);
     console.log('Validation check:');
     console.log('- body exists:', !!body);
-    console.log('- doctor_id:', body?.doctor_id, '→', !!body?.doctor_id);
-    console.log('- pharm_verify:', body?.pharm_verify, '→', !!body?.pharm_verify);
-    console.log('- medtech_verify:', body?.medtech_verify, '→', !!body?.medtech_verify);
-    console.log('- note_id:', body?.note_id, '→', !!body?.note_id);
     console.log('- rule_id:', body?.rule_id, '→', !!body?.rule_id);
-    console.log('- index_rule:', body?.index_rule, '→', !!body?.index_rule);
+    console.log('- index_rule:', body?.index_rule, '→', body?.index_rule !== undefined);
     console.log('- more_information:', body?.more_information, '→', !!body?.more_information);
-    console.log('- pharmacist_id:', body?.pharmacist_id, '→', !!body?.pharmacist_id);
     console.log('- medical_technician_id:', body?.medical_technician_id, '→', !!body?.medical_technician_id);
-    console.log('- request_date:', body?.request_date, '→', !!body?.request_date);
     console.log('- report_date:', body?.report_date, '→', !!body?.report_date);
     
-    if (!body || !body.doctor_id || !body.pharm_verify || !body.medtech_verify || !body.note_id || !body.rule_id || !body.index_rule || !body.more_information || !body.pharmacist_id || !body.medical_technician_id || !body.request_date || !body.report_date) {
+    // Validate only required fields for report update
+    if (!body || !body.rule_id || body.index_rule === undefined || !body.more_information || !body.medical_technician_id || !body.report_date) {
         ResponseModel.status = '400'
-        ResponseModel.message = 'Invalid Data'
+        ResponseModel.message = 'Invalid Data - Missing required fields'
         ResponseModel.data = null;
-        console.error("Invalid Data") //for Debug
+        console.error("Invalid Data - Missing required fields") //for Debug
         return NextResponse.json(ResponseModel, { status: 400 }) //for User
     }
-    ReportUpdate.doctor_id = body.doctor_id;
-    ReportUpdate.pharm_verify = body.pharm_verify;
-    ReportUpdate.medtech_verify = body.medtech_verify;
-    ReportUpdate.note_id = body.note_id;
-    ReportUpdate.rule_id = body.rule_id;
-    ReportUpdate.index_rule = parseInt(body.index_rule); // Changed to int
-    ReportUpdate.more_information = body.more_information;
-    ReportUpdate.pharmacist_id = body.pharmacist_id;
-    ReportUpdate.medical_technician_id = body.medical_technician_id;
-    ReportUpdate.status = 'Completed' // changed from Finished to Completed
-    ReportUpdate.request_date = body.request_date;
-    ReportUpdate.report_date = body.report_date;
-    ReportUpdate.updated_at = new Date().toISOString();
-    console.log(ReportUpdate)
+    
+    // Build update object based on ReportUpdate model
+    const updateData = {
+        medtech_verify: body.medtech_verify !== undefined ? body.medtech_verify : true,
+        rule_id: body.rule_id,
+        index_rule: parseInt(body.index_rule),
+        more_information: body.more_information,
+        medical_technician_id: body.medical_technician_id,
+        report_date: body.report_date,
+        status: 'Completed',
+        updated_at: new Date().toISOString()
+    };
+    
+    // Add optional fields if provided (convert "N/A" to null for UUID fields)
+    if (body.doctor_id && body.doctor_id !== 'N/A') updateData.doctor_id = body.doctor_id;
+    if (body.pharm_verify !== undefined) updateData.pharm_verify = body.pharm_verify;
+    if (body.note_id && body.note_id !== 'N/A') updateData.note_id = body.note_id;
+    if (body.pharmacist_id && body.pharmacist_id !== 'N/A') updateData.pharmacist_id = body.pharmacist_id;
+    if (body.request_date) updateData.request_date = body.request_date;
+    
+    console.log('Update data:', updateData);
+    
     try {
-        const { data, error } = await UpdateReportByID(id, ReportUpdate)
+        const { data, error } = await UpdateReportByID(id, updateData)
+        console.log("UpdateReportByID result:", { data, error });
         if (!data || data.length === 0) {
             ResponseModel.status = '404'
             ResponseModel.message = 'Report Not Found with ID: ' + id
             ResponseModel.data = null;
-            console.error("Note Not Found with ID: " + id) //for Debug
+            console.error("Report Not Found with ID: " + id) //for Debug
             return NextResponse.json(ResponseModel, { status: 404 }) //for User
         }
         if (error) {
             ResponseModel.status = '500'
-            ResponseModel.message = 'Update Failed' + error
+            ResponseModel.message = 'Update Failed: ' + (error.message || JSON.stringify(error))
             ResponseModel.data = null;
+            console.error("Update Failed Error:", error);
             return NextResponse.json(ResponseModel, { status: 500 })
         }
         ResponseModel.status = '200';
@@ -285,7 +291,8 @@ export async function PUT(req) {
         return NextResponse.json(ResponseModel, { status: 200 })
     } catch (err) {
         ResponseModel.status = '500'
-        ResponseModel.message = 'Update Failed' + err
+        ResponseModel.message = 'Update Failed: ' + err.message
+        console.error("Update Exception:", err);
         return NextResponse.json(ResponseModel, { status: 500 })
     }
 }

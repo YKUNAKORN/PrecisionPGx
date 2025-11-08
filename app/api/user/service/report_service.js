@@ -261,38 +261,47 @@ export async function GetAllReports() {
 }
 
 export async function UpdateReportByID(id, row) {
+    console.log("UpdateReportByID called with:", { id, row });
     const { data, error } = await Update(db, "reports", id, row);
-    if (data.length === 0) {
-        return { data: [], error: new Error("Data Not Found : " + id) }; //for User
-    }
+    console.log("Update result from DB:", { data, error });
     if (error) {
-        console.log(error);
+        console.error("Update error:", error);
         return { data: null, error: error }; //for User
     }
-    try {
-        ReportResult.id = data[0].id;
-        ReportResult.specimens_id = data[0].specimens_id;
-        ReportResult.doctor_id = data[0].doctor_id;
-        ReportResult.patient_id = data[0].patient_id;
-        ReportResult.pharm_verify = data[0].pharm_verify;
-        ReportResult.medtech_verify = data[0].medtech_verify;
-        ReportResult.note_id = data[0].note_id;
-        ReportResult.rule_id = data[0].rule_id;
-        ReportResult.more_information = data[0].more_information;
-        ReportResult.medical_technician_id = data[0].medical_technician_id;
-        ReportResult.status = data[0].status;
-        ReportResult.request_date = data[0].request_date;
-        ReportResult.report_date = data[0].report_date;
-        ReportResult.priority = data[0].priority;
-        ReportResult.ward_id = data[0].ward_id;
-        ReportResult.contact_number = data[0].ward.contact_number;
-        ReportResult.created_at = data[0].created_at;
-        ReportResult.updated_at = data[0].updated_at;
-    } catch (err) {
-        console.error("Failed to parse data" + err); //for Debug
-        return { data: null, error: "Failed to parse data" + err };
+    if (!data || data.length === 0) {
+        console.error("No data returned from update for ID:", id);
+        return { data: [], error: new Error("Data Not Found : " + id) }; //for User
     }
-    return { data: ReportResult, error: null };
+    try {
+        // ส่งข้อมูลที่ได้จาก database โดยตรง ไม่ต้องแปลง
+        const result = {
+            id: data[0].id,
+            specimens_id: data[0].specimens_id,
+            doctor_id: data[0].doctor_id,
+            patient_id: data[0].patient_id,
+            pharm_verify: data[0].pharm_verify,
+            medtech_verify: data[0].medtech_verify,
+            note_id: data[0].note_id,
+            rule_id: data[0].rule_id,
+            index_rule: data[0].index_rule,
+            more_information: data[0].more_information,
+            pharmacist_id: data[0].pharmacist_id,
+            medical_technician_id: data[0].medical_technician_id,
+            status: data[0].status,
+            request_date: data[0].request_date,
+            report_date: data[0].report_date,
+            priority: data[0].priority,
+            ward_id: data[0].ward_id,
+            contact_number: data[0].contact_number,
+            created_at: data[0].created_at,
+            updated_at: data[0].updated_at
+        };
+        console.log("Returning result:", result);
+        return { data: result, error: null };
+    } catch (err) {
+        console.error("Failed to parse data:", err); //for Debug
+        return { data: null, error: "Failed to parse data: " + err.message };
+    }
 }
 
 export async function DeleteReportByID(id) {

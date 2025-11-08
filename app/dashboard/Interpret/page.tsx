@@ -1164,11 +1164,11 @@ export function ResultInterpretation() {
       });
 
       const updateData: any = {
-        doctor_id: selectedPatientData.doctor_id || "N/A",
+        doctor_id: selectedPatientData.doctor_id || null,
         pharm_verify: true,
         medtech_verify: true,
-        note_id: selectedPatientData.note_id || "N/A",
-        rule_id: selectedRuleId || selectedPatientData.rule_id || "N/A",
+        note_id: selectedPatientData.note_id || null,
+        rule_id: selectedRuleId || selectedPatientData.rule_id || null,
         index_rule: (() => {
           const value = selectedRuleRowIndex !== null && selectedRuleRowIndex !== undefined 
             ? selectedRuleRowIndex 
@@ -1176,8 +1176,8 @@ export function ResultInterpretation() {
           return value === 0 || value === null || value === undefined ? 1 : value;
         })(),
         more_information: moreInfo.length > 0 ? moreInfo : [{ default: true }],
-        pharmacist_id: selectedPatientData.pharmacist_id || "N/A",
-        medical_technician_id: selectedPatientData.medical_technician_id || "N/A",
+        pharmacist_id: selectedPatientData.pharmacist_id || null,
+        medical_technician_id: selectedPatientData.medical_technician_id || null,
         request_date: selectedPatientData.request_date || new Date().toISOString(),
         report_date: selectedPatientData.report_date || new Date().toISOString(),
       };
@@ -1213,15 +1213,15 @@ export function ResultInterpretation() {
 
     try {
       const updateData: any = {
-        doctor_id: selectedPatientData.doctor_id || "N/A",
+        doctor_id: selectedPatientData.doctor_id || null,
         pharm_verify: selectedPatientData.pharm_verify || true,
         medtech_verify: selectedPatientData.medtech_verify || true,
-        note_id: selectedPatientData.note_id || "N/A",
-        rule_id: selectedPatientData.rule_id || "N/A",
+        note_id: selectedPatientData.note_id || null,
+        rule_id: selectedPatientData.rule_id || null,
         index_rule: selectedPatientData.index_rule || 1,
         more_information: selectedPatientData.more_information || [{ default: true }],
-        pharmacist_id: selectedPatientData.pharmacist_id || "N/A",
-        medical_technician_id: selectedPatientData.medical_technician_id || "N/A",
+        pharmacist_id: selectedPatientData.pharmacist_id || null,
+        medical_technician_id: selectedPatientData.medical_technician_id || null,
         request_date: selectedPatientData.request_date || new Date().toISOString(),
         report_date: selectedPatientData.report_date || new Date().toISOString(),
         status: "Completed",
