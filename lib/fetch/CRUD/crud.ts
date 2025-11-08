@@ -1,8 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
-/**
- * Generic response type for CRUD operations
- */
 export interface CRUDResponse<T = any> {
   data: T | null;
   error: Error | null;

@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -202,10 +203,11 @@ export function ResultInterpretation() {
   const [expandedGenePhenotype, setExpandedGenePhenotype] = useState<string | null>(null);
   const [showDetailedRulesPhenotype, setShowDetailedRulesPhenotype] = useState(false);
   
-  const [testerType, setTesterType] = useState("TPMT");
+  const [testerType, setTesterType] = useState("7787dd4c-f61b-48a1-845f-da1ea4807391"); // Default to TPMT
   const [selectedValidationCriteria, setSelectedValidationCriteria] = useState<string[]>([]);
   const [isValidating, setIsValidating] = useState(false);
   const [validationSuccess, setValidationSuccess] = useState(false);
+  const [isApproved, setIsApproved] = useState(false);
 
   const updateReportMutation = useMutation({
     ...mutateReportQueryOptions.put(),
@@ -701,6 +703,7 @@ export function ResultInterpretation() {
             <table className="w-full">
               <thead>
                 <tr style={{ backgroundColor: '#EDE9FE' }}>
+                  <th className="text-center px-4 py-4" style={{ color: '#1E1E1E' }}>Select</th>
                   <th className="text-left px-6 py-4" style={{ color: '#1E1E1E' }}>Gene</th>
                   <th className="text-left px-6 py-4" style={{ color: '#1E1E1E' }}>Alleles</th>
                   <th className="text-center px-4 py-4" style={{ color: '#1E1E1E', backgroundColor: '#F5F3FF' }}>G/G</th>
@@ -709,7 +712,6 @@ export function ResultInterpretation() {
                   <th className="text-center px-4 py-4" style={{ color: '#1E1E1E', backgroundColor: '#F5F3FF' }}>T/T</th>
                   <th className="text-left px-6 py-4" style={{ color: '#1E1E1E' }}>Predicted Genotype</th>
                   <th className="text-left px-6 py-4" style={{ color: '#1E1E1E' }}>Column Predicted Phenotype</th>
-                  <th className="text-center px-4 py-4" style={{ color: '#1E1E1E' }}>Rules</th>
                 </tr>
               </thead>
               <tbody className="bg-white">
@@ -786,8 +788,8 @@ export function ResultInterpretation() {
                           };
                         } else if (lower.includes('normal') || lower.includes('nm')) {
                           return {
-                            containerColor: 'bg-muted',
-                            textColor: 'text-foreground',
+                            containerColor: 'bg-green-100',
+                            textColor: 'text-green-700',
                             short: 'NM'
                           };
                         } else if (lower.includes('poor') || lower.includes('pm')) {
@@ -814,6 +816,36 @@ export function ResultInterpretation() {
 
                       return (
                         <tr key={index} className="border-t hover:bg-[#F5F3FF] transition-colors" style={{ borderColor: '#DCDCE6' }}>
+                          <td className="px-4 py-4 text-center">
+                            <input
+                              type="radio"
+                              name="rule-row-selection"
+                              checked={selectedRuleRowIndex === index}
+                              onChange={() => {
+                                setSelectedRuleRowIndex(index);
+                                
+                                setSelectedGenotypeData({
+                                  ruleBasedName: ruleBasedName,
+                                  alleleName: alleleName,
+                                  resultLocation: resultLocation,
+                                  predictedGenotype: predictedGenotype,
+                                  predictedPhenotype: predictedPhenotype,
+                                  recommendation: recommendation
+                                });
+                                
+                                console.log(`Selected row ${index} for Phenotype step:`, {
+                                  rule: ruleBasedName,
+                                  allele: alleleName,
+                                  resultLocation: resultLocation,
+                                  genotype: predictedGenotype,
+                                  phenotype: predictedPhenotype,
+                                  recommendation: recommendation
+                                });
+                              }}
+                              className="w-4 h-4 cursor-pointer"
+                              style={{ accentColor: '#7864B4' }}
+                            />
+                          </td>
                           <td className="px-6 py-4">
                             <span style={{ color: '#1E1E1E' }}>{ruleBasedName}</span>
                           </td>
@@ -848,37 +880,6 @@ export function ResultInterpretation() {
                               <span className={`text-xs font-mono ${phenotypeStyle.textColor}`}>{phenotypeStyle.short}</span>
                               <span className={`text-sm ${phenotypeStyle.textColor}`}>{predictedPhenotype}</span>
                             </div>
-                          </td>
-                          <td className="px-4 py-4 text-center">
-                            <Button
-                              variant={selectedRuleRowIndex === index ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => {
-                                setSelectedRuleRowIndex(index);
-                                
-                                setSelectedGenotypeData({
-                                  ruleBasedName: ruleBasedName,
-                                  alleleName: alleleName,
-                                  resultLocation: resultLocation,
-                                  predictedGenotype: predictedGenotype,
-                                  predictedPhenotype: predictedPhenotype,
-                                  recommendation: recommendation
-                                });
-                                
-                                console.log(`Selected row ${index} for Phenotype step:`, {
-                                  rule: ruleBasedName,
-                                  allele: alleleName,
-                                  resultLocation: resultLocation,
-                                  genotype: predictedGenotype,
-                                  phenotype: predictedPhenotype,
-                                  recommendation: recommendation
-                                });
-                              }}
-                              className="cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
-                              style={selectedRuleRowIndex === index ? { backgroundColor: '#7864B4', color: 'white' } : { borderColor: '#C8C8D2', color: '#7864B4' }}
-                            >
-                              {selectedRuleRowIndex === index ? 'Selected' : 'Use'}
-                            </Button>
                           </td>
                         </tr>
                       );
@@ -1048,6 +1049,18 @@ export function ResultInterpretation() {
     setExpandedGenePhenotype(expandedGenePhenotype === gene ? null : gene);
   };
 
+  const getTesterTypeName = (id: string) => {
+    const testerTypeMap: { [key: string]: string } = {
+      '4ffa92f7-ce20-4ce7-9ee9-471f61cc9583': '2D6',
+      '7787dd4c-f61b-48a1-845f-da1ea4807391': 'TPMT',
+      'ce0bf81c-65f1-4c5c-af6f-7b898bb5b22b': 'HLA-B',
+      'cea70080-3e7f-4d04-a4ea-9b437ae1e55f': '3A5',
+      'e26d4416-dd10-40ac-915c-c0f869ad2cec': '2C19',
+      'f5b4828a-1f75-468e-be4a-213f7a91300b': 'CYP2C9',
+    };
+    return testerTypeMap[id] || id;
+  };
+
   const renderPhenotype = () => {
 
     return (
@@ -1143,10 +1156,52 @@ export function ResultInterpretation() {
     setIsValidated(true);
   };
 
-  const handleConfirmValidation = async () => {
+  const handleValidateReport = async () => {
     if (!selectedPatientData) return;
     
     setIsValidating(true);
+    
+    try {
+      // Create quality record via POST to /api/user/quality
+      const qualityData = {
+        tester_id: testerType, // This is now the UUID from tester_type table
+        quality: selectedValidationCriteria.join(', '), // Store selected criteria as text
+      };
+
+      console.log('Creating quality record:', qualityData);
+
+      const response = await fetch('http://localhost:3000/api/user/quality', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(qualityData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create quality record');
+      }
+
+      const result = await response.json();
+      console.log('Quality record created:', result);
+
+      setValidationSuccess(true);
+      qc.invalidateQueries({ queryKey: ['quality'] });
+      
+    } catch (error) {
+      console.error('Failed to validate report:', error);
+      alert('Failed to validate report: ' + (error as Error).message);
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const handleApproveReport = async () => {
+    if (!selectedPatientData) return;
+    if (!validationSuccess) {
+      alert('Please validate the report first before approving.');
+      return;
+    }
     
     try {
       console.log('selectedPatientData:', selectedPatientData);
@@ -1160,7 +1215,7 @@ export function ResultInterpretation() {
       moreInfo.push({ 
         tester_type: testerType,
         validation_criteria: selectedValidationCriteria,
-        validated_at: new Date().toISOString()
+        approved_at: new Date().toISOString()
       });
 
       const updateData: any = {
@@ -1183,28 +1238,18 @@ export function ResultInterpretation() {
       };
 
       console.log('Updating report with data:', updateData);
-      console.log('Checking required fields:');
-      console.log('- doctor_id:', updateData.doctor_id);
-      console.log('- pharm_verify:', updateData.pharm_verify, typeof updateData.pharm_verify);
-      console.log('- medtech_verify:', updateData.medtech_verify, typeof updateData.medtech_verify);
-      console.log('- note_id:', updateData.note_id);
-      console.log('- rule_id:', updateData.rule_id);
-      console.log('- index_rule:', updateData.index_rule, typeof updateData.index_rule);
-      console.log('- more_information:', updateData.more_information);
-      console.log('- pharmacist_id:', updateData.pharmacist_id);
-      console.log('- medical_technician_id:', updateData.medical_technician_id);
-      console.log('- request_date:', updateData.request_date);
-      console.log('- report_date:', updateData.report_date);
 
       await updateReportMutation.mutateAsync({ 
         id: selectedPatientData.id,
         data: updateData 
       });
+
+      setIsApproved(true);
+      alert('Report approved successfully!');
+      
     } catch (error) {
-      console.error('Failed to validate report:', error);
-      alert('Failed to validate report: ' + (error as Error).message);
-    } finally {
-      setIsValidating(false);
+      console.error('Failed to approve report:', error);
+      alert('Failed to approve report: ' + (error as Error).message);
     }
   };
 
@@ -1259,13 +1304,12 @@ export function ResultInterpretation() {
                 <SelectValue placeholder="Select tester type" />
               </SelectTrigger>
               <SelectContent className="bg-white border" style={{ borderColor: '#C8C8D2' }}>
-                <SelectItem value="TPMT">TPMT</SelectItem>
-                <SelectItem value="2C19">2C19</SelectItem>
-                <SelectItem value="3A5">3A5</SelectItem>
-                <SelectItem value="VKORC1">VKORC1</SelectItem>
-                <SelectItem value="2D6 new">2D6 new</SelectItem>
-                <SelectItem value="CYP2C9">CYP2C9</SelectItem>
-                <SelectItem value="HLA-B">HLA-B</SelectItem>
+                <SelectItem value="4ffa92f7-ce20-4ce7-9ee9-471f61cc9583">2D6</SelectItem>
+                <SelectItem value="7787dd4c-f61b-48a1-845f-da1ea4807391">TPMT</SelectItem>
+                <SelectItem value="ce0bf81c-65f1-4c5c-af6f-7b898bb5b22b">HLA-B</SelectItem>
+                <SelectItem value="cea70080-3e7f-4d04-a4ea-9b437ae1e55f">3A5</SelectItem>
+                <SelectItem value="e26d4416-dd10-40ac-915c-c0f869ad2cec">2C19</SelectItem>
+                <SelectItem value="f5b4828a-1f75-468e-be4a-213f7a91300b">CYP2C9</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1365,14 +1409,25 @@ export function ResultInterpretation() {
         >
           Back
         </Button>
-        <Button 
-          className="text-white cursor-pointer"
-          style={{ backgroundColor: '#7864B4' }}
-          onClick={() => setCurrentStep(5)}
-          disabled={selectedValidationCriteria.length === 0}
-        >
-          Continue to Confirmation
-        </Button>
+        <div className="flex space-x-3">
+          <Button 
+            className="text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ backgroundColor: validationSuccess ? '#C8C8D2' : '#7864B4' }}
+            onClick={handleValidateReport}
+            disabled={selectedValidationCriteria.length === 0 || isValidating || validationSuccess}
+          >
+            {isValidating ? 'Validating...' : validationSuccess ? 'Validated' : 'Validate Report'}
+          </Button>
+          <Button 
+            className="text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ backgroundColor: validationSuccess ? '#7864B4' : '#C8C8D2' }}
+            onClick={() => setCurrentStep(5)}
+            disabled={!validationSuccess}
+            title={!validationSuccess ? "Please validate the report first" : ""}
+          >
+            Continue to Confirmation
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -1443,7 +1498,7 @@ export function ResultInterpretation() {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <p style={{ color: '#505050' }}>Tester Type</p>
-                <p style={{ color: '#1E1E1E' }}>{testerType}</p>
+                <p style={{ color: '#1E1E1E' }}>{getTesterTypeName(testerType)}</p>
               </div>
               <div>
                 <p style={{ color: '#505050' }}>Validation Criteria</p>
@@ -1457,36 +1512,32 @@ export function ResultInterpretation() {
           </div>
 
           <div>
-            <h4 className="font-medium mb-3" style={{ color: '#1E1E1E' }}>Validation Status</h4>
-            {validationSuccess ? (
+            <h4 className="font-medium mb-3" style={{ color: '#1E1E1E' }}>Approval Status</h4>
+            {isApproved ? (
               <div className="flex items-center gap-2 p-3 rounded-lg" style={{ backgroundColor: '#E8F5E9' }}>
                 <CheckCircle className="h-5 w-5" style={{ color: '#4CAF50' }} />
-                <span style={{ color: '#2E7D32' }}>Report validated successfully</span>
+                <span style={{ color: '#2E7D32' }}>Report approved successfully</span>
+              </div>
+            ) : validationSuccess ? (
+              <div className="flex items-center gap-2 p-3 rounded-lg" style={{ backgroundColor: '#FFF8E1' }}>
+                <AlertCircle className="h-5 w-5" style={{ color: '#FFA000' }} />
+                <span style={{ color: '#F57C00' }}>Report validated, pending approval</span>
               </div>
             ) : (
               <div className="flex items-center gap-2 p-3 rounded-lg" style={{ backgroundColor: '#FFF8E1' }}>
                 <AlertCircle className="h-5 w-5" style={{ color: '#FFA000' }} />
-                <span style={{ color: '#F57C00' }}>Pending validation</span>
+                <span style={{ color: '#F57C00' }}>Pending validation and approval</span>
               </div>
             )}
           </div>
         </div>
-
-        <Button 
-          className="w-full mt-6 text-white cursor-pointer"
-          style={{ backgroundColor: validationSuccess ? '#C8C8D2' : '#7864B4' }}
-          onClick={handleConfirmValidation}
-          disabled={isValidating || validationSuccess}
-        >
-          {isValidating ? 'Validating...' : validationSuccess ? 'Validated' : 'Validate Report'}
-        </Button>
       </Card>
 
       <Separator style={{ backgroundColor: '#DCDCE6' }} />
 
       <div>
-        <h3 className="font-medium mb-2" style={{ color: '#1E1E1E' }}>Approval</h3>
-        <p className="mb-6" style={{ color: '#505050' }}>Review and approve this interpretation.</p>
+        <h3 className="font-medium mb-2" style={{ color: '#1E1E1E' }}>Report Confirmation</h3>
+        <p className="mb-6" style={{ color: '#505050' }}>Review the complete report details before exporting.</p>
         
         <div className="flex items-center justify-between">
           <Button 
@@ -1499,21 +1550,22 @@ export function ResultInterpretation() {
           </Button>
           <div className="flex space-x-3">
             <Button 
-              variant="outline"
-              className="bg-white hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors cursor-pointer"
-              style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
-            >
-              Request Review
-            </Button>
-            
-            <Button 
               className="text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: validationSuccess ? '#7864B4' : '#C8C8D2' }}
-              onClick={() => setCurrentStep(6)}
-              disabled={!validationSuccess}
+              style={{ backgroundColor: isApproved ? '#C8C8D2' : (validationSuccess ? '#7864B4' : '#C8C8D2') }}
+              onClick={handleApproveReport}
+              disabled={!validationSuccess || isApproved}
               title={!validationSuccess ? "Please validate the report first" : ""}
             >
-              Approve & Continue to Export
+              {isApproved ? 'Approved' : 'Approve Interpret Summary'}
+            </Button>
+            <Button 
+              className="text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: isApproved ? '#7864B4' : '#C8C8D2' }}
+              onClick={() => setCurrentStep(6)}
+              disabled={!isApproved}
+              title={!isApproved ? "Please approve the interpret summary first" : ""}
+            >
+              Continue to Export
             </Button>
           </div>
         </div>
