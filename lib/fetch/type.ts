@@ -112,9 +112,17 @@ export type Qualityper = {
 }
 
 export type Doctor = {
-    id: string;               
-    email: string;            
-    position: string;         
-    fullname: string;         
-    created_at: string; 
+    id: string;
+    email: string;
+    position: string;
+    fullname: string;
+    created_at: string;
+}
+
+export type Fridge = {
+    id: string,
+    name: string,
+    capacity: number,
+    item: number,
+    remaining: number,
 }
