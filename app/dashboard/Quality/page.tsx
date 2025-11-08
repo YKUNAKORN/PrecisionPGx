@@ -45,7 +45,7 @@ const Page = () => {
 // ✅ Card
 function Card({ title, value }) {
   return (
-    <div className="bg-[#F9F6FF] border border-[#CCC2DC] rounded-xl p-6 shadow-sm w-75 hover:shadow-md transition">
+    <div className="bg-[#F9F6FF] border border-[#000000] rounded-xl p-6 shadow-sm w-75 hover:shadow-md transition">
       <h3 className="text-sm text-[#000000] font-medium">{title}</h3>
       {value && <p className="text-xl font-semibold text-[#4F378B] mt-2">{value}</p>}
     </div>
@@ -55,7 +55,7 @@ function Card({ title, value }) {
 // ✅ Chart
 function Chart({ title, value }) {
   return (
-    <div className="bg-[#F9F6FF] border border-[#CCC2DC] rounded-xl p-6 shadow-md w-full">
+    <div className="bg-[#F9F6FF] border border-[#000000] rounded-xl p-6 shadow-md w-full">
       <h3 className="text-base font-bold text-[#000000]">{title}</h3>
       {value && <p className="text-sm text-[#938F99] mt-3 leading-relaxed">{value}</p>}
       <div className="h-64 bg-[#D0BCFF1A] mt-5 rounded-lg flex items-center justify-center text-[#938F99] text-sm border border-[#CCC2DC]">
@@ -95,7 +95,7 @@ function Alerts() {
   };
 
   return (
-    <div className="bg-[#F9F6FF] rounded-xl p-5 shadow-md w-full border border-[#CCC2DC]">
+    <div className="bg-[#F9F6FF] rounded-xl p-5 shadow-md w-full border border-[#000000]">
       <h2 className="mb-4 text-lg font-semibold text-[#000000]">Alerts</h2>
       <div className="space-y-3">
         {alertsData.map((alert) => (
@@ -132,7 +132,7 @@ function Inventory() {
   };
 
   return (
-    <div className="bg-[#F9F6FF] rounded-xl p-5 shadow-md w-full border border-[#CCC2DC]">
+    <div className="bg-[#F9F6FF] rounded-xl p-5 shadow-md w-full border border-[#000000]">
       <h3 className="text-lg font-semibold mb-4 text-[#000000]">Control Inventory</h3>
       <table className="w-full text-sm text-left border-collapse">
         <thead>
@@ -162,10 +162,37 @@ function Inventory() {
 }
 
 // ✅ Status
-function Status({ value }) {
+function Status() {
   return (
-    <div className="bg-[#F9F6FF] border border-[#CCC2DC] rounded-lg p-4 shadow-sm w-full max-w-7xl text-start">
-      {value && <p className="text-xs text-[#000000]">{value}</p>}
+    <div className="bg-[#F9F6FF] border border-[#000000] rounded-lg p-4 shadow-sm w-full max-w-8xl mx-auto">
+      <p className="text-sm text-[#4A4458] flex flex-wrap items-center gap-2">
+        <span className="font-medium">Status colors:</span>
+
+        {/* จุดสี */}
+        <span className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded-sm bg-[#4CAF50]"></span>
+          Pass
+        </span>
+
+        <span className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded-sm bg-[#FFA500]"></span>
+          Warning range
+        </span>
+
+        <span className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded-sm bg-[#F44336]"></span>
+          Failure
+        </span>
+
+        <span className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded-sm bg-[#2196F3]"></span>
+          Info
+        </span>
+
+        <span className="ml-3">
+          Control limits and target lines follow manufacturer guidelines for acceptability.
+        </span>
+      </p>
     </div>
   );
 }
