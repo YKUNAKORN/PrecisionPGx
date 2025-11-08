@@ -1,5 +1,5 @@
 import { Create, GetJoinAll, Update, Delete, GetById, GetJoinWithId, GetAll } from '@/lib/supabase/crud'
-import { ReportDashboard, ReportResult, ReportResultOne } from "@/lib/model/Report"
+import { ReportDashboard, ReportResult, ReportUpdate } from "@/lib/model/Report"
 import { CreateClientSecret } from "@/lib/supabase/client"
 import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 import { startOfDay, addDays } from 'date-fns';
@@ -15,25 +15,6 @@ export async function CreateReport(InsertReportModel) {
             console.error("Error inserting rule:", response.error);
             return { data: null, error: response.error.message }; //for User
         }
-        // ReportResult.id = response.data[0].id;
-        // ReportResult.specimens_id = response.data[0].specimens_id;
-        // ReportResult.doctor_id = response.data[0].doctor_id;
-        // ReportResult.patient_id = response.data[0].patient_id;
-        // ReportResult.pharm_verify = response.data[0].pharm_verify;
-        // ReportResult.medtech_verify = response.data[0].medtech_verify;
-        // ReportResult.note_id = response.data[0].note_id;
-        // ReportResult.rule_id = response.data[0].rule_id;
-        // ReportResult.more_information = response.data[0].more_information;
-        // ReportResult.pharmacist_id = response.data[0].pharmacist_id;
-        // ReportResult.pharmacist_license = response.data[0].pharmacist_license;
-        // ReportResult.medical_technician_id = response.data[0].medical_technician_id;
-        // ReportResult.medtech_license = response.data[0].medtech_license;
-        // ReportResult.status = response.data[0].status;
-        // ReportResult.request_date = response.data[0].request_date;
-        // ReportResult.report_date = response.data[0].report_date;
-        // ReportResult.created_at = response.data[0].created_at;
-
-        // return { data: ReportResult, error: null }; //for User
         return { data: response.data, error: null }; //for User
     } catch (error) {
         console.error("Error inserting rule:", error);
@@ -541,4 +522,22 @@ export async function GetAllReportsDashboard() {
   };
 
   return { data: ReportDashboard, error: null };
+}
+
+
+export async function EditReportByID(id, body) {
+    body.report_date = new Date().toISOString();
+    body.updated_at = new Date().toISOString();
+    const { data, error } = await Update(db, "reports", id, body);
+    if (data.length === 0) {
+        return { data: [], error: new Error("Data Not Found : " + id) }; //for User
+    }
+    if (error) {
+        console.log(error)
+        return { data: null, error: error }; //for User
+    }
+    return { data: data[0], error: null };
+}
+
+export async function AddNewReport(InsertReportModel) {
 }
