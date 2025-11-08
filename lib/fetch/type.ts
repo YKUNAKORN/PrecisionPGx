@@ -126,3 +126,21 @@ export type Fridge = {
     item: number,
     remaining: number,
 }
+
+export type Dashboard = {
+    sample_received: number;
+    tests_completed: number;
+    results_interpret: number;
+    submitted_inspection: number;
+    awaiting_inspection: number;
+    inprogress: number;
+    completed: number;
+    awaiting_approve: number;
+    sample_received_d6: number;
+    sample_received_d5: number;
+    sample_received_d4: number;
+    sample_received_d3: number;
+    sample_received_d2: number;
+    sample_received_d1: number;
+    sample_received_d0: number;
+}
