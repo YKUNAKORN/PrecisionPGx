@@ -1,6 +1,19 @@
 import { Report } from "./type";
 import { queryOptions } from "@tanstack/react-query";
 
+export type ReportsDTO = {
+  specimens: string;
+  doctor_id: string;
+  patient_id: string;
+  priority: string;
+  ward_id: string;
+  contact_number: string;
+  collected_at: string;
+  fridge_id: string;
+  medical_technician_id: string;
+  note: string;
+};
+
 export async function getReports(): Promise<Report[]> {
   const res = await fetch(`/api/user/report`);
   if (!res.ok) throw new Error("Failed to fetch user");
@@ -37,32 +50,7 @@ export async function deleteReport(id: string) {
   return res.json();
 }
 
-export async function postReport(data: Omit<Report,  | "id"
-  | "specimen_name"
-  | "specimens_expire_date"
-  | "doctor_fullname"
-  | "Eng_name"
-  | "Thai_name"
-  | "DOB"
-  | "age"
-  | "gender"
-  | "phone"
-  | "address"
-  | "index_rule"
-  | "rule_location"
-  | "rule_result_location"
-  | "rule_phenotype"
-  | "rule_predicted_genotype"
-  | "rule_predicted_phenotype"
-  | "rule_recommendation"
-  | "rule_name"
-  | "fullname_pharmacist"
-  | "fullname_medtech"
-  | "status"
-  | "priority"
-  | "ward_id"
-  | "created_at"
-  | "updated_at">) {
+export async function postReport(data: ReportsDTO) {
   const res = await fetch(`/api/user/report`, {
     method: "POST",
     headers: {
@@ -102,31 +90,6 @@ export const mutateReportQueryOptions = {
   }),
 
   post: ({
-    mutationFn: async (data: Omit<Report,  | "id"
-  | "specimen_name"
-  | "specimens_expire_date"
-  | "doctor_fullname"
-  | "Eng_name"
-  | "Thai_name"
-  | "DOB"
-  | "age"
-  | "gender"
-  | "phone"
-  | "address"
-  | "index_rule"
-  | "rule_location"
-  | "rule_result_location"
-  | "rule_phenotype"
-  | "rule_predicted_genotype"
-  | "rule_predicted_phenotype"
-  | "rule_recommendation"
-  | "rule_name"
-  | "fullname_pharmacist"
-  | "fullname_medtech"
-  | "status"
-  | "priority"
-  | "ward_id"
-  | "created_at"
-  | "updated_at">) => await postReport(data),
+    mutationFn: async (data: ReportsDTO) => await postReport(data),
   }),
 };

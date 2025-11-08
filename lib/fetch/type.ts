@@ -35,10 +35,8 @@ export type Report = {
   specimens_id: string;
   specimen_name: string;
   specimens_expire_date: string;
-
   doctor_id: string;
   doctor_fullname: string;
-
   patient_id: string;
   Eng_name: string;
   Thai_name: string;
@@ -47,13 +45,10 @@ export type Report = {
   gender: string;
   phone: string;
   address: string;
-
   pharm_verify: boolean;
   medtech_verify: boolean;
-
   note_id: string;
   note_method: string;
-
   index_rule: number;
   rule_location: string;
   rule_result_location: string;
@@ -61,24 +56,18 @@ export type Report = {
   rule_predicted_genotype: string;
   rule_predicted_phenotype: string;
   rule_recommendation: string;
-
   rule_id: string;
   rule_name: string;
-
   pharmacist_id: string;
   fullname_pharmacist: string;
-
   medical_technician_id: string;
   fullname_medtech: string;
-
-  more_information: string; // ถ้าอยาก parse JSON ให้ใช้ Record<string, any>[] ก็ได้
-
+  more_information: string;
   status: string;
   request_date: string;
   report_date: string;
   priority: string;
   ward_id: string;
-
   created_at: string;
   updated_at: string;
 }
