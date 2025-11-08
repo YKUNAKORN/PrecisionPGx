@@ -177,7 +177,9 @@ import { ReportModel, ReportUpdate } from '../../../../lib/model/Report';
 
 export async function POST(req) {
     const body = await req.json()
-    if (!body || !body.specimens_id || !body.patient_id) {
+    const cookies = req.cookies;
+    body.medical_technician_id = cookies._headers.get('x-user-id');
+    if (!body || !body.specimens || !body.patient_id || !body.priority || !body.doctor_id || !body.ward_id || !body.contact_number || !body.collected_at || !body.fridge_id  || !body.medical_technician_id) {
         ResponseModel.status = '400'
         ResponseModel.message = 'Invalid Data'
         ResponseModel.data = null;
@@ -197,7 +199,7 @@ export async function POST(req) {
     ResponseModel.status = '201';
     ResponseModel.message = 'Created Successful';
     ResponseModel.data = data;
-    return NextResponse.json(ResponseModel, { status: 201 })
+    return NextResponse.json(cookies, { status: 201 })
 }
 
 export async function GET() {
