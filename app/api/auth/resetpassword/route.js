@@ -31,9 +31,9 @@ import { ResetPassword } from '@/app/api/auth/service/password'
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Password reset successfully 
- *                data:
- *                  type: object
+ *                   example: Password reset successfully
+ *                 data:
+ *                   type: object
  */
 
 export async function POST(request) {
