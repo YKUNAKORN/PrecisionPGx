@@ -17,7 +17,8 @@ export type ReportsDTO = {
 export async function getReports(): Promise<Report[]> {
   const res = await fetch(`/api/user/report`);
   if (!res.ok) throw new Error("Failed to fetch user");
-  return res.json();
+  const body = await res.json();
+  return body.data;
 }
 
 
