@@ -42,3 +42,27 @@ export async function DeleteUser(id) {
     }
     return { data: data, error: null }
 }
+
+export async function GetDoctor() {
+    const { data, error } = await db.from("user").select("*").eq("position", "doctor")
+    if (error) {
+        return { data: null, error: error }
+    }
+    return { data: data, error: null }
+}
+
+export async function GetMedicalTechnician() {
+    const { data, error } = await db.from("user").select("*").eq("position", "medtech")
+    if (error) {
+        return { data: null, error: error }
+    }
+    return { data: data, error: null }
+}
+
+export async function GetPharmacist() {
+    const { data, error } = await db.from("user").select("*").eq("position", "pharmacy")
+    if (error) {
+        return { data: null, error: error }
+    }
+    return { data: data, error: null }
+}
