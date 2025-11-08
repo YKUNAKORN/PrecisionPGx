@@ -73,7 +73,7 @@ export async function POST(request) {
   }
   try {
     InsertUserModel.email = email
-    InsertUserModel.position = position
+    InsertUserModel.position = position.toLowerCase()
     InsertUserModel.fullname = fullname
     InsertUserModel.phone = phone
     InsertUserModel.license_number = license_number
