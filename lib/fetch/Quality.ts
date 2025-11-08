@@ -1,4 +1,4 @@
-import { Quality } from "./type";
+import { Qualityper } from "./type";
 import { queryOptions } from "@tanstack/react-query";
 
 export async function getQualityPec(): Promise<Quality> {

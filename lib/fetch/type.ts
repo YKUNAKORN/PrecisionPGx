@@ -104,7 +104,7 @@ export type HLA_B = {
     created_at: Timestamp;
 }
 
-export type Quality = {
+export type Qualityper = {
     pass: number,
     fail: number,
     warning: number,
