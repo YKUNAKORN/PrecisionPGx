@@ -286,6 +286,8 @@
 }
 
 .under-topic{
+  margin-top: 3px;
+  font-size: 13px;
   padding-bottom: 24px;
 }
 
@@ -295,7 +297,6 @@
 }
 
 .select-trigger{
-  display: block;
   width: 100%;
   height: 40px;
   padding: 0 40px 0 12px;
@@ -362,6 +363,7 @@
 }
 
 .field {
+  
   display: grid;
   row-gap: 5px;         
 }
@@ -450,7 +452,7 @@
   }
 
   .main-topic{ font-size: 14px; }
-  .under-topic{ font-size: 13px; padding-bottom: 16px; }
+  .under-topic{ font-size: 12px; padding-bottom: 16px; }
 
   .priority-group{
     flex-wrap: wrap;
