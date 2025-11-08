@@ -550,9 +550,7 @@ function makeBarcodeSVG(text: string) {
     for (let i = 0; i < 80; i++) {
         const bit = (h >> (i % 31)) & 1;
         const w = bit ? 3 : 1;
-    bars.push(
-      `<rect x="${x}" y="${y0}" width="${w}" height="${y1 - y0}" fill="black"/>`
-    );
+        bars.push(`<rect x="${x}" y="${y0}" width="${w}" height="${y1 - y0}" fill="black"/>`);
         x += w + 1;
         if (x > W - 10) break;
     }
