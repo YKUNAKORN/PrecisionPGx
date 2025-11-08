@@ -1276,81 +1276,72 @@ export function ResultInterpretation() {
             <div className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors" 
                  style={{ borderColor: selectedValidationCriteria.includes('coverage') ? '#7864B4' : '#C8C8D2' }}
                  onClick={() => {
-                   setSelectedValidationCriteria(prev => 
-                     prev.includes('coverage') 
-                       ? prev.filter(c => c !== 'coverage')
-                       : [...prev, 'coverage']
-                   );
+                   setSelectedValidationCriteria(['coverage']);
                  }}>
               <div className="flex items-center gap-3">
                 <input 
-                  type="checkbox" 
+                  type="radio" 
                   checked={selectedValidationCriteria.includes('coverage')}
                   onChange={() => {}}
-                  className="w-4 h-4 rounded"
+                  className="w-4 h-4"
                   style={{ accentColor: '#7864B4' }}
+                  name="validationCriteria"
                 />
                 <div>
                   <span style={{ color: '#1E1E1E' }}>Coverage</span>
-                  <p className="text-xs" style={{ color: '#505050' }}>≥ {validationResults.coverage.threshold}x required</p>
+                  <p className="text-xs" style={{ color: '#505050' }}>≥ 100x required</p>
                 </div>
               </div>
-              <Badge className={`px-3 py-1 rounded-lg ${validationResults.coverage.passed ? 'bg-[#64B464]/10 text-[#64B464]' : validationResults.coverage.value >= 50 ? 'bg-[#FFD966]/10 text-[#F89C4E]' : 'bg-[#DC6464]/10 text-[#DC6464]'}`}>
-                {validationResults.coverage.passed ? 'Pass' : validationResults.coverage.value >= 50 ? 'Warning' : 'Fail'}
+              <Badge className="px-3 py-1 rounded-lg bg-[#4CAF50]/10 text-[#4CAF50]">
+                Pass
               </Badge>
             </div>
 
             <div className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors" 
                  style={{ borderColor: selectedValidationCriteria.includes('alleleBalance') ? '#7864B4' : '#C8C8D2' }}
                  onClick={() => {
-                   setSelectedValidationCriteria(prev => 
-                     prev.includes('alleleBalance') 
-                       ? prev.filter(c => c !== 'alleleBalance')
-                       : [...prev, 'alleleBalance']
-                   );
+                   setSelectedValidationCriteria(['alleleBalance']);
                  }}>
               <div className="flex items-center gap-3">
                 <input 
-                  type="checkbox" 
+                  type="radio" 
                   checked={selectedValidationCriteria.includes('alleleBalance')}
                   onChange={() => {}}
-                  className="w-4 h-4 rounded"
+                  className="w-4 h-4"
                   style={{ accentColor: '#7864B4' }}
+                  name="validationCriteria"
                 />
                 <div>
                   <span style={{ color: '#1E1E1E' }}>Allele Balance</span>
-                  <p className="text-xs" style={{ color: '#505050' }}>≥ {validationResults.alleleBalance.threshold}% required</p>
+                  <p className="text-xs" style={{ color: '#505050' }}>≥ 90% required</p>
                 </div>
               </div>
-              <Badge className={`px-3 py-1 rounded-lg ${validationResults.alleleBalance.passed ? 'bg-[#64B464]/10 text-[#64B464]' : validationResults.alleleBalance.value >= 30 ? 'bg-[#FFD966]/10 text-[#F89C4E]' : 'bg-[#DC6464]/10 text-[#DC6464]'}`}>
-                {validationResults.alleleBalance.passed ? 'Pass' : validationResults.alleleBalance.value >= 30 ? 'Warning' : 'Fail'}
+              <Badge className="px-3 py-1 rounded-lg bg-[#FFD966]/10 text-[#F89C4E]">
+                Warning
               </Badge>
             </div>
 
             <div className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors" 
                  style={{ borderColor: selectedValidationCriteria.includes('qualityScore') ? '#7864B4' : '#C8C8D2' }}
                  onClick={() => {
-                   setSelectedValidationCriteria(prev => 
-                     prev.includes('qualityScore') 
-                       ? prev.filter(c => c !== 'qualityScore')
-                       : [...prev, 'qualityScore']
-                   );
+                   setSelectedValidationCriteria(['qualityScore']);
                  }}>
               <div className="flex items-center gap-3">
                 <input 
-                  type="checkbox" 
+                  type="radio" 
                   checked={selectedValidationCriteria.includes('qualityScore')}
                   onChange={() => {}}
-                  className="w-4 h-4 rounded"
+                  className="w-4 h-4"
                   style={{ accentColor: '#7864B4' }}
+                  name="validationCriteria"
                 />
                 <div>
                   <span style={{ color: '#1E1E1E' }}>Quality Score</span>
-                  <p className="text-xs" style={{ color: '#505050' }}>≥ {validationResults.qualityScore.threshold} required</p>
+                  <p className="text-xs" style={{ color: '#505050' }}>≥ 70 required</p>
                 </div>
               </div>
-              <Badge className={`px-3 py-1 rounded-lg ${validationResults.qualityScore.passed ? 'bg-[#64B464]/10 text-[#64B464]' : validationResults.qualityScore.value >= 80 ? 'bg-[#FFD966]/10 text-[#F89C4E]' : 'bg-[#DC6464]/10 text-[#DC6464]'}`}>
-                {validationResults.qualityScore.passed ? 'Pass' : validationResults.qualityScore.value >= 80 ? 'Warning' : 'Fail'}
+              <Badge className="px-3 py-1 rounded-lg bg-[#DC6464]/10 text-[#DC6464]">
+                Failed
               </Badge>
             </div>
           </div>
