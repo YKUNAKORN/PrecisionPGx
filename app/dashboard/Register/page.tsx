@@ -185,7 +185,7 @@ export default function Page() {
             fridge_id: "",
             medical_technician_id: "",
             note: notes,
-        };
+            };
 
         try {
             await createReport.mutateAsync(reportDTO);
@@ -385,36 +385,36 @@ export default function Page() {
             )}
 
             {/* STEP 3 */}
-            {currentStep === "3" && (
-                <div className="Barcodes">
-                    <div className="bc-left">
-                        <div className="bc-title">Barcode Preview</div>
-                        <div className="bc-canvas">
-                            {barcodeSvg ? (
+                {currentStep === "3" && (
+                    <div className="Barcodes">
+                        <div className="bc-left">
+                            <div className="bc-title">Barcode Preview</div>
+                            <div className="bc-canvas">
+                                {barcodeSvg ? (
                                 <div className="bc-svg" dangerouslySetInnerHTML={{ __html: barcodeSvg }} />
-                            ) : (
-                                <div className="bc-placeholder">No barcode yet</div>
-                            )}
-                        </div>
+                                ) : (
+                                    <div className="bc-placeholder">No barcode yet</div>
+                                )}
+                            </div>
                         <button className="bc-generate" onClick={handleGenerateLocal}>Generate Barcode (Local)</button>
-                    </div>
+                        </div>
 
-                    <div className="bc-right">
-                        <div className="bc-panel-title">Label Details</div>
-                        <div className="bc-rows">
+                        <div className="bc-right">
+                            <div className="bc-panel-title">Label Details</div>
+                            <div className="bc-rows">
                             <div className="bc-row"><span>Lab Number</span><b>{barcodeText || "Pending"}</b></div>
                             <div className="bc-row"><span>Patient</span><b>{activePatient?.Thai_name ?? activePatient?.Eng_name ?? "—"}</b></div>
                             <div className="bc-row"><span>Priority</span><b>{selectedPriority.toUpperCase()}</b></div>
-                        </div>
+                                </div>
                         <p className="bc-note">This is a visual preview and supports printing via browser print dialog.</p>
-                        <div className="bc-actions">
+                            <div className="bc-actions">
                             <button className="bc-print" onClick={handlePrint}>Print Label</button>
                             <button className="bc-register" onClick={() => alert(`Registered sample for ${activePatient?.Thai_name ?? activePatient?.Eng_name ?? "(unknown)"} with ${barcodeText || "(no barcode)"}`)}>Register Sample</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )}
+            </div>
     );
 }
 
