@@ -175,15 +175,15 @@ export default function Page() {
 
 
         const reportDTO: ReportsDTO = {
-            specimens: sampleType,
-            doctor_id: doctor,
-            patient_id: activePatient.id,
-            priority: selectedPriority,
-            ward_id: ward,
-            contact_number: contact,
-            collected_at: collectedAt,
-            fridge_id: "",
-            medical_technician_id: "",
+            specimens: sampleType || "blood",
+            doctor_id: doctor || "", //doop
+            patient_id: activePatient.id || "",
+            priority: selectedPriority || "Routine",
+            ward_id: ward   || "",
+            contact_number: contact || "",
+            collected_at: collectedAt  || new Date().toISOString(),
+            fridge_id: "hgmdghm", //doop
+            medical_technician_id: "fhjdgh", //user id
             note: notes,
             };
 
