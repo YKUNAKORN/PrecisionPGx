@@ -13,15 +13,24 @@ export async function getReport(id: string): Promise<Report> {
   return res.json();
 }
 
-export async function putReport(data: Report) {
-  const res = await fetch(`/api/user/report`, {
+export async function putReport(id: string, data: any) {
+  console.log('putReport called with:', { id, data });
+  
+  const res = await fetch(`/api/user/report?id=${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("/api/user/report");
+  
+  console.log('API Response status:', res.status);
+  
+  if (!res.ok) {
+    const errorData = await res.json();
+    console.error('API Error Response:', errorData);
+    throw new Error(`Failed to update report: ${errorData.message || res.statusText}`);
+  }
   return res.json();
 }
 
@@ -68,7 +77,7 @@ export const createReportQueryOptions = {
 
 export const mutateReportQueryOptions = {
   put: () => ({
-    mutationFn: async (data: Report) => await putReport(data),
+    mutationFn: async ({ id, data }: { id: string; data: any }) => await putReport(id, data),
   }),
 
   delete: () => ({

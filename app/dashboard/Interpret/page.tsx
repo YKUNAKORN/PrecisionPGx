@@ -1,6 +1,6 @@
 "use client";
-import { useState, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useMemo, useEffect } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,24 +13,27 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Search, Edit, CheckCircle, AlertCircle, XCircle, User, Calendar, MapPin, Phone, FileText, X, ChevronDown, ChevronUp, Info, TrendingUp, Shield, BookOpen } from "lucide-react";
 
-// ✅ Import Query Options จาก lib/fetch
-import { createReportQueryOptions } from "@/lib/fetch/Report";
+import { createReportQueryOptions, mutateReportQueryOptions } from "@/lib/fetch/Report";
 import { createPatientQueryOptions } from "@/lib/fetch/Patient";
+import { createRuleQueryOptions } from "@/lib/fetch/Rule";
 import { Report, Patient } from "@/lib/fetch/type";
+import { RuleBased } from "@/lib/fetch/model/Rule";
+import { ReportUpdate } from "@/lib/fetch/model/Report";
 
-// Type สำหรับข้อมูลที่แสดงในตาราง
+import { CreateClientPublic } from "@/lib/supabase/client";
+import { isPharmacy } from "@/lib/auth/permission";
+
 type ReportWithPatient = Report & {
   patient?: Patient;
 };
 
 const stepLabels = [
   { number: 1, label: "Patient", active: true },
-  { number: 2, label: "Raw Data", active: false },
-  { number: 3, label: "Genotype", active: false },
-  { number: 4, label: "Phenotype", active: false },
-  { number: 5, label: "Recommendations", active: false },
-  { number: 6, label: "Confirmation", active: false },
-  { number: 7, label: "Export PDF", active: false }
+  { number: 2, label: "Genotype", active: false },
+  { number: 3, label: "Phenotype", active: false },
+  { number: 4, label: "Quality", active: false },
+  { number: 5, label: "Confirmation", active: false },
+  { number: 6, label: "Export PDF", active: false }
 ];
 
 const patientReports = [
@@ -187,17 +190,33 @@ export function ResultInterpretation() {
   const [reviewerName, setReviewerName] = useState("");
   const [comments, setComments] = useState("");
 
-  // Enhanced phenotype prediction states
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [userPosition, setUserPosition] = useState<string | null>(null);
+  const [isPharmacyUser, setIsPharmacyUser] = useState(false);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+
   const [expandedRules, setExpandedRules] = useState<Set<string>>(new Set());
   const [selectedGene, setSelectedGene] = useState<string | null>(null);
   const [showRuleDetails, setShowRuleDetails] = useState(false);
 
-  // Phenotype classification states
   const [expandedGenePhenotype, setExpandedGenePhenotype] = useState<string | null>(null);
   const [showDetailedRulesPhenotype, setShowDetailedRulesPhenotype] = useState(false);
   
-  // Quality validation state
-  const [testerType, setTesterType] = useState("Illumina MiSeq");
+  const [testerType, setTesterType] = useState("TPMT");
+  const [selectedValidationCriteria, setSelectedValidationCriteria] = useState<string[]>([]);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationSuccess, setValidationSuccess] = useState(false);
+
+  const updateReportMutation = useMutation({
+    ...mutateReportQueryOptions.put(),
+    onSuccess: () => {
+      setValidationSuccess(true);
+      qc.invalidateQueries({ queryKey: ['reports'] });
+      if (selectedPatientData?.id) {
+        qc.invalidateQueries({ queryKey: ['report', selectedPatientData.id] });
+      }
+    },
+  });
   const [isValidated, setIsValidated] = useState(false);
   const [validationResults, setValidationResults] = useState({
     coverage: { value: 150, threshold: 100, passed: false },
@@ -205,9 +224,18 @@ export function ResultInterpretation() {
     qualityScore: { value: 92, threshold: 90, passed: false }
   });
 
-  // -----------------------------
-  // ✅ React Query: Fetch Reports และ Patients
-  // -----------------------------
+  const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
+  const [selectedRuleRowIndex, setSelectedRuleRowIndex] = useState<number | null>(null);
+  
+  const [selectedGenotypeData, setSelectedGenotypeData] = useState<{
+    ruleBasedName: string;
+    alleleName: string;
+    resultLocation: string;
+    predictedGenotype: string;
+    predictedPhenotype: string;
+    recommendation: string;
+  } | null>(null);
+
   const qc = useQueryClient();
 
   const {
@@ -222,9 +250,86 @@ export function ResultInterpretation() {
     error: errorPatients,
   } = useQuery(createPatientQueryOptions.all());
 
-  // -----------------------------
-  // ✅ Process data: Combine Reports with Patient info
-  // -----------------------------
+  const {
+    data: rules,
+    isLoading: loadingRules,
+    error: errorRules,
+  } = useQuery(createRuleQueryOptions.all());
+
+  console.log("Rules Query State:", { rules, loadingRules, errorRules });
+
+  const {
+    data: selectedRuleData,
+    isLoading: loadingRuleDetail,
+  } = useQuery({
+    ...createRuleQueryOptions.detail(selectedRuleId || ""),
+    enabled: !!selectedRuleId,
+  });
+
+  console.log("Selected Rule State:", { selectedRuleId, selectedRuleData, loadingRuleDetail });
+
+  // Fetch User and Role check
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setIsLoadingUser(true);
+        const supabase = CreateClientPublic();
+        
+        // check session first
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          console.warn("No active session:", sessionError?.message || "User not logged in");
+          setIsLoadingUser(false);
+          setIsPharmacyUser(false);
+          return;
+        }
+        
+        // fectch authenticated user
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          console.warn("Error fetching user:", authError?.message);
+          setIsLoadingUser(false);
+          setIsPharmacyUser(false);
+          return;
+        }
+
+        // fetch user profile from table user
+        const { data: userProfile, error: profileError } = await supabase
+          .from('user')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.warn("Error fetching user profile:", profileError.message);
+          setIsLoadingUser(false);
+          setIsPharmacyUser(false);
+          return;
+        }
+
+        setCurrentUser(userProfile);
+        setUserPosition(userProfile?.position || null);
+        
+        // pharmacy role check
+        if (userProfile?.position) {
+          setIsPharmacyUser(isPharmacy(userProfile.position));
+        } else {
+          setIsPharmacyUser(false);
+        }
+        
+        setIsLoadingUser(false);
+      } catch (error) {
+        console.error("Error in fetchUserData:", error);
+        setIsLoadingUser(false);
+        setIsPharmacyUser(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   const reportsWithPatients: ReportWithPatient[] = useMemo(() => {
     const reportsRaw = reports as any;
     const patientsRaw = patients as any;
@@ -241,7 +346,6 @@ export function ResultInterpretation() {
     });
   }, [reports, patients]);
 
-  // Filter reports based on search query
   const filteredReports = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return reportsWithPatients;
@@ -268,12 +372,11 @@ export function ResultInterpretation() {
     // User can always go to step 1
     if (stepNumber === 1) return true;
     
-    // Can only go to step 2 if a report is selected
+    // Can only go to step 2 (Genotype) if a report is selected
     if (stepNumber === 2) return selectedReport !== null;
     
-    // For steps 3-7, can navigate if we've reached that step before
-    // (In a real application, you might want more sophisticated validation)
-    if (stepNumber >= 3 && stepNumber <= 7) {
+    // For steps 3-6, can navigate if we've reached that step before
+    if (stepNumber >= 3 && stepNumber <= 6) {
       return selectedReport !== null && currentStep >= stepNumber - 1;
     }
     
@@ -291,25 +394,24 @@ export function ResultInterpretation() {
     
     switch (status.toLowerCase()) {
       case "completed":
-        return <Badge className="text-white" style={{ backgroundColor: '#7864B4' }}>Completed</Badge>;
+        return <Badge className="text-white" style={{ backgroundColor: '#CBB4FF' }}>Completed</Badge>;
       
       case "in progress":
       case "in_progress":
       case "inprogress":
-      case "pending":
-        return <Badge className="text-white" style={{ backgroundColor: '#50C878' }}>In Progress</Badge>;
+        return <Badge className="text-white" style={{ backgroundColor: '#F1B6D5' }}>In Progress</Badge>;
       
       case "submitted for inspection":
       case "submitted_for_inspection":
-        return <Badge className="text-white" style={{ backgroundColor: '#FFD966' }}>Submitted for Inspection</Badge>;
+        return <Badge className="text-white" style={{ backgroundColor: '#A7A7B4' }}>Submitted for Inspection</Badge>;
       
       case "awaiting inspection":
       case "awaiting_inspection":
-        return <Badge className="text-white" style={{ backgroundColor: '#45A2E7' }}>Awaiting Inspection</Badge>;
+        return <Badge className="text-white" style={{ backgroundColor: '#A7A7B4' }}>Awaiting Inspection</Badge>;
       
-      case "awaiting approve":
-      case "awaiting_approve":
-        return <Badge className="text-white" style={{ backgroundColor: '#F89C4E' }}>Awaiting Approve</Badge>;
+      case "awaiting report":
+      case "awaiting_report":
+        return <Badge className="text-white" style={{ backgroundColor: '#A7A7B4' }}>Awaiting Report</Badge>;
       
       case "failed":
       case "rejected":
@@ -321,19 +423,15 @@ export function ResultInterpretation() {
   };
 
   const getApprovalIcon = (pharmVerify?: boolean, medtechVerify?: boolean) => {
-    // approved = ทั้ง pharm และ medtech verify แล้ว
     if (pharmVerify && medtechVerify) {
       return <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#64B464' }}></div>;
     }
-    // rejected = ถ้าไม่มีการ verify เลย
     if (!pharmVerify && !medtechVerify) {
       return <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#DC6464' }}></div>;
     }
-    // pending = verify แค่อันใดอันหนึ่ง
     return <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#DCB450' }}></div>;
   };
 
-  // Enhanced phenotype prediction helper functions
   const toggleRuleExpansion = (gene: string) => {
     const newExpanded = new Set(expandedRules);
     if (newExpanded.has(gene)) {
@@ -365,7 +463,6 @@ export function ResultInterpretation() {
   };
 
   const renderPatientReports = () => {
-    // Show loading state
     if (loadingReports || loadingPatients) {
       return (
         <div className="p-6 text-center" style={{ color: '#505050' }}>
@@ -374,7 +471,6 @@ export function ResultInterpretation() {
       );
     }
 
-    // Show error state
     if (errorReports || errorPatients) {
       return (
         <div className="p-6 text-center" style={{ color: '#DC6464' }}>
@@ -385,7 +481,6 @@ export function ResultInterpretation() {
 
     return (
       <>
-        {/* Search and Filters */}
         <div className="p-6 border-b" style={{ backgroundColor: '#EDE9FE', borderColor: '#DCDCE6' }}>
           <div className="flex items-center space-x-4">
             <div className="relative flex-1 max-w-md">
@@ -422,7 +517,6 @@ export function ResultInterpretation() {
           </div>
         </div>
         
-        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="border-b" style={{ backgroundColor: '#EDE9FE', borderColor: '#DCDCE6' }}>
@@ -476,12 +570,16 @@ export function ResultInterpretation() {
                         <Button 
                           size="sm"
                           variant="outline" 
-                          className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
+                          className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
                           onClick={() => {
-                            setApprovalReportData(report);
-                            setIsApprovalDialogOpen(true);
+                            if (isPharmacyUser) {
+                              setApprovalReportData(report);
+                              setIsApprovalDialogOpen(true);
+                            }
                           }}
+                          disabled={!isPharmacyUser || isLoadingUser}
+                          title={!isPharmacyUser ? "Only pharmacy users can approve reports" : ""}
                         >
                           Approval
                         </Button>
@@ -507,7 +605,6 @@ export function ResultInterpretation() {
           </table>
         </div>
         
-        {/* Footer */}
         <div className="p-4 border-t" style={{ backgroundColor: '#EDE9FE', borderColor: '#DCDCE6' }}>
           <p className="text-sm" style={{ color: '#1E1E1E' }}>
             Showing {filteredReports.length} of {reportsWithPatients.length} reports
@@ -517,377 +614,373 @@ export function ResultInterpretation() {
     );
   };
 
-  const renderRawData = () => (
-    <div className="p-6 space-y-6 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
-      <div>
-        <h3 className="font-medium mb-4" style={{ color: '#1E1E1E' }}>Raw Variant Data (VCF excerpt)</h3>
-        
-        {/* VCF Data Display */}
-        <div className="bg-white border font-mono text-sm p-4 rounded-lg overflow-x-auto" style={{ borderColor: '#C8C8D2' }}>
-          <div className="whitespace-pre" style={{ color: '#1E1E1E' }}>
-#CHROM POS ID REF ALT QUAL FILTER INFO{'\n'}
-chr19 9655168 rs11185532 C T 99 PASS GENE=CYP2C19;IMPACT=MODERATE{'\n'}
-chr19 9471810 rs4986833 G A 99 PASS GENE=CYP2C19;IMPACT=HIGH{'\n'}
-chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
+  const renderGenotype = () => {
+    if (loadingRules) {
+      return (
+        <div className="p-6 space-y-6 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
+          <div className="flex items-center justify-center p-12">
+            <div className="text-center space-y-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: '#7864B4' }}></div>
+              <p className="text-sm" style={{ color: '#505050' }}>Loading rules...</p>
+            </div>
           </div>
         </div>
-      </div>
+      );
+    }
 
-      {/* Metrics */}
-      <div className="grid grid-cols-3 gap-6">
-        <div className="text-center">
-          <p style={{ color: '#505050' }}>Coverage</p>
-          <p className="text-2xl font-medium" style={{ color: '#1E1E1E' }}>110x</p>
+    if (errorRules) {
+      return (
+        <div className="p-6 space-y-6 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
+          <div className="flex items-center justify-center p-12">
+            <div className="text-center space-y-4">
+              <div className="rounded-full bg-red-100 p-3 w-12 h-12 flex items-center justify-center mx-auto">
+                <span className="text-red-600">✕</span>
+              </div>
+              <p className="text-sm" style={{ color: '#E94D6A' }}>Failed to load rules. Please try again.</p>
+            </div>
+          </div>
         </div>
-        
-        <div className="text-center">
-          <p style={{ color: '#505050' }}>Mean QScore</p>
-          <p className="text-2xl font-medium" style={{ color: '#1E1E1E' }}>38</p>
-        </div>
-        
-        <div className="text-center">
-          <p style={{ color: '#505050' }}>Reads on Target</p>
-          <p className="text-2xl font-medium" style={{ color: '#1E1E1E' }}>99%</p>
-        </div>
-      </div>
+      );
+    }
 
+    return (
+      <div className="p-6 space-y-6 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
+        <div className="space-y-6">
+          <div>
+            <h3 className="mb-1" style={{ color: '#1E1E1E' }}>Rule-Based Genotype Interpretation</h3>
+            <p className="text-sm" style={{ color: '#505050' }}>Algorithm-based genotype-to-phenotype conversion following CPIC/PharmGKB guidelines</p>
+          </div>
 
-      {/* Navigation Buttons */}
-      <div className="flex items-center justify-between">
-        <Button 
-          variant="outline"
-          className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
-          style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
-          onClick={() => setCurrentStep(1)}
-        >
-          Back
-        </Button>
-        <Button 
-          className="text-white cursor-pointer"
-          style={{ backgroundColor: '#7864B4' }}
-          onClick={() => setCurrentStep(3)}
-        >
-          Continue to Genotype
-        </Button>
-      </div>
-    </div>
-  );  const renderGenotype = () => (
-    <div className="p-6 space-y-6 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h3 className="mb-1" style={{ color: '#1E1E1E' }}>Rule-Based Genotype Interpretation</h3>
-          <p className="text-sm" style={{ color: '#505050' }}>Algorithm-based genotype-to-phenotype conversion following CPIC/PharmGKB guidelines</p>
-        </div>
-        
-        {/* Genotype Table */}
-        <div className="overflow-hidden rounded-xl elevation-1 bg-white border" style={{ borderColor: '#C8C8D2' }}>
-          <table className="w-full">
-            <thead>
-              <tr style={{ backgroundColor: '#EDE9FE' }}>
-                <th className="text-left px-6 py-4" style={{ color: '#1E1E1E' }}>Gene</th>
-                <th className="text-left px-6 py-4" style={{ color: '#1E1E1E' }}>Alleles</th>
-                <th className="text-center px-4 py-4" style={{ color: '#1E1E1E', backgroundColor: '#F5F3FF' }}>G/G</th>
-                <th className="text-center px-4 py-4" style={{ color: '#1E1E1E', backgroundColor: '#F5F3FF' }}>C/C</th>
-                <th className="text-center px-4 py-4" style={{ color: '#1E1E1E', backgroundColor: '#F5F3FF' }}>A/A</th>
-                <th className="text-center px-4 py-4" style={{ color: '#1E1E1E', backgroundColor: '#F5F3FF' }}>T/T</th>
-                <th className="text-left px-6 py-4" style={{ color: '#1E1E1E' }}>Predicted Genotype</th>
-                <th className="text-left px-6 py-4" style={{ color: '#1E1E1E' }}>Column Predicted Phenotype</th>
-                <th className="text-center px-4 py-4" style={{ color: '#1E1E1E' }}>Rules</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {genotypeData.map((row, index) => {
-                // Enhanced rule-based interpretation logic following CPIC/PharmGKB guidelines
-                const interpretations = {
-                  'CYP2C19': {
-                    gg: '−',
-                    cc: '✓',
-                    aa: '−',
-                    tt: '−',
-                    predicted: '*1/*2',
-                    phenotype: 'Intermediate Metabolizer',
-                    phenotypeShort: 'IM',
-                    activityScore: '1.5',
-                    containerColor: 'bg-secondary/10',
-                    textColor: 'text-secondary-foreground-container',
-                    confidence: 92,
-                    evidence: 'A',
-                    rules: [
-                      'CYP2C19*2 (681G>A): No function allele',
-                      'CYP2C19*1: Normal function allele',
-                      'Activity Score: 1.0 + 0.5 = 1.5',
-                      'Phenotype: Intermediate Metabolizer (IM)'
-                    ],
-                    cpicGuideline: 'CPIC Guideline for CYP2C19 and Proton Pump Inhibitors',
-                    clinicalSignificance: 'Reduced clopidogrel activation, consider alternative antiplatelet therapy'
-                  },
-                  'CYP2D6': {
-                    gg: '✓',
-                    cc: '−',
-                    aa: '−',
-                    tt: '✓',
-                    predicted: '*1/*4',
-                    phenotype: 'Intermediate Metabolizer',
-                    phenotypeShort: 'IM',
-                    activityScore: '1.0',
-                    containerColor: 'bg-secondary/10',
-                    textColor: 'text-secondary-foreground-container',
-                    confidence: 88,
-                    evidence: 'A',
-                    rules: [
-                      'CYP2D6*4: No function allele',
-                      'CYP2D6*1: Normal function allele',
-                      'Activity Score: 1.0 + 0.0 = 1.0',
-                      'Phenotype: Intermediate Metabolizer (IM)'
-                    ],
-                    cpicGuideline: 'CPIC Guideline for CYP2D6 and SSRIs',
-                    clinicalSignificance: 'Reduced metabolism of many antidepressants, consider dose adjustment'
-                  },
-                  'SLCO1B1': {
-                    gg: '−',
-                    cc: '−',
-                    aa: '✓',
-                    tt: '−',
-                    predicted: '*1/*5',
-                    phenotype: 'Normal Function',
-                    phenotypeShort: 'NM',
-                    activityScore: '2.0',
-                    containerColor: 'bg-muted',
-                    textColor: 'text-foreground',
-                    confidence: 95,
-                    evidence: 'A',
-                    rules: [
-                      'SLCO1B1*5: Decreased function allele',
-                      'SLCO1B1*1: Normal function allele',
-                      'Combined Effect: Normal transporter activity',
-                      'Phenotype: Normal Function (NM)'
-                    ],
-                    cpicGuideline: 'CPIC Guideline for SLCO1B1 and Statins',
-                    clinicalSignificance: 'Normal statin transport, standard dosing appropriate'
+          <div className="bg-white rounded-xl p-6 border elevation-1" style={{ borderColor: '#C8C8D2' }}>
+            <h4 className="mb-4" style={{ color: '#1E1E1E' }}>Select Rule-Based</h4>
+            <div className="space-y-3">
+              {rules && rules.length > 0 ? (
+                rules.map((rule: RuleBased) => {
+                  console.log("Rule Name:", rule.Name, "Type:", typeof rule.Name, "Is Array:", Array.isArray(rule.Name));
+                  
+                  let displayName = 'Unknown Rule';
+                  if (rule.Name) {
+                    if (Array.isArray(rule.Name)) {
+                      displayName = rule.Name.join('');
+                    } else if (typeof rule.Name === 'string') {
+                      displayName = rule.Name;
+                    }
                   }
-                };
-                const interp = interpretations[row.gene as keyof typeof interpretations] ||
-                               {
-                                 gg: '−', cc: '−', aa: '−', tt: '−',
-                                 predicted: 'N/A', phenotype: 'Unknown', phenotypeShort: 'UK',
-                                 activityScore: '0.0', containerColor: 'bg-destructive/10',
-                                 textColor: 'text-destructive', confidence: 0, evidence: 'D',
-                                 rules: ['Insufficient data for interpretation'],
-                                 cpicGuideline: 'No guideline available',
-                                 clinicalSignificance: 'Interpretation not possible'
-                               };
-                
-                return (
-                      <tr key={row.gene} className="border-t hover:bg-[#F5F3FF] transition-colors" style={{ borderColor: '#DCDCE6' }}>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <input type="checkbox" className="w-4 h-4 rounded" style={{ accentColor: '#7864B4' }} />
-                        <span style={{ color: '#1E1E1E' }}>{row.gene}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="font-mono text-sm" style={{ color: '#1E1E1E' }}>{row.alleles}</span>
-                    </td>
-                    <td className="px-4 py-4 text-center" style={{ backgroundColor: '#F5F3FF' }}>
-                      <span style={{ color: interp.gg === '✓' ? '#7864B4' : '#505050' }}>
-                        {interp.gg}
+                  if (!displayName || displayName === '') {
+                    displayName = `Rule ${rule.id}`;
+                  }
+
+                  return (
+                    <label
+                      key={rule.id}
+                      className="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-[#F5F3FF] transition-colors"
+                      style={{ borderColor: selectedRuleId === rule.id ? '#7864B4' : '#C8C8D2', backgroundColor: selectedRuleId === rule.id ? '#F5F3FF' : 'transparent' }}
+                    >
+                      <input
+                        type="radio"
+                        name="rule-selection"
+                        value={rule.id}
+                        checked={selectedRuleId === rule.id}
+                        onChange={(e) => setSelectedRuleId(e.target.value)}
+                        className="w-4 h-4"
+                        style={{ accentColor: '#7864B4' }}
+                      />
+                      <span style={{ color: '#1E1E1E' }}>
+                        {displayName}
                       </span>
-                    </td>
-                    <td className="px-4 py-4 text-center" style={{ backgroundColor: '#F5F3FF' }}>
-                      <span style={{ color: interp.cc === '✓' ? '#7864B4' : '#505050' }}>
-                        {interp.cc}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-center" style={{ backgroundColor: '#F5F3FF' }}>
-                      <span style={{ color: interp.aa === '✓' ? '#7864B4' : '#505050' }}>
-                        {interp.aa}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-center" style={{ backgroundColor: '#F5F3FF' }}>
-                      <span style={{ color: interp.tt === '✓' ? '#7864B4' : '#505050' }}>
-                        {interp.tt}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="font-mono text-sm" style={{ color: '#1E1E1E' }}>{interp.predicted}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${interp.containerColor}`}>
-                        <span className={`text-xs font-mono ${interp.textColor}`}>{interp.phenotypeShort}</span>
-                        <span className={`text-sm ${interp.textColor}`}>{interp.phenotype}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-center">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleRuleExpansion(row.gene)}
-                        className="h-8 w-8 p-0 hover:bg-[#F5F3FF] cursor-pointer"
-                      >
-                        {expandedRules.has(row.gene) ? (
-                          <ChevronUp className="h-4 w-4" style={{ color: '#1E1E1E' }} />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" style={{ color: '#1E1E1E' }} />
-                        )}
-                      </Button>
+                    </label>
+                  );
+                })
+              ) : (
+                <p className="text-sm text-center py-4" style={{ color: '#505050' }}>No rules available</p>
+              )}
+            </div>
+          </div>
+          
+          <div className="overflow-hidden rounded-xl elevation-1 bg-white border" style={{ borderColor: '#C8C8D2' }}>
+            <table className="w-full">
+              <thead>
+                <tr style={{ backgroundColor: '#EDE9FE' }}>
+                  <th className="text-left px-6 py-4" style={{ color: '#1E1E1E' }}>Gene</th>
+                  <th className="text-left px-6 py-4" style={{ color: '#1E1E1E' }}>Alleles</th>
+                  <th className="text-center px-4 py-4" style={{ color: '#1E1E1E', backgroundColor: '#F5F3FF' }}>G/G</th>
+                  <th className="text-center px-4 py-4" style={{ color: '#1E1E1E', backgroundColor: '#F5F3FF' }}>C/C</th>
+                  <th className="text-center px-4 py-4" style={{ color: '#1E1E1E', backgroundColor: '#F5F3FF' }}>A/A</th>
+                  <th className="text-center px-4 py-4" style={{ color: '#1E1E1E', backgroundColor: '#F5F3FF' }}>T/T</th>
+                  <th className="text-left px-6 py-4" style={{ color: '#1E1E1E' }}>Predicted Genotype</th>
+                  <th className="text-left px-6 py-4" style={{ color: '#1E1E1E' }}>Column Predicted Phenotype</th>
+                  <th className="text-center px-4 py-4" style={{ color: '#1E1E1E' }}>Rules</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white">
+                {selectedRuleData ? (
+                  (() => {
+                    const locations = selectedRuleData.location || [];
+                    const resultLocations = selectedRuleData.result_location || [];
+                    const phenotypes = selectedRuleData.phenotype || [];
+                    const predictedGenotypes = selectedRuleData.predicted_genotype || [];
+                    const predictedPhenotypes = selectedRuleData.predicted_phenotype || [];
+                    const recommendations = selectedRuleData.recommend || [];
+                    const names = selectedRuleData.Name || [];
+
+                    const ruleBasedName = Array.isArray(names) ? names.join('') : (names || 'Unknown');
+                    
+                    const alleleName = locations[0] || '−';
+
+                    console.log("Selected Rule Data Debug:", {
+                      names,
+                      ruleBasedName,
+                      locations,
+                      alleleName,
+                      resultLocations,
+                      predictedGenotypes,
+                      predictedPhenotypes
+                    });
+
+                    const maxLength = Math.max(
+                      resultLocations.length,
+                      phenotypes.length,
+                      predictedGenotypes.length,
+                      predictedPhenotypes.length,
+                      recommendations.length
+                    );
+
+                    if (maxLength === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={9} className="px-6 py-8 text-center">
+                            <p className="text-sm" style={{ color: '#505050' }}>No data available for selected rule</p>
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return Array.from({ length: maxLength }).map((_, index) => {
+                      const resultLocation = resultLocations[index] || '−';
+                      const phenotype = phenotypes[index] || '−';
+                      const predictedGenotype = predictedGenotypes[index] || '−';
+                      const predictedPhenotype = predictedPhenotypes[index] || '−';
+                      const recommendation = recommendations[index] || '−';
+
+                      const parseGenotype = (resultLoc: string) => {
+                        const markers = { gg: '−', cc: '−', aa: '−', tt: '−' };
+                        if (resultLoc && resultLoc !== '−') {
+                          const lower = resultLoc.toLowerCase();
+                          if (lower.includes('g/g')) markers.gg = '✓';
+                          if (lower.includes('c/c')) markers.cc = '✓';
+                          if (lower.includes('a/a')) markers.aa = '✓';
+                          if (lower.includes('t/t')) markers.tt = '✓';
+                        }
+                        return markers;
+                      };
+
+                      const markers = parseGenotype(resultLocation);
+
+                      const getPhenotypeStyle = (phenotype: string) => {
+                        const lower = phenotype.toLowerCase();
+                        if (lower.includes('intermediate') || lower.includes('im')) {
+                          return {
+                            containerColor: 'bg-secondary/10',
+                            textColor: 'text-secondary-foreground-container',
+                            short: 'IM'
+                          };
+                        } else if (lower.includes('normal') || lower.includes('nm')) {
+                          return {
+                            containerColor: 'bg-muted',
+                            textColor: 'text-foreground',
+                            short: 'NM'
+                          };
+                        } else if (lower.includes('poor') || lower.includes('pm')) {
+                          return {
+                            containerColor: 'bg-destructive/10',
+                            textColor: 'text-destructive',
+                            short: 'PM'
+                          };
+                        } else if (lower.includes('rapid') || lower.includes('rm') || lower.includes('ultra')) {
+                          return {
+                            containerColor: 'bg-primary/10',
+                            textColor: 'text-primary',
+                            short: 'RM'
+                          };
+                        }
+                        return {
+                          containerColor: 'bg-muted',
+                          textColor: 'text-muted-foreground',
+                          short: 'UK'
+                        };
+                      };
+
+                      const phenotypeStyle = getPhenotypeStyle(predictedPhenotype);
+
+                      return (
+                        <tr key={index} className="border-t hover:bg-[#F5F3FF] transition-colors" style={{ borderColor: '#DCDCE6' }}>
+                          <td className="px-6 py-4">
+                            <span style={{ color: '#1E1E1E' }}>{ruleBasedName}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="font-mono text-sm" style={{ color: '#1E1E1E' }}>{alleleName}</span>
+                          </td>
+                          <td className="px-4 py-4 text-center" style={{ backgroundColor: '#F5F3FF' }}>
+                            <span style={{ color: markers.gg === '✓' ? '#7864B4' : '#505050' }}>
+                              {markers.gg}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 text-center" style={{ backgroundColor: '#F5F3FF' }}>
+                            <span style={{ color: markers.cc === '✓' ? '#7864B4' : '#505050' }}>
+                              {markers.cc}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 text-center" style={{ backgroundColor: '#F5F3FF' }}>
+                            <span style={{ color: markers.aa === '✓' ? '#7864B4' : '#505050' }}>
+                              {markers.aa}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 text-center" style={{ backgroundColor: '#F5F3FF' }}>
+                            <span style={{ color: markers.tt === '✓' ? '#7864B4' : '#505050' }}>
+                              {markers.tt}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="font-mono text-sm" style={{ color: '#1E1E1E' }}>{predictedGenotype}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${phenotypeStyle.containerColor}`}>
+                              <span className={`text-xs font-mono ${phenotypeStyle.textColor}`}>{phenotypeStyle.short}</span>
+                              <span className={`text-sm ${phenotypeStyle.textColor}`}>{predictedPhenotype}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            <Button
+                              variant={selectedRuleRowIndex === index ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => {
+                                setSelectedRuleRowIndex(index);
+                                
+                                setSelectedGenotypeData({
+                                  ruleBasedName: ruleBasedName,
+                                  alleleName: alleleName,
+                                  resultLocation: resultLocation,
+                                  predictedGenotype: predictedGenotype,
+                                  predictedPhenotype: predictedPhenotype,
+                                  recommendation: recommendation
+                                });
+                                
+                                console.log(`Selected row ${index} for Phenotype step:`, {
+                                  rule: ruleBasedName,
+                                  allele: alleleName,
+                                  resultLocation: resultLocation,
+                                  genotype: predictedGenotype,
+                                  phenotype: predictedPhenotype,
+                                  recommendation: recommendation
+                                });
+                              }}
+                              className="cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
+                              style={selectedRuleRowIndex === index ? { backgroundColor: '#7864B4', color: 'white' } : { borderColor: '#C8C8D2', color: '#7864B4' }}
+                            >
+                              {selectedRuleRowIndex === index ? 'Selected' : 'Use'}
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })()
+                ) : (
+                  <tr>
+                    <td colSpan={9} className="px-6 py-8 text-center">
+                      <p className="text-sm" style={{ color: '#505050' }}>Please select a rule to view genotype data</p>
                     </td>
                   </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {expandedRules.size > 0 && selectedRuleData && (
+            <div className="space-y-4 mt-6">
+              <h3 className="text-foreground font-medium flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                Rule-Based Prediction Details
+              </h3>
+              {Array.from(expandedRules).map(gene => {
+                const recommendations = selectedRuleData.recommendation || [];
+                const phenotypes = selectedRuleData.phenotype || [];
+
+                return (
+                  <Card key={gene} className="bg-white border p-4" style={{ borderColor: '#C8C8D2' }}>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium" style={{ color: '#1E1E1E' }}>{gene} Prediction Rules</h4>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openGeneDetails(gene)}
+                          className="hover:bg-[#F5F3FF] cursor-pointer"
+                          style={{ color: '#7864B4' }}
+                        >
+                          <Info className="h-4 w-4 mr-1" />
+                          View Details
+                        </Button>
+                      </div>
+
+                      <div className="space-y-2">
+                        <h5 className="text-sm font-medium" style={{ color: '#1E1E1E' }}>Recommendations:</h5>
+                        <ul className="space-y-1">
+                          {recommendations.length > 0 ? (
+                            recommendations.map((rec, index) => (
+                              <li key={index} className="text-sm flex items-start gap-2" style={{ color: '#505050' }}>
+                                <span className="mt-0.5" style={{ color: '#7864B4' }}>•</span>
+                                {rec}
+                              </li>
+                            ))
+                          ) : (
+                            <li className="text-sm" style={{ color: '#505050' }}>No recommendations available</li>
+                          )}
+                        </ul>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-medium" style={{ color: '#1E1E1E' }}>Phenotype:</h5>
+                          <p className="text-sm" style={{ color: '#505050' }}>
+                            {phenotypes.length > 0 ? phenotypes.join(', ') : 'N/A'}
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-medium" style={{ color: '#1E1E1E' }}>Clinical Significance:</h5>
+                          <p className="text-sm italic" style={{ color: '#505050' }}>
+                            {recommendations.length > 0 ? recommendations[0] : 'Interpretation not available'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
                 );
               })}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
 
-        {/* Expandable Rule Details */}
-        {expandedRules.size > 0 && (
-          <div className="space-y-4 mt-6">
-            <h3 className="text-foreground font-medium flex items-center gap-2">
-              <BookOpen className="h-4 w-4" />
-              Rule-Based Prediction Details
-            </h3>
-            {Array.from(expandedRules).map(gene => {
-              const interp = {
-                'CYP2C19': {
-                  rules: [
-                    'CYP2C19*2 (681G>A): No function allele',
-                    'CYP2C19*1: Normal function allele',
-                    'Activity Score: 1.0 + 0.5 = 1.5',
-                    'Phenotype: Intermediate Metabolizer (IM)'
-                  ],
-                  cpicGuideline: 'CPIC Guideline for CYP2C19 and Proton Pump Inhibitors',
-                  clinicalSignificance: 'Reduced clopidogrel activation, consider alternative antiplatelet therapy'
-                },
-                'CYP2D6': {
-                  rules: [
-                    'CYP2D6*4: No function allele',
-                    'CYP2D6*1: Normal function allele',
-                    'Activity Score: 1.0 + 0.0 = 1.0',
-                    'Phenotype: Intermediate Metabolizer (IM)'
-                  ],
-                  cpicGuideline: 'CPIC Guideline for CYP2D6 and SSRIs',
-                  clinicalSignificance: 'Reduced metabolism of many antidepressants, consider dose adjustment'
-                },
-                'SLCO1B1': {
-                  rules: [
-                    'SLCO1B1*5: Decreased function allele',
-                    'SLCO1B1*1: Normal function allele',
-                    'Combined Effect: Normal transporter activity',
-                    'Phenotype: Normal Function (NM)'
-                  ],
-                  cpicGuideline: 'CPIC Guideline for SLCO1B1 and Statins',
-                  clinicalSignificance: 'Normal statin transport, standard dosing appropriate'
-                }
-              }[gene] || {
-                rules: ['Insufficient data for interpretation'],
-                cpicGuideline: 'No guideline available',
-                clinicalSignificance: 'Interpretation not possible'
-              };
-
-              return (
-                <Card key={gene} className="bg-white border p-4" style={{ borderColor: '#C8C8D2' }}>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium" style={{ color: '#1E1E1E' }}>{gene} Prediction Rules</h4>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openGeneDetails(gene)}
-                        className="hover:bg-[#F5F3FF] cursor-pointer"
-                        style={{ color: '#7864B4' }}
-                      >
-                        <Info className="h-4 w-4 mr-1" />
-                        View Details
-                      </Button>
-                    </div>
-
-                    <div className="space-y-2">
-                      <h5 className="text-sm font-medium" style={{ color: '#1E1E1E' }}>Algorithm Steps:</h5>
-                      <ul className="space-y-1">
-                        {interp.rules.map((rule, index) => (
-                          <li key={index} className="text-sm flex items-start gap-2" style={{ color: '#505050' }}>
-                            <span className="mt-0.5" style={{ color: '#7864B4' }}>•</span>
-                            {rule}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-medium" style={{ color: '#1E1E1E' }}>CPIC Guideline:</h5>
-                        <p className="text-sm italic" style={{ color: '#505050' }}>{interp.cpicGuideline}</p>
-                      </div>
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-medium" style={{ color: '#1E1E1E' }}>Clinical Significance:</h5>
-                        <p className="text-sm" style={{ color: '#505050' }}>{interp.clinicalSignificance}</p>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Enhanced Legend */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="p-4 bg-white border elevation-0" style={{ borderColor: '#C8C8D2' }}>
-            <h4 className="text-sm mb-3" style={{ color: '#1E1E1E' }}>Variant Detection</h4>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span style={{ color: '#64B464' }}>✓</span>
-                <span className="text-sm" style={{ color: '#505050' }}>Detected</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span style={{ color: '#505050' }}>−</span>
-                <span className="text-sm" style={{ color: '#505050' }}>Not detected</span>
-              </div>
-            </div>
-          </Card>
-
-          {/* Confidence Levels and Evidence Levels cards removed */}
-
-          <Card className="p-4 bg-white border elevation-0" style={{ borderColor: '#C8C8D2' }}>
-            <h4 className="text-sm mb-3" style={{ color: '#1E1E1E' }}>Interactive Rules</h4>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 cursor-pointer">
-                  <ChevronDown className="h-3 w-3" style={{ color: '#1E1E1E' }} />
-                </Button>
-                <span className="text-sm" style={{ color: '#505050' }}>Click to expand</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Info className="h-3 w-3" style={{ color: '#7864B4' }} />
-                <span className="text-sm" style={{ color: '#505050' }}>View details</span>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
-
-      {/* Navigation Buttons */}
-      <div className="flex items-center justify-between">
-        <Button 
-          variant="outline"
-          className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors px-6 py-3"
-          style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
-          onClick={() => setCurrentStep(2)}
+        <div className="flex items-center justify-between">
+          <Button 
+            variant="outline"
+            className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors px-6 py-3"
+            style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
+          onClick={() => setCurrentStep(1)}
         >
           Back
         </Button>
         <Button 
           className="text-white px-6 py-3 cursor-pointer"
           style={{ backgroundColor: '#7864B4' }}
-          onClick={() => setCurrentStep(4)}
+          onClick={() => setCurrentStep(3)}
         >
           Continue to Phenotype Analysis →
         </Button>
       </div>
     </div>
   );
+};
 
-  // Enhanced phenotype data based on rule-based predictions
   const phenotypeData = {
     overall: {
       primaryGene: 'CYP2C19',
@@ -959,146 +1052,78 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
 
     return (
       <div className="p-6 space-y-6 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
-        {/* Main Phenotype Classification Card */}
-        <Card className="p-8 bg-white border elevation-1" style={{ borderColor: '#C8C8D2' }}>
-          <div className="space-y-8">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="mb-1" style={{ color: '#1E1E1E' }}>Rule-Based Phenotype Classification</h3>
-                <p className="text-sm" style={{ color: '#505050' }}>Algorithm-based interpretation following CPIC/PharmGKB guidelines</p>
+        
+        {selectedGenotypeData && (
+          <Card className="p-6 bg-white border elevation-1" style={{ borderColor: '#7864B4' }}>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium" style={{ color: '#1E1E1E' }}>Selected Genotype Summary</h3>
+                <Badge style={{ backgroundColor: '#7864B4', color: 'white' }}>
+                  From Previous Step
+                </Badge>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDetailedRulesPhenotype(!showDetailedRulesPhenotype)}
-                className="bg-white hover:bg-[#F5F3FF] cursor-pointer"
-                style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
-              >
-                <BookOpen className="h-4 w-4 mr-2" />
-                {showDetailedRulesPhenotype ? 'Hide Rules' : 'Show Rules'}
-              </Button>
-            </div>
-
-            {/* Overall Phenotype Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="text-center p-6 bg-white rounded-lg border" style={{ borderColor: '#C8C8D2' }}>
-                  <Badge className={`mb-3 px-4 py-2 rounded-lg ${
-                    phenotypeData.overall.phenotypeShort === 'IM'
-                      ? 'bg-secondary/10 text-secondary-foreground-container'
-                      : 'bg-muted text-foreground'
-                  }`}>
-                    {phenotypeData.overall.phenotypeShort}
-                  </Badge>
-                  <h4 className="text-lg font-medium mb-2" style={{ color: '#1E1E1E' }}>{phenotypeData.overall.phenotype}</h4>
-                  <p className="text-sm" style={{ color: '#505050' }}>{phenotypeData.overall.interpretation}</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium" style={{ color: '#505050' }}>Rule-Based</p>
+                  <p className="text-lg font-semibold" style={{ color: '#7864B4' }}>{selectedGenotypeData.ruleBasedName}</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-medium" style={{ color: '#505050' }}>Allele</p>
+                  <p className="text-lg font-mono" style={{ color: '#1E1E1E' }}>{selectedGenotypeData.alleleName}</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-medium" style={{ color: '#505050' }}>Genotype Marker</p>
+                  <p className="text-lg font-mono" style={{ color: '#1E1E1E' }}>{selectedGenotypeData.resultLocation}</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-medium" style={{ color: '#505050' }}>Predicted Genotype</p>
+                  <p className="text-lg font-mono" style={{ color: '#1E1E1E' }}>{selectedGenotypeData.predictedGenotype}</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-medium" style={{ color: '#505050' }}>Predicted Phenotype</p>
+                  <p className="text-lg" style={{ color: '#1E1E1E' }}>{selectedGenotypeData.predictedPhenotype}</p>
                 </div>
               </div>
-
-              <div className="space-y-4">
-                {/* Space left empty after removing Activity Score, Confidence, and Evidence Level */}
-              </div>
-            </div>
-
-            {/* Detailed Rules Section */}
-            {showDetailedRulesPhenotype && (
-              <div className="space-y-6 pt-6 border-t" style={{ borderColor: '#DCDCE6' }}>
-                <h4 className="font-medium flex items-center gap-2" style={{ color: '#1E1E1E' }}>
-                  <BookOpen className="h-4 w-4" />
-                  Gene-Specific Rule-Based Predictions
-                </h4>
-
-                <div className="space-y-4">
-                  {phenotypeData.genePredictions.map((gene) => (
-                    <Card key={gene.gene} className="bg-white border" style={{ borderColor: '#C8C8D2' }}>
-                      <div className="p-4">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            <h5 className="font-medium" style={{ color: '#1E1E1E' }}>{gene.gene}</h5>
-                            <span className="font-mono text-sm" style={{ color: '#505050' }}>{gene.genotype}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full ${
-                              gene.phenotypeShort === 'IM'
-                                ? 'bg-secondary/10 text-secondary-foreground-container'
-                                : 'bg-muted text-foreground'
-                            }`}>
-                              <span className="text-xs font-medium">{gene.phenotypeShort}</span>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleGeneExpansionPhenotype(gene.gene)}
-                              className="h-8 w-8 p-0 hover:bg-[#F5F3FF] cursor-pointer"
-                            >
-                              {expandedGenePhenotype === gene.gene ? (
-                                <ChevronUp className="h-4 w-4" style={{ color: '#1E1E1E' }} />
-                              ) : (
-                                <ChevronDown className="h-4 w-4" style={{ color: '#1E1E1E' }} />
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-
-                        {expandedGenePhenotype === gene.gene && (
-                          <div className="space-y-4 pt-4 border-t" style={{ borderColor: '#DCDCE6' }}>
-                            {/* Rule Steps */}
-                            <div className="space-y-2">
-                              <h6 className="text-sm font-medium" style={{ color: '#1E1E1E' }}>Algorithm Steps:</h6>
-                              <ul className="space-y-1">
-                                {gene.rules.map((rule, index) => (
-                                  <li key={index} className="text-sm flex items-start gap-2" style={{ color: '#505050' }}>
-                                    <span className="mt-0.5" style={{ color: '#7864B4' }}>•</span>
-                                    {rule}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-
-                            {/* Additional Info */}
-                            {/* Activity Score and Confidence sections removed */}
-
-                            <div className="pt-2">
-                              <p className="text-xs italic" style={{ color: '#505050' }}>
-                                {gene.cpicGuideline}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </Card>
-                  ))}
+              
+              <div className="pt-4 border-t" style={{ borderColor: '#DCDCE6' }}>
+                <p className="text-sm font-medium mb-2" style={{ color: '#505050' }}>Therapeutic Recommendation</p>
+                <div className="p-4 rounded-lg" style={{ backgroundColor: '#F5F3FF' }}>
+                  <p className="text-sm leading-relaxed" style={{ color: '#1E1E1E' }}>
+                    {selectedGenotypeData.recommendation || 'No specific recommendation available'}
+                  </p>
                 </div>
               </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: '#DCDCE6' }}>
-              <Button
-                variant="outline"
-                className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors px-6 py-3"
-                style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
-                onClick={() => setCurrentStep(3)}
-              >
-                Back
-              </Button>
-              <Button
-                className="text-white px-6 py-3 cursor-pointer"
-                style={{ backgroundColor: '#7864B4' }}
-                onClick={() => setCurrentStep(5)}
-              >
-                Continue to Recommendations →
-              </Button>
             </div>
-          </div>
-        </Card>
+          </Card>
+        )}
+        
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors px-6 py-3"
+            style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
+            onClick={() => setCurrentStep(2)}
+          >
+            Back
+          </Button>
+          <Button
+            className="text-white px-6 py-3 cursor-pointer"
+            style={{ backgroundColor: '#7864B4' }}
+            onClick={() => setCurrentStep(4)}
+          >
+            Continue to Quality Review →
+          </Button>
+        </div>
       </div>
     );
   };
 
   const handleValidation = () => {
-    // Perform validation checks
     const updatedResults = {
       coverage: {
         ...validationResults.coverage,
@@ -1118,201 +1143,244 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
     setIsValidated(true);
   };
 
+  const handleConfirmValidation = async () => {
+    if (!selectedPatientData) return;
+    
+    setIsValidating(true);
+    
+    try {
+      console.log('selectedPatientData:', selectedPatientData);
+      console.log('selectedRuleId:', selectedRuleId);
+      console.log('selectedRuleRowIndex:', selectedRuleRowIndex);
+
+      const moreInfo = Array.isArray(selectedPatientData.more_information) 
+        ? [...selectedPatientData.more_information] 
+        : [];
+      
+      moreInfo.push({ 
+        tester_type: testerType,
+        validation_criteria: selectedValidationCriteria,
+        validated_at: new Date().toISOString()
+      });
+
+      const updateData: any = {
+        doctor_id: selectedPatientData.doctor_id || "N/A",
+        pharm_verify: true,
+        medtech_verify: true,
+        note_id: selectedPatientData.note_id || "N/A",
+        rule_id: selectedRuleId || selectedPatientData.rule_id || "N/A",
+        index_rule: (() => {
+          const value = selectedRuleRowIndex !== null && selectedRuleRowIndex !== undefined 
+            ? selectedRuleRowIndex 
+            : selectedPatientData.index_rule;
+          return value === 0 || value === null || value === undefined ? 1 : value;
+        })(),
+        more_information: moreInfo.length > 0 ? moreInfo : [{ default: true }],
+        pharmacist_id: selectedPatientData.pharmacist_id || "N/A",
+        medical_technician_id: selectedPatientData.medical_technician_id || "N/A",
+        request_date: selectedPatientData.request_date || new Date().toISOString(),
+        report_date: selectedPatientData.report_date || new Date().toISOString(),
+      };
+
+      console.log('Updating report with data:', updateData);
+      console.log('Checking required fields:');
+      console.log('- doctor_id:', updateData.doctor_id);
+      console.log('- pharm_verify:', updateData.pharm_verify, typeof updateData.pharm_verify);
+      console.log('- medtech_verify:', updateData.medtech_verify, typeof updateData.medtech_verify);
+      console.log('- note_id:', updateData.note_id);
+      console.log('- rule_id:', updateData.rule_id);
+      console.log('- index_rule:', updateData.index_rule, typeof updateData.index_rule);
+      console.log('- more_information:', updateData.more_information);
+      console.log('- pharmacist_id:', updateData.pharmacist_id);
+      console.log('- medical_technician_id:', updateData.medical_technician_id);
+      console.log('- request_date:', updateData.request_date);
+      console.log('- report_date:', updateData.report_date);
+
+      await updateReportMutation.mutateAsync({ 
+        id: selectedPatientData.id,
+        data: updateData 
+      });
+    } catch (error) {
+      console.error('Failed to validate report:', error);
+      alert('Failed to validate report: ' + (error as Error).message);
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const handleFinishReport = async () => {
+    if (!selectedPatientData) return;
+
+    try {
+      const updateData: any = {
+        doctor_id: selectedPatientData.doctor_id || "N/A",
+        pharm_verify: selectedPatientData.pharm_verify || true,
+        medtech_verify: selectedPatientData.medtech_verify || true,
+        note_id: selectedPatientData.note_id || "N/A",
+        rule_id: selectedPatientData.rule_id || "N/A",
+        index_rule: selectedPatientData.index_rule || 1,
+        more_information: selectedPatientData.more_information || [{ default: true }],
+        pharmacist_id: selectedPatientData.pharmacist_id || "N/A",
+        medical_technician_id: selectedPatientData.medical_technician_id || "N/A",
+        request_date: selectedPatientData.request_date || new Date().toISOString(),
+        report_date: selectedPatientData.report_date || new Date().toISOString(),
+        status: "Completed",
+      };
+
+      await updateReportMutation.mutateAsync({
+        id: selectedPatientData.id,
+        data: updateData
+      });
+
+      alert('Report completed successfully!');
+      
+      setSelectedReport(null);
+      setSelectedPatientData(null);
+      setCurrentStep(1);
+    } catch (error) {
+      console.error('Failed to complete report:', error);
+      alert('Failed to complete report: ' + (error as Error).message);
+    }
+  };
+
   const renderRecommendations = () => (
     <div className="p-6 space-y-6 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
-      {/* Quality Review Section */}
       <Card className="p-6 border elevation-1 bg-white" style={{ borderColor: '#C8C8D2' }}>
         <div className="space-y-6">
           <div>
             <h3 className="mb-1" style={{ color: '#1E1E1E' }}>Quality Review</h3>
-            <p className="text-sm" style={{ color: '#505050' }}>Validate sequencing quality metrics before finalizing recommendations</p>
+            <p className="text-sm" style={{ color: '#505050' }}>Validate sequencing quality metrics before finalizing</p>
           </div>
 
-          {/* Tester Type */}
           <div className="space-y-2">
             <Label htmlFor="tester-type" style={{ color: '#1E1E1E' }}>Tester Type</Label>
             <Select value={testerType} onValueChange={setTesterType}>
               <SelectTrigger id="tester-type" className="bg-white border" style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}>
-                <SelectValue />
+                <SelectValue placeholder="Select tester type" />
               </SelectTrigger>
               <SelectContent className="bg-white border" style={{ borderColor: '#C8C8D2' }}>
-                <SelectItem value="Illumina MiSeq" style={{ color: '#1E1E1E' }}>Illumina MiSeq</SelectItem>
-                <SelectItem value="Illumina NextSeq" style={{ color: '#1E1E1E' }}>Illumina NextSeq</SelectItem>
-                <SelectItem value="Ion Torrent PGM" style={{ color: '#1E1E1E' }}>Ion Torrent PGM</SelectItem>
-                <SelectItem value="Oxford Nanopore MinION" style={{ color: '#1E1E1E' }}>Oxford Nanopore MinION</SelectItem>
+                <SelectItem value="TPMT">TPMT</SelectItem>
+                <SelectItem value="2C19">2C19</SelectItem>
+                <SelectItem value="3A5">3A5</SelectItem>
+                <SelectItem value="VKORC1">VKORC1</SelectItem>
+                <SelectItem value="2D6 new">2D6 new</SelectItem>
+                <SelectItem value="CYP2C9">CYP2C9</SelectItem>
+                <SelectItem value="HLA-B">HLA-B</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Validation Metrics */}
           <div className="space-y-4">
             <h4 style={{ color: '#1E1E1E' }}>Validation Criteria</h4>
             
-            {/* Coverage */}
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white border" style={{ borderColor: '#C8C8D2' }}>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors" 
+                 style={{ borderColor: selectedValidationCriteria.includes('coverage') ? '#7864B4' : '#C8C8D2' }}
+                 onClick={() => {
+                   setSelectedValidationCriteria(prev => 
+                     prev.includes('coverage') 
+                       ? prev.filter(c => c !== 'coverage')
+                       : [...prev, 'coverage']
+                   );
+                 }}>
               <div className="flex items-center gap-3">
-                {isValidated && (
-                  validationResults.coverage.passed ? (
-                    <CheckCircle className="h-5 w-5" style={{ color: '#7864B4' }} />
-                  ) : (
-                    <XCircle className="h-5 w-5" style={{ color: '#DC6464' }} />
-                  )
-                )}
-                {!isValidated && <div className="h-5 w-5 rounded-full border-2" style={{ borderColor: '#C8C8D2' }} />}
+                <input 
+                  type="checkbox" 
+                  checked={selectedValidationCriteria.includes('coverage')}
+                  onChange={() => {}}
+                  className="w-4 h-4 rounded"
+                  style={{ accentColor: '#7864B4' }}
+                />
                 <div>
                   <span style={{ color: '#1E1E1E' }}>Coverage</span>
                   <p className="text-xs" style={{ color: '#505050' }}>≥ {validationResults.coverage.threshold}x required</p>
                 </div>
               </div>
-              <Badge className={`px-3 py-1 rounded-lg ${isValidated && validationResults.coverage.passed ? 'bg-[#7864B4]/10' : 'bg-white'}`} style={{ color: isValidated && validationResults.coverage.passed ? '#7864B4' : '#1E1E1E' }}>
-                {validationResults.coverage.value}x
+              <Badge className={`px-3 py-1 rounded-lg ${validationResults.coverage.passed ? 'bg-[#64B464]/10 text-[#64B464]' : validationResults.coverage.value >= 50 ? 'bg-[#FFD966]/10 text-[#F89C4E]' : 'bg-[#DC6464]/10 text-[#DC6464]'}`}>
+                {validationResults.coverage.passed ? 'Pass' : validationResults.coverage.value >= 50 ? 'Warning' : 'Fail'}
               </Badge>
             </div>
 
-            {/* Allele Balance */}
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white border" style={{ borderColor: '#C8C8D2' }}>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors" 
+                 style={{ borderColor: selectedValidationCriteria.includes('alleleBalance') ? '#7864B4' : '#C8C8D2' }}
+                 onClick={() => {
+                   setSelectedValidationCriteria(prev => 
+                     prev.includes('alleleBalance') 
+                       ? prev.filter(c => c !== 'alleleBalance')
+                       : [...prev, 'alleleBalance']
+                   );
+                 }}>
               <div className="flex items-center gap-3">
-                {isValidated && (
-                  validationResults.alleleBalance.passed ? (
-                    <CheckCircle className="h-5 w-5" style={{ color: '#7864B4' }} />
-                  ) : (
-                    <XCircle className="h-5 w-5" style={{ color: '#DC6464' }} />
-                  )
-                )}
-                {!isValidated && <div className="h-5 w-5 rounded-full border-2" style={{ borderColor: '#C8C8D2' }} />}
+                <input 
+                  type="checkbox" 
+                  checked={selectedValidationCriteria.includes('alleleBalance')}
+                  onChange={() => {}}
+                  className="w-4 h-4 rounded"
+                  style={{ accentColor: '#7864B4' }}
+                />
                 <div>
                   <span style={{ color: '#1E1E1E' }}>Allele Balance</span>
                   <p className="text-xs" style={{ color: '#505050' }}>≥ {validationResults.alleleBalance.threshold}% required</p>
                 </div>
               </div>
-              <Badge className={`px-3 py-1 rounded-lg ${isValidated && validationResults.alleleBalance.passed ? 'bg-[#7864B4]/10' : 'bg-white'}`} style={{ color: isValidated && validationResults.alleleBalance.passed ? '#7864B4' : '#1E1E1E' }}>
-                {validationResults.alleleBalance.value}%
+              <Badge className={`px-3 py-1 rounded-lg ${validationResults.alleleBalance.passed ? 'bg-[#64B464]/10 text-[#64B464]' : validationResults.alleleBalance.value >= 30 ? 'bg-[#FFD966]/10 text-[#F89C4E]' : 'bg-[#DC6464]/10 text-[#DC6464]'}`}>
+                {validationResults.alleleBalance.passed ? 'Pass' : validationResults.alleleBalance.value >= 30 ? 'Warning' : 'Fail'}
               </Badge>
             </div>
 
-            {/* Quality Score */}
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white border" style={{ borderColor: '#C8C8D2' }}>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors" 
+                 style={{ borderColor: selectedValidationCriteria.includes('qualityScore') ? '#7864B4' : '#C8C8D2' }}
+                 onClick={() => {
+                   setSelectedValidationCriteria(prev => 
+                     prev.includes('qualityScore') 
+                       ? prev.filter(c => c !== 'qualityScore')
+                       : [...prev, 'qualityScore']
+                   );
+                 }}>
               <div className="flex items-center gap-3">
-                {isValidated && (
-                  validationResults.qualityScore.passed ? (
-                    <CheckCircle className="h-5 w-5" style={{ color: '#7864B4' }} />
-                  ) : (
-                    <XCircle className="h-5 w-5" style={{ color: '#DC6464' }} />
-                  )
-                )}
-                {!isValidated && <div className="h-5 w-5 rounded-full border-2" style={{ borderColor: '#C8C8D2' }} />}
+                <input 
+                  type="checkbox" 
+                  checked={selectedValidationCriteria.includes('qualityScore')}
+                  onChange={() => {}}
+                  className="w-4 h-4 rounded"
+                  style={{ accentColor: '#7864B4' }}
+                />
                 <div>
                   <span style={{ color: '#1E1E1E' }}>Quality Score</span>
                   <p className="text-xs" style={{ color: '#505050' }}>≥ {validationResults.qualityScore.threshold} required</p>
                 </div>
               </div>
-              <Badge className={`px-3 py-1 rounded-lg ${isValidated && validationResults.qualityScore.passed ? 'bg-[#7864B4]/10' : 'bg-white'}`} style={{ color: isValidated && validationResults.qualityScore.passed ? '#7864B4' : '#1E1E1E' }}>
-                {validationResults.qualityScore.value}
+              <Badge className={`px-3 py-1 rounded-lg ${validationResults.qualityScore.passed ? 'bg-[#64B464]/10 text-[#64B464]' : validationResults.qualityScore.value >= 80 ? 'bg-[#FFD966]/10 text-[#F89C4E]' : 'bg-[#DC6464]/10 text-[#DC6464]'}`}>
+                {validationResults.qualityScore.passed ? 'Pass' : validationResults.qualityScore.value >= 80 ? 'Warning' : 'Fail'}
               </Badge>
             </div>
           </div>
 
-          {/* Validate Button */}
-          <Button 
-            className="w-full text-white cursor-pointer"
-            style={{ backgroundColor: '#7864B4' }}
-            onClick={handleValidation}
-            disabled={isValidated}
-          >
-            {isValidated ? 'Validated' : 'Validate Quality Metrics'}
-          </Button>
-
-          {/* Validation Result Message */}
-          {isValidated && (
-            <div className={`p-4 rounded-lg border ${
-              Object.values(validationResults).every(r => r.passed)
-                ? 'bg-[#7864B4]/10'
-                : 'bg-[#DC6464]/10'
-            }`} style={{ borderColor: Object.values(validationResults).every(r => r.passed) ? '#7864B4' : '#DC6464' }}>
-              <div className="flex items-start gap-3">
-                {Object.values(validationResults).every(r => r.passed) ? (
-                  <CheckCircle className="h-5 w-5 mt-0.5" style={{ color: '#7864B4' }} />
-                ) : (
-                  <AlertCircle className="h-5 w-5 mt-0.5" style={{ color: '#DC6464' }} />
-                )}
-                <div>
-                  <p className="font-medium" style={{ color: Object.values(validationResults).every(r => r.passed) ? '#7864B4' : '#DC6464' }}>
-                    {Object.values(validationResults).every(r => r.passed) 
-                      ? 'All Quality Checks Passed' 
-                      : 'Quality Validation Failed'}
-                  </p>
-                  <p className="text-sm mt-1" style={{ color: Object.values(validationResults).every(r => r.passed) ? '#505050' : '#505050' }}>
-                    {Object.values(validationResults).every(r => r.passed)
-                      ? 'Sample meets all quality criteria and is ready for approval.'
-                      : 'One or more quality metrics failed. Review and reprocess if necessary.'}
-                  </p>
-                </div>
-              </div>
+          {selectedValidationCriteria.length > 0 && (
+            <div className="p-4 rounded-lg" style={{ backgroundColor: '#F5F3FF' }}>
+              <p className="text-sm" style={{ color: '#505050' }}>
+                Selected {selectedValidationCriteria.length} validation {selectedValidationCriteria.length === 1 ? 'criterion' : 'criteria'}
+              </p>
             </div>
           )}
         </div>
       </Card>
 
-      {/* Drug Recommendations Section */}
-      <Card className="p-6 border elevation-1 bg-white" style={{ borderColor: '#C8C8D2' }}>
-        <div className="space-y-4">
-          <div>
-            <h3 className="mb-1" style={{ color: '#1E1E1E' }}>Drug Recommendations</h3>
-            <p className="text-sm" style={{ color: '#505050' }}>Clinical pharmacogenomic recommendations based on genotype analysis</p>
-          </div>
-          
-          {/* Drug Cards */}
-          <div className="space-y-3">
-            {/* Clopidogrel */}
-            <div className="p-4 rounded-lg bg-white border" style={{ borderColor: '#C8C8D2' }}>
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex-1">
-                  <h4 className="mb-1" style={{ color: '#1E1E1E' }}>Clopidogrel</h4>
-                  <p className="text-sm" style={{ color: '#505050' }}>
-                    Use alternative antiplatelet such as prasugrel due to reduced activation.
-                  </p>
-                </div>
-                <Badge className="bg-white px-3 py-1.5 rounded-full shrink-0" style={{ color: '#1E1E1E', borderColor: '#C8C8D2' }}>
-                  Alternative
-                </Badge>
-              </div>
-            </div>
-
-            {/* Voriconazole */}
-            <div className="p-4 rounded-lg bg-white border" style={{ borderColor: '#C8C8D2' }}>
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex-1">
-                  <h4 className="mb-1" style={{ color: '#1E1E1E' }}>Voriconazole</h4>
-                  <p className="text-sm" style={{ color: '#505050' }}>
-                    Consider dose reduction and monitor levels closely.
-                  </p>
-                </div>
-                <Badge className="bg-secondary/10 text-secondary-foreground-container px-3 py-1.5 rounded-full shrink-0">
-                  Adjust Dose
-                </Badge>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Action Buttons */}
       <div className="flex justify-between items-center">
         <Button 
           variant="outline"
           className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
           style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
-          onClick={() => setCurrentStep(4)}
+          onClick={() => setCurrentStep(3)}
         >
           Back
         </Button>
         <Button 
           className="text-white cursor-pointer"
           style={{ backgroundColor: '#7864B4' }}
-          onClick={() => setCurrentStep(6)}
-          disabled={!isValidated || !Object.values(validationResults).every(r => r.passed)}
+          onClick={() => setCurrentStep(5)}
+          disabled={selectedValidationCriteria.length === 0}
         >
-          Continue to Approval
+          Continue to Confirmation
         </Button>
       </div>
     </div>
@@ -1320,39 +1388,111 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
 
   const renderApproval = () => (
     <div className="p-6 space-y-8 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
-      {/* Quality Review Section */}
-      <div>
-        <h3 className="font-medium mb-6" style={{ color: '#1E1E1E' }}>Quality Review</h3>
+      <Card className="p-6 border elevation-1 bg-white" style={{ borderColor: '#C8C8D2' }}>
+        <h3 className="font-medium mb-4" style={{ color: '#1E1E1E' }}>Interpretation Summary</h3>
         
-        {/* Quality Checklist */}
-        <div className="space-y-3 mb-6">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#7864B4' }}></div>
-            <span style={{ color: '#1E1E1E' }}>Coverage ≥ 100x</span>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4 pb-4 border-b" style={{ borderColor: '#C8C8D2' }}>
+            <div>
+              <p className="text-sm mb-1" style={{ color: '#505050' }}>Patient Name</p>
+              <p className="font-medium" style={{ color: '#1E1E1E' }}>
+                {selectedPatientData?.patient?.Eng_name || selectedPatientData?.patient?.name || 'N/A'}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm mb-1" style={{ color: '#505050' }}>Report ID</p>
+              <p className="font-medium" style={{ color: '#1E1E1E' }}>
+                {selectedPatientData?.id || 'N/A'}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm mb-1" style={{ color: '#505050' }}>Patient ID</p>
+              <p className="font-medium" style={{ color: '#1E1E1E' }}>
+                {selectedPatientData?.patient?.id || 'N/A'}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm mb-1" style={{ color: '#505050' }}>Date of Birth</p>
+              <p className="font-medium" style={{ color: '#1E1E1E' }}>
+                {selectedPatientData?.patient?.date_of_birth || 'N/A'}
+              </p>
+            </div>
           </div>
-          
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#7864B4' }}></div>
-            <span style={{ color: '#1E1E1E' }}>Allele balance between 0.35 and 0.65</span>
+
+          {selectedGenotypeData && (
+            <div className="pb-4 border-b" style={{ borderColor: '#C8C8D2' }}>
+              <h4 className="font-medium mb-3" style={{ color: '#1E1E1E' }}>Selected Genotype</h4>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p style={{ color: '#505050' }}>Gene</p>
+                  <p style={{ color: '#1E1E1E' }}>{selectedGenotypeData.ruleBasedName}</p>
+                </div>
+                <div>
+                  <p style={{ color: '#505050' }}>Alleles</p>
+                  <p style={{ color: '#1E1E1E' }}>{selectedGenotypeData.alleleName}</p>
+                </div>
+                <div>
+                  <p style={{ color: '#505050' }}>Result Location</p>
+                  <p style={{ color: '#1E1E1E' }}>{selectedGenotypeData.resultLocation}</p>
+                </div>
+                <div>
+                  <p style={{ color: '#505050' }}>Predicted Genotype</p>
+                  <p style={{ color: '#1E1E1E' }}>{selectedGenotypeData.predictedGenotype}</p>
+                </div>
+                <div className="col-span-2">
+                  <p style={{ color: '#505050' }}>Predicted Phenotype</p>
+                  <p style={{ color: '#1E1E1E' }}>{selectedGenotypeData.predictedPhenotype}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="pb-4 border-b" style={{ borderColor: '#C8C8D2' }}>
+            <h4 className="font-medium mb-3" style={{ color: '#1E1E1E' }}>Quality Control</h4>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p style={{ color: '#505050' }}>Tester Type</p>
+                <p style={{ color: '#1E1E1E' }}>{testerType}</p>
+              </div>
+              <div>
+                <p style={{ color: '#505050' }}>Validation Criteria</p>
+                <p style={{ color: '#1E1E1E' }}>
+                  {selectedValidationCriteria.length > 0 
+                    ? selectedValidationCriteria.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')
+                    : 'None selected'}
+                </p>
+              </div>
+            </div>
           </div>
-          
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#7864B4' }}></div>
-            <span style={{ color: '#1E1E1E' }}>Quality Score ≥ 95</span>
+
+          <div>
+            <h4 className="font-medium mb-3" style={{ color: '#1E1E1E' }}>Validation Status</h4>
+            {validationSuccess ? (
+              <div className="flex items-center gap-2 p-3 rounded-lg" style={{ backgroundColor: '#E8F5E9' }}>
+                <CheckCircle className="h-5 w-5" style={{ color: '#4CAF50' }} />
+                <span style={{ color: '#2E7D32' }}>Report validated successfully</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 p-3 rounded-lg" style={{ backgroundColor: '#FFF8E1' }}>
+                <AlertCircle className="h-5 w-5" style={{ color: '#FFA000' }} />
+                <span style={{ color: '#F57C00' }}>Pending validation</span>
+              </div>
+            )}
           </div>
         </div>
 
         <Button 
-          className="text-white mb-6 cursor-pointer"
-          style={{ backgroundColor: '#7864B4' }}
+          className="w-full mt-6 text-white cursor-pointer"
+          style={{ backgroundColor: validationSuccess ? '#C8C8D2' : '#7864B4' }}
+          onClick={handleConfirmValidation}
+          disabled={isValidating || validationSuccess}
         >
-          Validate
+          {isValidating ? 'Validating...' : validationSuccess ? 'Validated' : 'Validate Report'}
         </Button>
-      </div>
+      </Card>
 
       <Separator style={{ backgroundColor: '#DCDCE6' }} />
 
-      {/* Approval Section */}
       <div>
         <h3 className="font-medium mb-2" style={{ color: '#1E1E1E' }}>Approval</h3>
         <p className="mb-6" style={{ color: '#505050' }}>Review and approve this interpretation.</p>
@@ -1362,7 +1502,7 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
             variant="outline"
             className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
             style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
-            onClick={() => setCurrentStep(5)}
+            onClick={() => setCurrentStep(4)}
           >
             Back
           </Button>
@@ -1376,9 +1516,11 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
             </Button>
             
             <Button 
-              className="text-white cursor-pointer"
-              style={{ backgroundColor: '#7864B4' }}
-              onClick={() => setCurrentStep(7)}
+              className="text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: validationSuccess ? '#7864B4' : '#C8C8D2' }}
+              onClick={() => setCurrentStep(6)}
+              disabled={!validationSuccess}
+              title={!validationSuccess ? "Please validate the report first" : ""}
             >
               Approve & Continue to Export
             </Button>
@@ -1393,7 +1535,6 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
       <div>
         <h3 className="font-medium mb-6" style={{ color: '#1E1E1E' }}>Export PDF Report</h3>
         
-        {/* Report Summary */}
         <div className="bg-white border p-4 rounded-lg mb-6" style={{ borderColor: '#C8C8D2' }}>
           <h4 className="font-medium mb-4" style={{ color: '#1E1E1E' }}>Report Summary</h4>
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -1422,7 +1563,6 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
           </div>
         </div>
 
-        {/* Export Options */}
         <div className="space-y-4">
           <h4 className="font-medium" style={{ color: '#1E1E1E' }}>Export Options</h4>
           
@@ -1459,13 +1599,12 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
           </div>
         </div>
 
-        {/* Export Actions */}
         <div className="flex items-center justify-between pt-4">
           <Button 
             variant="outline"
             className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
             style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
-            onClick={() => setCurrentStep(6)}
+            onClick={() => setCurrentStep(5)}
           >
             Back
           </Button>
@@ -1488,9 +1627,10 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
             <Button 
               variant="outline"
               className="bg-white hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors cursor-pointer"
-              style={{ borderColor: '#7864B4', color: '#7864B4' }}
+              style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
+              onClick={handleFinishReport}
             >
-              Email Report
+              Finish
             </Button>
           </div>
         </div>
@@ -1523,7 +1663,6 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
       });
     };
 
-    // Get patient name from selectedPatientData
     const patientName = selectedPatientData.patient?.Eng_name || 
                        selectedPatientData.patient?.name || 
                        'Unknown Patient';
@@ -1570,7 +1709,6 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Patient Info */}
             <div className="space-y-1">
               <div className="flex items-center space-x-2 text-sm">
                 <FileText className="h-4 w-4" style={{ color: '#505050' }} />
@@ -1621,16 +1759,14 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
       case 1:
         return renderPatientReports();
       case 2:
-        return renderRawData();
-      case 3:
         return renderGenotype();
-      case 4:
+      case 3:
         return renderPhenotype();
-      case 5:
+      case 4:
         return renderRecommendations();
-      case 6:
+      case 5:
         return renderApproval();
-      case 7:
+      case 6:
         return renderExportPDF();
       default:
         return renderPatientReports();
@@ -1680,7 +1816,6 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
   };
 
   const handleApprovalSubmit = () => {
-    // Handle approval submission logic here
     console.log("Approval submitted:", {
       reportData: approvalReportData,
       reviewerName,
@@ -1692,7 +1827,6 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
     setComments("");
   };
 
-  // Gene detail information for the detailed view dialog
   const getGeneDetailData = (gene: string) => {
     const geneDetails = {
       'CYP2C19': {
@@ -1742,7 +1876,6 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
 
   return (
     <div className="h-full w-full overflow-x-hidden" style={{ backgroundColor: '#F5F3FF' }}>
-      {/* Header */}
       <div className="flex items-center justify-between p-6 border-b" style={{ backgroundColor: '#F5F3FF', borderColor: '#DCDCE6' }}>
         <div>
           <h1 style={{ color: '#1E1E1E' }}>Result Interpretation</h1>
@@ -1750,22 +1883,18 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
         </div>
       </div>
 
-      {/* Step Navigation */}
       {renderStepNavigation()}
 
-      {/* Patient Preview (when report is selected) */}
       {selectedPatientData && (
         <div className="p-6 border-b" style={{ backgroundColor: '#F5F3FF', borderColor: '#DCDCE6' }}>
           {renderPatientPreview()}
         </div>
       )}
 
-      {/* Main Content */}
       <div className="flex-1 w-full max-w-full" style={{ backgroundColor: '#F5F3FF' }}>
         {renderContent()}
       </div>
 
-      {/* Approval Dialog */}
       <Dialog open={isApprovalDialogOpen} onOpenChange={setIsApprovalDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto elevation-3 bg-white border rounded-2xl" style={{ borderColor: '#DCDCE6' }}>
           <DialogHeader className="space-y-3 pb-4 border-b" style={{ borderColor: '#DCDCE6' }}>
@@ -1785,7 +1914,6 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
 
           {approvalReportData && (
             <div className="space-y-6 py-4">
-              {/* Report Header Card */}
               <Card className="p-4 border" style={{ backgroundColor: '#F5F3FF', borderColor: '#DCDCE6' }}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -1819,7 +1947,6 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
                 </div>
               </Card>
 
-              {/* Report Details Section */}
               <div>
                 <h3 className="font-semibold mb-4" style={{ color: '#1E1E1E' }}>Report Details</h3>
                 <div className="border rounded-xl overflow-hidden" style={{ borderColor: '#DCDCE6' }}>
@@ -1866,7 +1993,6 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
                 </div>
               </div>
 
-              {/* Approval Details Section */}
               <div>
                 <h3 className="font-semibold mb-4" style={{ color: '#1E1E1E' }}>Approval Details</h3>
                 <div className="space-y-4">
@@ -1910,18 +2036,31 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
                 </Button>
                 <Button
                   onClick={handleApprovalSubmit}
-                  className="text-white cursor-pointer hover:opacity-90 transition-opacity"
+                  disabled={!isPharmacyUser || isLoadingUser}
+                  className="text-white cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundColor: '#7864B4' }}
+                  title={!isPharmacyUser ? "Only pharmacy users can approve reports" : ""}
                 >
                   Approve Report
                 </Button>
               </div>
+
+              {/* Warning message สำหรับ user ที่ไม่ใช่ pharmacy */}
+              {!isLoadingUser && !isPharmacyUser && (
+                <div className="pt-2">
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-yellow-50 border border-yellow-200">
+                    <AlertCircle className="h-4 w-4 text-yellow-600" />
+                    <p className="text-sm text-yellow-800">
+                      Only users with pharmacy role can approve reports.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Gene Details Dialog */}
       <Dialog open={showRuleDetails} onOpenChange={setShowRuleDetails}>
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto elevation-3 bg-white border" style={{ borderColor: '#C8C8D2' }}>
           <DialogHeader className="space-y-3">
@@ -1940,7 +2079,6 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
                 const geneData = getGeneDetailData(selectedGene);
                 return (
                   <>
-                    {/* Gene Overview */}
                     <div className="space-y-4">
                       <div className="p-4 bg-white rounded-lg border" style={{ borderColor: '#C8C8D2' }}>
                         <h3 className="text-lg font-medium mb-2" style={{ color: '#1E1E1E' }}>{geneData.name}</h3>
@@ -1948,7 +2086,6 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
                       </div>
                     </div>
 
-                    {/* Clinical Relevance */}
                     <div className="space-y-3">
                       <h4 className="font-medium" style={{ color: '#1E1E1E' }}>Clinical Relevance</h4>
                       <div className="p-4 bg-white rounded-lg border" style={{ borderColor: '#C8C8D2' }}>
@@ -1956,7 +2093,6 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
                       </div>
                     </div>
 
-                    {/* Gene Variants Table */}
                     <div className="space-y-3">
                       <h4 className="font-medium" style={{ color: '#1E1E1E' }}>Common Variants</h4>
                       <div className="border rounded-lg overflow-hidden" style={{ borderColor: '#C8C8D2' }}>
@@ -1981,7 +2117,6 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
                       </div>
                     </div>
 
-                    {/* Guideline References */}
                     <div className="space-y-3">
                       <h4 className="font-medium" style={{ color: '#1E1E1E' }}>Clinical Guidelines</h4>
                       <div className="space-y-2">
@@ -1993,7 +2128,6 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex justify-end space-x-3 pt-4 border-t" style={{ borderColor: '#DCDCE6' }}>
                       <Button
                         variant="outline"
@@ -2007,7 +2141,6 @@ chr22 42130797 rs1135840 C G 99 PASS GENE=CYP2D6;IMPACT=LOW
                         className="text-white cursor-pointer"
                         style={{ backgroundColor: '#7864B4' }}
                         onClick={() => {
-                          // Navigate to external CPIC guideline
                           console.log(`Navigate to CPIC guideline for ${selectedGene}`);
                         }}
                       >

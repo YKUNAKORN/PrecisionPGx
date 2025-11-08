@@ -175,7 +175,6 @@ import { ReportModel, ReportUpdate } from '../../../../lib/model/Report';
  *                   type: object
  */
 
-
 export async function POST(req) {
     const body = await req.json()
     if (!body || !body.specimens_id || !body.patient_id) {
@@ -224,11 +223,26 @@ export async function GET() {
     }
 }
 
-
 export async function PUT(req) {
     const { searchParams } = new URL(req.url); //querystring
     const id = searchParams.get('id');
     const body = await req.json()
+    // these for debug when hit Validate-btn    
+    console.log('PUT /api/user/report - Received body:', body);
+    console.log('Validation check:');
+    console.log('- body exists:', !!body);
+    console.log('- doctor_id:', body?.doctor_id, '→', !!body?.doctor_id);
+    console.log('- pharm_verify:', body?.pharm_verify, '→', !!body?.pharm_verify);
+    console.log('- medtech_verify:', body?.medtech_verify, '→', !!body?.medtech_verify);
+    console.log('- note_id:', body?.note_id, '→', !!body?.note_id);
+    console.log('- rule_id:', body?.rule_id, '→', !!body?.rule_id);
+    console.log('- index_rule:', body?.index_rule, '→', !!body?.index_rule);
+    console.log('- more_information:', body?.more_information, '→', !!body?.more_information);
+    console.log('- pharmacist_id:', body?.pharmacist_id, '→', !!body?.pharmacist_id);
+    console.log('- medical_technician_id:', body?.medical_technician_id, '→', !!body?.medical_technician_id);
+    console.log('- request_date:', body?.request_date, '→', !!body?.request_date);
+    console.log('- report_date:', body?.report_date, '→', !!body?.report_date);
+    
     if (!body || !body.doctor_id || !body.pharm_verify || !body.medtech_verify || !body.note_id || !body.rule_id || !body.index_rule || !body.more_information || !body.pharmacist_id || !body.medical_technician_id || !body.request_date || !body.report_date) {
         ResponseModel.status = '400'
         ResponseModel.message = 'Invalid Data'
@@ -241,11 +255,11 @@ export async function PUT(req) {
     ReportUpdate.medtech_verify = body.medtech_verify;
     ReportUpdate.note_id = body.note_id;
     ReportUpdate.rule_id = body.rule_id;
-    ReportUpdate.index_rule = parseInt(body.index_rule); // แปลงเป็น integer
+    ReportUpdate.index_rule = parseInt(body.index_rule); // Changed to int
     ReportUpdate.more_information = body.more_information;
     ReportUpdate.pharmacist_id = body.pharmacist_id;
     ReportUpdate.medical_technician_id = body.medical_technician_id;
-    ReportUpdate.status = 'finished'
+    ReportUpdate.status = 'completed' // changed from Finished to Completed
     ReportUpdate.request_date = body.request_date;
     ReportUpdate.report_date = body.report_date;
     ReportUpdate.updated_at = new Date().toISOString();

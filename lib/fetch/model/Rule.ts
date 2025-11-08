@@ -16,7 +16,7 @@ export interface RuleBased {
     phenotype: any[];
     predicted_genotype: any[];
     predicted_phenotype: any[];
-    recommendation: any[];
+    recommend: any[];  // Changed from recommendation to recommend
     Name: any[];
     created_at: string;
 }
@@ -49,7 +49,7 @@ export const RuleBasedExample: RuleBased = {
     phenotype: [],
     predicted_genotype: [],
     predicted_phenotype: [],
-    recommendation: [],
+    recommend: [],  // Changed from recommendation to recommend
     Name: [],
     created_at: ""
 };
