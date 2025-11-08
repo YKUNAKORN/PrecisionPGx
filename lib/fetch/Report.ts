@@ -37,7 +37,32 @@ export async function deleteReport(id: string) {
   return res.json();
 }
 
-export async function postReport(data: Report) {
+export async function postReport(data: Omit<Report,  | "id"
+  | "specimen_name"
+  | "specimens_expire_date"
+  | "doctor_fullname"
+  | "Eng_name"
+  | "Thai_name"
+  | "DOB"
+  | "age"
+  | "gender"
+  | "phone"
+  | "address"
+  | "index_rule"
+  | "rule_location"
+  | "rule_result_location"
+  | "rule_phenotype"
+  | "rule_predicted_genotype"
+  | "rule_predicted_phenotype"
+  | "rule_recommendation"
+  | "rule_name"
+  | "fullname_pharmacist"
+  | "fullname_medtech"
+  | "status"
+  | "priority"
+  | "ward_id"
+  | "created_at"
+  | "updated_at">) {
   const res = await fetch(`/api/user/report`, {
     method: "POST",
     headers: {
@@ -77,6 +102,31 @@ export const mutateReportQueryOptions = {
   }),
 
   post: ({
-    mutationFn: async (data: Omit<Report,"id">) => await postReport(data),
+    mutationFn: async (data: Omit<Report,  | "id"
+  | "specimen_name"
+  | "specimens_expire_date"
+  | "doctor_fullname"
+  | "Eng_name"
+  | "Thai_name"
+  | "DOB"
+  | "age"
+  | "gender"
+  | "phone"
+  | "address"
+  | "index_rule"
+  | "rule_location"
+  | "rule_result_location"
+  | "rule_phenotype"
+  | "rule_predicted_genotype"
+  | "rule_predicted_phenotype"
+  | "rule_recommendation"
+  | "rule_name"
+  | "fullname_pharmacist"
+  | "fullname_medtech"
+  | "status"
+  | "priority"
+  | "ward_id"
+  | "created_at"
+  | "updated_at">) => await postReport(data),
   }),
 };

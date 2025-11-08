@@ -299,7 +299,7 @@ export default function Page() {
                                     {filtered.map((p) => (
                                         <div key={p.id} className="patient-card snap-start">
                                             <div className="patient-info">
-                                                <p className="patient-name">{p.name}</p>
+                                                <p className="patient-name">{p.Thai_name}</p>
                                                 <p className="patient-detail">
                                                     Phone: {p.phone ?? "—"} • Gender: {p.gender ?? "—"} • Age: {p.age ?? "—"} • Ethnicity: {p.Ethnicity ?? "—"}
                                                 </p>
@@ -321,7 +321,7 @@ export default function Page() {
                             <div className="sel-empty">No patient selected.</div>
                         ) : (
                             <>
-                                <div className="sel-name">{activePatient.name}</div>
+                                <div className="sel-name">{activePatient.Thai_name}</div>
                                 <div className="sel-line" />
                                 <div className="sel-rows">
                                     <div className="sel-row"><span>Phone:</span>{activePatient.phone ?? "—"}</div>

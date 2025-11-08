@@ -31,58 +31,56 @@ export type RuleBased = {
 }
 
 export type Report = {
-    id: string;
+  id: string;
+  specimens_id: string;
+  specimen_name: string;
+  specimens_expire_date: string;
 
-  specimens_id: string 
-  specimen_name: string 
-  specimens_expire_date: string 
-
-  doctor_id: string 
-  doctor_fullname: string 
+  doctor_id: string;
+  doctor_fullname: string;
 
   patient_id: string;
   Eng_name: string;
   Thai_name: string;
-  DOB: string 
-  age: number 
-  gender: "Male" | "Female" | string;
-  phone: string 
-  address: string 
+  DOB: string;
+  age: number;
+  gender: string;
+  phone: string;
+  address: string;
 
   pharm_verify: boolean;
   medtech_verify: boolean;
 
-  note_id: string 
-  note_method: string 
+  note_id: string;
+  note_method: string;
 
-  index_rule: number 
-  rule_location: string 
-  rule_result_location: string 
-  rule_phenotype: string 
-  rule_predicted_genotype: string 
-  rule_predicted_phenotype: string 
-  rule_recommendation: string 
+  index_rule: number;
+  rule_location: string;
+  rule_result_location: string;
+  rule_phenotype: string;
+  rule_predicted_genotype: string;
+  rule_predicted_phenotype: string;
+  rule_recommendation: string;
 
-  rule_id: string 
-  rule_name: string 
+  rule_id: string;
+  rule_name: string;
 
-  pharmacist_id: string 
-  fullname_pharmacist: string 
+  pharmacist_id: string;
+  fullname_pharmacist: string;
 
-  medical_technician_id: string 
-  fullname_medtech: string 
+  medical_technician_id: string;
+  fullname_medtech: string;
 
-  more_information: string 
-  status: string 
+  more_information: string; // ถ้าอยาก parse JSON ให้ใช้ Record<string, any>[] ก็ได้
 
-  request_date: string  // ISO datetime string
-  report_date: string   // ISO datetime string
-
-  priority: "Routine" | "Urgent" | "STAT" | string;
-  ward_id: string 
+  status: string;
+  request_date: string;
+  report_date: string;
+  priority: string;
+  ward_id: string;
 
   created_at: string;
-  updated_at: string 
+  updated_at: string;
 }
 
 export type Note = {
