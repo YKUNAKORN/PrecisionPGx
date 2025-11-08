@@ -1,4 +1,4 @@
-import './globals.css'
+
 import '@/app/style/home.css';
 
 export default function Home() {
@@ -38,7 +38,7 @@ export default function Home() {
           <p className="card-value-c1">98</p>
           <div className="card-c1-progress">
             <div className="fill" style={{ width: "92%" }} />
-          </div>   
+          </div>    
         </div>
       </div>
 

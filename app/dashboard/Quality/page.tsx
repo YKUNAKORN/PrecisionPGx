@@ -63,6 +63,7 @@ function Chart({ title, value }) {
   );
 }
 
+
 function Alerts() {
   const alertsData = [
     {

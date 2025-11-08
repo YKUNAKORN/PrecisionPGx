@@ -4,6 +4,22 @@ import { CreateClientSecret } from "@/lib/supabase/client"
 const db = CreateClientSecret()
 
 export async function CreateSpecimen(row) {
+    if (row.name.toLowerCase() == "blood") {
+        row.expire_in = 7
+    }
+    else if (row.name.toLowerCase() == "saliva") {
+        row.expire_in = 14
+    }
+    else if (row.name.toLowerCase() == "buccal swab") {
+        row.expire_in = 10
+    }
+    else if (row.name.toLowerCase() == "tissue") {
+        row.expire_in = 5
+    }
+    else {
+        return { data: null, error: "Invalid specimen" }
+    }
+    console.log(row)
     const { data, error } = await Create(db, "specimen", row)
     if (error) {
         return { data: null, error: error }

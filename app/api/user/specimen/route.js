@@ -54,13 +54,18 @@ import { GetAllSpecimens, CreateSpecimen } from '@/app/api/user/service/specimen
  *             required:
  *               - name
  *               - expire_in
+ *               - patient_id
  *             properties:
  *               name:
  *                 type: string
  *                 example: Kevin De Bruyne
  *               expire_in:
+ *                 type: integer
+ *                 example: 7
+ *               patient_id:
  *                 type: string
- *                 example: "2025-12-31"
+ *                 format: uuid
+ *                 example: "60b3d5cb-0c24-4bc4-95c2-a733c2b65175"
  *     responses:
  *       201:
  *         description: Specimen created successfully
@@ -100,11 +105,10 @@ export async function GET() {
 }
 
 export async function POST(req) {
+    const body = await req.json()
     try {
-        const body = await req.json()
-        const { name, expire_in } = body
         
-        if (!name || !expire_in) {
+        if (!body.name || !body.patient_id) {
             ResponseModel.status = '400'
             ResponseModel.message = 'Missing required fields'
             ResponseModel.data = null
@@ -126,7 +130,6 @@ export async function POST(req) {
         return NextResponse.json(ResponseModel, { status: 201 })
     } catch (error) {
         console.error('Error creating specimen:', error)
-
         ResponseModel.status = '500'
         ResponseModel.message = 'Internal server error'
         ResponseModel.data = null
