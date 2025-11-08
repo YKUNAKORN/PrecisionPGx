@@ -93,11 +93,11 @@ export const createReportQueryOptions = {
 };
 
 export const mutateReportQueryOptions = {
-  put: () => ({
+  put:  ({
     mutationFn: async (data: Report) => await putReport(data),
   }),
 
-  delete: () => ({
+  delete:  ({
     mutationFn: async (id: string) => await deleteReport(id),
   }),
 
