@@ -77,6 +77,6 @@ export const mutateReportQueryOptions = {
   }),
 
   post: ({
-    mutationFn: async (data: Report) => await postReport(data),
+    mutationFn: async (data: Omit<Report,"id">) => await postReport(data),
   }),
 };
