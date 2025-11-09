@@ -142,7 +142,7 @@ export async function POST(req) {
     ResponseModel.status = '201';
     ResponseModel.message = 'Created Successful';
     ResponseModel.data = data;
-    return NextResponse.json(cookies, { status: 201 })
+    return NextResponse.json(ResponseModel, { status: 201 })
 }
 
 export async function GET() {
