@@ -134,10 +134,7 @@ function InventorySection({
 
     switch (filters.sortBy) {
       case "Date":
-        list.sort(
-          (a, b) =>
-            new Date(b.created_at as any).getTime() - new Date(a.created_at as any).getTime()
-        );
+        list.sort((a, b) => new Date(b.created_at as any).getTime() - new Date(a.created_at as any).getTime());
         break;
       case "Status":
         list.sort((a, b) => (a.status ?? "").localeCompare(b.status ?? ""));
@@ -199,29 +196,46 @@ function InventorySection({
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content - HORIZONTAL SNAP (snap-x) */}
       {loading ? (
         <div className="mt-6 text-sm">Loading storages…</div>
       ) : error ? (
         <div className="mt-6 text-sm text-red-400">Failed to load storages: {error.message}</div>
       ) : (
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {filtered.map((s) => (
-            <SampleCard
-              key={s.id}
-              data={{
-                id: s.id,
-                type: s.specimen_type ?? "—",
-                fridge_id: s.fridge_id ?? "—",
-                status: s.status ?? "—",
-                date: formatDate(s.created_at as any),
-                time: formatTime(s.created_at as any),
-                test: s.specimen_type ?? "—",
-              }}
-            />
-          ))}
+        // Container: overflow-x-auto + flex + snap-x
+        <div
+          className="mt-6 overflow-x-auto pb-4 snap-x snap-mandatory scroll-pt-4 -mx-2 px-2"
+          // accessibility: allow arrow key scrolling
+          role="list"
+          tabIndex={0}
+          aria-label="Storage cards"
+        >
+          <div className="flex gap-5">
+            {filtered.map((s) => (
+              // each item must be snap-start and have fixed width
+              <div
+                key={s.id}
+                className="snap-start w-[280px] flex-shrink-0"
+                role="listitem"
+                aria-label={`Sample ${s.id}`}
+              >
+                <SampleCard
+                  data={{
+                    id: s.id,
+                    type: s.specimen_type ?? "—",
+                    fridge_id: s.fridge_id ?? "—",
+                    status: s.status ?? "—",
+                    date: formatDate(s.created_at as any),
+                    time: formatTime(s.created_at as any),
+                    test: s.specimen_type ?? "—",
+                  }}
+                />
+              </div>
+            ))}
+            {/* optional spacer to allow last card to snap nicely */}
+            <div className="w-4 flex-shrink-0" aria-hidden />
+          </div>
         </div>
-
       )}
     </div>
   );
@@ -276,7 +290,7 @@ function SampleCard({
         ? "bg-amber-400"
         : "bg-blue-400";
   return (
-    <div className="border border-zinc-700 rounded-xl p-4 shadow-md hover:shadow-lg transition w-full">
+    <div className="border border-zinc-700 rounded-xl p-4 shadow-md hover:shadow-lg transition w-full  snap-start">
       <div className="flex justify-between items-start">
         <h3 className="font-semibold text-sm md:text-base">{data.id}</h3>
         <span className="flex items-center gap-1 text-xs md:text-sm">
