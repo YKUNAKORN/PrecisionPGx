@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { Search, Edit, CheckCircle, AlertCircle, XCircle, User, Calendar, MapPin, Phone, FileText, X, ChevronDown, ChevronUp, Info, TrendingUp, Shield, BookOpen } from "lucide-react";
+
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,7 +14,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, Edit, CheckCircle, AlertCircle, XCircle, User, Calendar, MapPin, Phone, FileText, X, ChevronDown, ChevronUp, Info, TrendingUp, Shield, BookOpen } from "lucide-react";
 
 import { createReportQueryOptions, mutateReportQueryOptions } from "@/lib/fetch/Report";
 import { createPatientQueryOptions } from "@/lib/fetch/Patient";
@@ -35,99 +36,6 @@ const stepLabels = [
   { number: 4, label: "Quality", active: false },
   { number: 5, label: "Confirmation", active: false },
   { number: 6, label: "Export PDF", active: false }
-];
-
-const patientReports = [
-  {
-    reportNumber: "RPT-2025-001",
-    patient: "John Smith", 
-    status: "Completed",
-    isApprove: "approved",
-    approvalColor: "green",
-    patientId: "PAT-001",
-    dateOfBirth: "1985-03-15",
-    gender: "Male",
-    mrn: "MRN-456789",
-    orderingPhysician: "Dr. Michael Roberts",
-    sampleType: "Blood",
-    collectionDate: "2024-12-15",
-    testType: "Pharmacogenomics Panel"
-  },
-  {
-    reportNumber: "RPT-2025-002",
-    patient: "Sarah Johnson",
-    status: "In Progress", 
-    isApprove: "pending",
-    approvalColor: "yellow",
-    patientId: "PAT-002",
-    dateOfBirth: "1990-07-22",
-    gender: "Female",
-    mrn: "MRN-123456",
-    orderingPhysician: "Dr. Emily Chen",
-    sampleType: "Saliva",
-    collectionDate: "2024-12-18",
-    testType: "Pharmacogenomics Panel"
-  },
-  {
-    reportNumber: "RPT-2025-003",
-    patient: "Michael Brown",
-    status: "Failed",
-    isApprove: "rejected", 
-    approvalColor: "red",
-    patientId: "PAT-003",
-    dateOfBirth: "1978-11-08",
-    gender: "Male",
-    mrn: "MRN-789012",
-    orderingPhysician: "Dr. Sarah Williams",
-    sampleType: "Blood",
-    collectionDate: "2024-12-10",
-    testType: "Pharmacogenomics Panel"
-  },
-  {
-    reportNumber: "RPT-2025-004",
-    patient: "Emily Davis",
-    status: "Failed",
-    isApprove: "rejected",
-    approvalColor: "red",
-    patientId: "PAT-004",
-    dateOfBirth: "1992-01-30",
-    gender: "Female",
-    mrn: "MRN-345678",
-    orderingPhysician: "Dr. David Thompson",
-    sampleType: "Blood",
-    collectionDate: "2024-12-12",
-    testType: "Pharmacogenomics Panel"
-  },
-  {
-    reportNumber: "RPT-2025-005",
-    patient: "David Wilson",
-    status: "In Progress",
-    isApprove: "pending",
-    approvalColor: "yellow",
-    patientId: "PAT-005",
-    dateOfBirth: "1987-09-14",
-    gender: "Male",
-    mrn: "MRN-901234",
-    orderingPhysician: "Dr. Lisa Anderson",
-    sampleType: "Saliva",
-    collectionDate: "2024-12-20",
-    testType: "Pharmacogenomics Panel"
-  },
-  {
-    reportNumber: "RPT-2025-006", 
-    patient: "Lisa Anderson",
-    status: "In Progress",
-    isApprove: "pending",
-    approvalColor: "yellow",
-    patientId: "PAT-006",
-    dateOfBirth: "1983-05-03",
-    gender: "Female",
-    mrn: "MRN-567890",
-    orderingPhysician: "Dr. John Miller",
-    sampleType: "Blood",
-    collectionDate: "2024-12-22",
-    testType: "Pharmacogenomics Panel"
-  }
 ];
 
 const genotypeData = [
@@ -208,6 +116,7 @@ export function ResultInterpretation() {
   const [isValidating, setIsValidating] = useState(false);
   const [validationSuccess, setValidationSuccess] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
+  const [qualityId, setQualityId] = useState<string | null>(null);
 
   const updateReportMutation = useMutation({
     ...mutateReportQueryOptions.put(),
@@ -1185,6 +1094,15 @@ export function ResultInterpretation() {
       const result = await response.json();
       console.log('Quality record created:', result);
 
+      // Store the quality_id from the response
+      if (result.data && result.data.id) {
+        setQualityId(result.data.id);
+        console.log('Quality ID stored:', result.data.id);
+      } else if (result.id) {
+        setQualityId(result.id);
+        console.log('Quality ID stored:', result.id);
+      }
+
       setValidationSuccess(true);
       qc.invalidateQueries({ queryKey: ['quality'] });
       
@@ -1235,6 +1153,7 @@ export function ResultInterpretation() {
         medical_technician_id: selectedPatientData.medical_technician_id || null,
         request_date: selectedPatientData.request_date || new Date().toISOString(),
         report_date: selectedPatientData.report_date || new Date().toISOString(),
+        quality_id: qualityId || selectedPatientData.quality_id || null,
       };
 
       console.log('Updating report with data:', updateData);
@@ -1460,7 +1379,13 @@ export function ResultInterpretation() {
             <div>
               <p className="text-sm mb-1" style={{ color: '#505050' }}>Date of Birth</p>
               <p className="font-medium" style={{ color: '#1E1E1E' }}>
-                {selectedPatientData?.patient?.date_of_birth || 'N/A'}
+                {selectedPatientData?.patient?.dob 
+                  ? new Date(selectedPatientData.patient.dob).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })
+                  : 'N/A'}
               </p>
             </div>
           </div>
