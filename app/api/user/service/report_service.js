@@ -633,6 +633,7 @@ export async function GetAllReportsDashboard() {
 export async function EditReportByID(id, body) {
     body.report_date = new Date().toISOString();
     body.updated_at = new Date().toISOString();
+    console.log("EditReportByID called with:", { id, body });
     const { data, error } = await Update(db, "reports", id, body);
     if (data.length === 0) {
         return { data: [], error: new Error("Data Not Found : " + id) }; //for User
@@ -641,7 +642,7 @@ export async function EditReportByID(id, body) {
         console.log(error);
         return { data: null, error: error }; //for User
     }
-    return { data: data[0], error: null };
+    return { data: data, error: null };
 }
 
 
@@ -666,4 +667,16 @@ export async function Pharm_verify(report_id, pharmacist_id) {
         return { data: null, error: error }; //for User
     }
     return { data: data[0], error: null };
+}
+
+export async function UpdateStatusReportById(id, statusupdate) {
+    const { data, error } = await Update(db, "reports", id, statusupdate);
+    if (data.length === 0) {
+        return { data: [], error: new Error("Data Not Found : " + id) }; //for User
+    }
+    if (error) {
+        console.log(error);
+        return { data: null, error: error }; //for User
+    }
+    return { data: data, error: null };
 }
