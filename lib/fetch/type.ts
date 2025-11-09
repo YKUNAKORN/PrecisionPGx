@@ -31,19 +31,21 @@ export type RuleBased ={
 
 export type Report = {
     id?: string;
-    sepicimens_id: string;
+    specimens_id: string;
     doctor_id: string;
     patient_id: string;
     pharm_verify: boolean;
     medtech_verify: boolean;
     note_id: string;
     rule_id: string;
-    more_information: string;
+    index_rule?: number;
+    more_information: any[];
     pharmacist_id: string;
-    medical_technologist_id: string;
+    medical_technician_id: string;
     request_date: Timestamp;
     report_date: Timestamp;
     status?: string;
+    quality_id?: string;
 }
 
 export type Note = {
@@ -58,6 +60,7 @@ export type Patient = {
     Eng_name?: string;
     phone?: string;
     age?: number;
+    dob?: string;
     gender?: string;
     Ethnicity?: string;
 }

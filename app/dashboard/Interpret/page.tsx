@@ -128,6 +128,17 @@ export function ResultInterpretation() {
       }
     },
   });
+
+  const finishReportMutation = useMutation({
+    ...mutateReportQueryOptions.finish(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['reports'] });
+      if (selectedPatientData?.id) {
+        qc.invalidateQueries({ queryKey: ['report', selectedPatientData.id] });
+      }
+    },
+  });
+
   const [isValidated, setIsValidated] = useState(false);
   const [validationResults, setValidationResults] = useState({
     coverage: { value: 150, threshold: 100, passed: false },
@@ -1068,18 +1079,26 @@ export function ResultInterpretation() {
   const handleValidateReport = async () => {
     if (!selectedPatientData) return;
     
+    // Validate required fields before sending
+    if (!selectedPatientData.medical_technician_id && !currentUser?.id) {
+      alert('Medical technician information is missing. Please ensure you are logged in.');
+      return;
+    }
+    
     setIsValidating(true);
     
     try {
-      // Create quality record via POST to /api/user/quality
+      console.log('Step 1: Creating quality record...');
+      console.log('Tester type (tester_id):', testerType);
+      console.log('Validation criteria:', selectedValidationCriteria);
+      
+      // Step 1: Create quality record first
       const qualityData = {
-        tester_id: testerType, // This is now the UUID from tester_type table
+        tester_id: testerType, // UUID from tester_type table
         quality: selectedValidationCriteria.join(', '), // Store selected criteria as text
       };
 
-      console.log('Creating quality record:', qualityData);
-
-      const response = await fetch('http://localhost:3000/api/user/quality', {
+      const qualityResponse = await fetch('/api/user/quality', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1087,24 +1106,86 @@ export function ResultInterpretation() {
         body: JSON.stringify(qualityData),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create quality record');
+      if (!qualityResponse.ok) {
+        const errorData = await qualityResponse.json();
+        throw new Error(`Failed to create quality record: ${errorData.message || qualityResponse.statusText}`);
       }
 
-      const result = await response.json();
-      console.log('Quality record created:', result);
+      const qualityResult = await qualityResponse.json();
+      console.log('Quality record created:', qualityResult);
 
-      // Store the quality_id from the response
-      if (result.data && result.data.id) {
-        setQualityId(result.data.id);
-        console.log('Quality ID stored:', result.data.id);
-      } else if (result.id) {
-        setQualityId(result.id);
-        console.log('Quality ID stored:', result.id);
+      // Extract quality_id from ResponseModel structure
+      // Response structure: { status: "201", message: "...", data: {...} }
+      let createdQualityId = null;
+      
+      if (qualityResult.data) {
+        // Check if data has id directly (array response)
+        if (Array.isArray(qualityResult.data) && qualityResult.data.length > 0) {
+          createdQualityId = qualityResult.data[0].id;
+        } 
+        // Check if data is object with id
+        else if (qualityResult.data.id) {
+          createdQualityId = qualityResult.data.id;
+        }
       }
+
+      console.log('Extracted quality_id:', createdQualityId);
+
+      if (!createdQualityId) {
+        console.error('Full quality response:', JSON.stringify(qualityResult, null, 2));
+        throw new Error('Failed to get quality_id from quality creation response');
+      }
+
+      console.log('Step 2: Updating report with quality_id:', createdQualityId);
+
+      // Step 2: Calculate required fields for report update
+      const ruleId = selectedRuleId || selectedPatientData.rule_id || "pending-rule-selection";
+      const indexRule = (() => {
+        const value = selectedRuleRowIndex !== null && selectedRuleRowIndex !== undefined 
+          ? selectedRuleRowIndex 
+          : selectedPatientData.index_rule;
+        return (!value || value === 0) ? 1 : value;
+      })();
+      const moreInformation = (() => {
+        const existing = selectedPatientData.more_information;
+        if (Array.isArray(existing) && existing.length > 0) {
+          return existing;
+        }
+        return [{ 
+          validated: true, 
+          validation_criteria: selectedValidationCriteria.join(', '),
+          tester_type: testerType,
+          quality_id: createdQualityId,
+          validated_at: new Date().toISOString()
+        }];
+      })();
+      const medtechId = selectedPatientData.medical_technician_id || currentUser?.id || "";
+
+      // Step 3: Update report with the created quality_id
+      const updateData: Partial<ReportUpdate> = {
+        medtech_verify: true,
+        rule_id: ruleId,
+        index_rule: indexRule,
+        more_information: moreInformation,
+        medical_technician_id: medtechId,
+        quality_id: createdQualityId, // Use the newly created quality record ID
+      };
+
+      console.log('Sending PUT request to /api/user/report with data:', updateData);
+
+      await updateReportMutation.mutateAsync({ 
+        id: selectedPatientData.id,
+        data: updateData 
+      });
+
+      console.log('Report validated and updated successfully');
+      
+      // Store the quality_id in state
+      setQualityId(createdQualityId);
 
       setValidationSuccess(true);
-      qc.invalidateQueries({ queryKey: ['quality'] });
+      qc.invalidateQueries({ queryKey: ['reports', 'quality'] });
+      alert('Report validated successfully!');
       
     } catch (error) {
       console.error('Failed to validate report:', error);
@@ -1113,6 +1194,11 @@ export function ResultInterpretation() {
       setIsValidating(false);
     }
   };
+
+
+
+
+
 
   const handleApproveReport = async () => {
     if (!selectedPatientData) return;
@@ -1136,12 +1222,12 @@ export function ResultInterpretation() {
         approved_at: new Date().toISOString()
       });
 
-      const updateData: any = {
-        doctor_id: selectedPatientData.doctor_id || null,
+      const updateData: Partial<ReportUpdate> = {
+        doctor_id: selectedPatientData.doctor_id || "",
         pharm_verify: true,
         medtech_verify: true,
-        note_id: selectedPatientData.note_id || null,
-        rule_id: selectedRuleId || selectedPatientData.rule_id || null,
+        note_id: selectedPatientData.note_id || "",
+        rule_id: selectedRuleId || selectedPatientData.rule_id || "pending-rule-selection",
         index_rule: (() => {
           const value = selectedRuleRowIndex !== null && selectedRuleRowIndex !== undefined 
             ? selectedRuleRowIndex 
@@ -1149,11 +1235,11 @@ export function ResultInterpretation() {
           return value === 0 || value === null || value === undefined ? 1 : value;
         })(),
         more_information: moreInfo.length > 0 ? moreInfo : [{ default: true }],
-        pharmacist_id: selectedPatientData.pharmacist_id || null,
-        medical_technician_id: selectedPatientData.medical_technician_id || null,
+        pharmacist_id: selectedPatientData.pharmacist_id || "",
+        medical_technician_id: selectedPatientData.medical_technician_id || currentUser?.id || "",
         request_date: selectedPatientData.request_date || new Date().toISOString(),
         report_date: selectedPatientData.report_date || new Date().toISOString(),
-        quality_id: qualityId || selectedPatientData.quality_id || null,
+        quality_id: qualityId || selectedPatientData.quality_id || testerType,
       };
 
       console.log('Updating report with data:', updateData);
@@ -1176,24 +1262,9 @@ export function ResultInterpretation() {
     if (!selectedPatientData) return;
 
     try {
-      const updateData: any = {
-        doctor_id: selectedPatientData.doctor_id || null,
-        pharm_verify: selectedPatientData.pharm_verify || true,
-        medtech_verify: selectedPatientData.medtech_verify || true,
-        note_id: selectedPatientData.note_id || null,
-        rule_id: selectedPatientData.rule_id || null,
-        index_rule: selectedPatientData.index_rule || 1,
-        more_information: selectedPatientData.more_information || [{ default: true }],
-        pharmacist_id: selectedPatientData.pharmacist_id || null,
-        medical_technician_id: selectedPatientData.medical_technician_id || null,
-        request_date: selectedPatientData.request_date || new Date().toISOString(),
-        report_date: selectedPatientData.report_date || new Date().toISOString(),
-        status: "Completed",
-      };
-
-      await updateReportMutation.mutateAsync({
+      await finishReportMutation.mutateAsync({
         id: selectedPatientData.id,
-        data: updateData
+        data: { status: "Completed" }
       });
 
       alert('Report completed successfully!');

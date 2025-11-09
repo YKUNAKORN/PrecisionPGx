@@ -29,7 +29,7 @@ export interface ReportUpdate {
     pharm_verify: boolean;
     medtech_verify: boolean;
     note_id: string;
-    rule_id: string[];
+    rule_id: string; // Changed from string[] to string to match database schema
     index_rule: number;
     more_information: any[];
     pharmacist_id: string;
@@ -38,6 +38,7 @@ export interface ReportUpdate {
     report_date: string;
     status: string;
     updated_at: string;
+    quality_id?: string; // Optional: UUID of the quality/tester type
 }
 
 export const ReportResultExample: ReportResult[] = [{
@@ -71,7 +72,7 @@ export const ReportUpdateExample: ReportUpdate = {
     pharm_verify: false,
     medtech_verify: false,
     note_id: "",
-    rule_id: [],
+    rule_id: "",
     index_rule: 0,
     more_information: [],
     pharmacist_id: "",
