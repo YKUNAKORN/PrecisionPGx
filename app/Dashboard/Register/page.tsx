@@ -504,27 +504,6 @@ export default function Page() {
                     </div>
 
                     {/* ward / notes */}
-                    <div className="row">
-                        <div className="field">
-                            <div className="main-topic">Test Panels</div>
-                            <div className="select-type">
-                                <select className="select-trigger" value={testPanel} onChange={(e) => setTestPanel(e.target.value as any)}>
-                                    <option value="PGx Panel">PGx Panel</option>
-                                    <option value="CYP2D6">CYP2D6</option>
-                                    <option value="CYP2C19">CYP2C19</option>
-                                    <option value="UGT1A1">UGT1A1</option>
-                                    <option value="TPMT/NUDT15">TPMT/NUDT15</option>
-                                    <option value="ABCB1">ABCB1</option>
-                                    <option value="BRCA1/2">BRCA1/2</option>
-                                    <option value="HLA-B*57:01">HLA-B*57:01</option>
-                                    <option value="HLA-B*15:02">HLA-B*15:02</option>
-                                    <option value="Thalassemia">Thalassemia</option>
-                                    <option value="CFTR">CFTR</option>
-                                    <option value="Factor V Leiden">Factor V Leiden</option>
-                                </select>
-                            </div>
-                            <div className="under-topic">Choose one panel from the dropdown or use search to find specific tests.</div>
-                        </div>
                         <div className="field">
                             <div className="main-topic">Ward</div>
                             <div className="textarea-type">
