@@ -34,6 +34,8 @@ export async function CreateReport(inputReportModel) {
         }
         let StorageModel = {};
         StorageModel.specimen_id = specimenResponse[0].id;
+        console.log(specimenResponse[0].id);
+        console.log(StorageModel.specimen_id)
         StorageModel.fridge_id = inputReportModel.fridge_id;
         StorageModel.collected_at = inputReportModel.collected_at;
         let collectdate = new Date(inputReportModel.collected_at);
@@ -52,8 +54,8 @@ export async function CreateReport(inputReportModel) {
             console.error("Error updating fridge:", fridgeUpdateResult.error);
             return { data: null, error: fridgeUpdateResult.error.message }; //for User
         }
-        ReportModel.specimens_id = specimenResponse.id;
-        ReportModel.note_id = noteResponse.id;
+        ReportModel.specimens_id = specimenResponse[0].id;
+        ReportModel.note_id = noteResponse[0].id;
         ReportModel.patient_id = inputReportModel.patient_id;
         ReportModel.priority = inputReportModel.priority;
         ReportModel.doctor_id = inputReportModel.doctor_id;
