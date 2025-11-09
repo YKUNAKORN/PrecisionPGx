@@ -1,162 +1,165 @@
+'use client';
+import '@/app/style/home.css';
+import { useQuery } from "@tanstack/react-query";
+import { createDashboardQueryOptions } from "lib/fetch/Dashboard";
+import { createReportQueryOptions } from "lib/fetch/Report";
+import { addDays, format } from "date-fns";
+
+
 export default function Home() {
-  const trends = [
-    { day: 'Sat', value: 72 },
-    { day: 'Sun', value: 58 },
-    { day: 'Mon', value: 35 },
-    { day: 'Tue', value: 88 },
-    { day: 'Wed', value: 55 },
-    { day: 'Thu', value: 70 },
-    { day: 'Fri', value: 48 },
-  ];
-  const maxVal = Math.max(...trends.map((t) => t.value));
+
+  const {
+    data: dashboard,
+    isLoading: loadingdashboard,
+    error: errordashboard,
+  } = useQuery(createDashboardQueryOptions.all());
+
+  const {
+    data: Report,
+    isLoading: loadingReport,
+    error: errorReport,
+  } = useQuery(createReportQueryOptions.all());
+
+  if (loadingdashboard) return <div>Loading dashboard...</div>;
+  if (errordashboard) return <div>Error loading dashboard</div>;
+
+  // Trends 7 วันย้อนหลัง (d0 = today, d1 = yesterday ...)
+  const trends = Array.from({ length: 7 }).map((_, i) => {
+    const dayDate = addDays(new Date(), -i);
+    const value = dashboard?.[`sample_received_d${i}`] ?? 0;
+    return {
+      day: format(dayDate, "dd MMM"), // แสดงวันที่แบบ "09 Nov"
+      value,
+    };
+  }).reverse(); // reverse ให้ d6 = วันเก่าสุด, d0 = วันนี้
+
+  const maxVal = Math.max(...trends.map((t) => t.value)) || 1;
+
 
   return (
-    <div className="content-shell">
-      {/* ✅ คุมระยะ content ให้บาลานซ์ทุกจอ */}
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        {/* Header */}
-        <header className="space-y-1">
-          <h1 className="text-xl font-semibold">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            At a glance overview of operations and performance.
-          </p>
-        </header>
+    <div>
+      <div className='title-1'>Dashboard</div>
+      <div className='title-2'>At a glance overview of operations and performance.</div>
 
-        {/* KPI / Metrics */}
-        <section>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <article className="metric">
-              <div className="metric-title">Samples Received</div>
-              <div className="metric-value">120</div>
-              <div className="metric-bar" style={{ ['--progress' as any]: '72%' }}>
-                <i />
-              </div>
-            </article>
-
-            <article className="metric">
-              <div className="metric-title">Tests Completed</div>
-              <div className="metric-value">105</div>
-              <div className="metric-bar" style={{ ['--progress' as any]: '82%' }}>
-                <i />
-              </div>
-            </article>
-
-            <article className="metric">
-              <div className="metric-title">Results Interpreted</div>
-              <div className="metric-value">98</div>
-              <div className="metric-bar" style={{ ['--progress' as any]: '92%' }}>
-                <i />
-              </div>
-            </article>
+      <div className="card-c1-container">
+        <div className="card-c1">
+          <p className="card-label-c1">Samples Received</p>
+          <p className="card-value-c1">{`${dashboard.sample_received}`}</p>
+          <div className="card-c1-progress">
+            <div className="fill" style={{ width: "72%" }} />
           </div>
-        </section>
-
-        {/* Trends + Execution Status */}
-        <section>
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Sample Registration Trends */}
-            <div className="panel stack">
-              <div>
-                <p className="text-base font-medium">Sample Registration Trends</p>
-                <p className="text-sm text-muted-foreground">Last 7 Days</p>
-              </div>
-
-              <div className="h-48 grid grid-cols-7 items-end gap-3">
-                {trends.map((t) => (
-                  <div key={t.day} className="flex flex-col items-center gap-2">
-                    <div
-                      className="w-8 rounded-md ring-1 ring-inset"
-                      style={{
-                        height: `${(t.value / maxVal) * 100}%`,
-                        background: 'var(--accent)',
-                        borderColor: 'var(--border)',
-                      }}
-                      aria-label={`${t.day}: ${t.value}`}
-                    />
-                    <span className="text-xs text-muted-foreground">{t.day}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Test Execution Status */}
-            <div className="panel stack">
-              <div>
-                <p className="text-base font-medium">Test Execution Status</p>
-                <p className="text-sm text-muted-foreground">Real-time workflow progress tracking</p>
-              </div>
-
-              <div className="stack">
-                {[
-                  { label: 'Submitted for Inspection', value: 8, pct: '20%' },
-                  { label: 'Awaiting Inspection', value: 12, pct: '35%' },
-                  { label: 'In Progress', value: 35, pct: '70%' },
-                  { label: 'Completed', value: 50, pct: '92%' },
-                  { label: 'Awaiting Report', value: 5, pct: '14%' },
-                ].map((row) => (
-                  <div key={row.label} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">{row.label}</span>
-                      <span className="text-sm">{row.value}</span>
-                    </div>
-                    <div className="kbar" style={{ ['--progress' as any]: row.pct }}>
-                      <i />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+        </div>
+        <div className="card-c1">
+          <p className="card-label-c1">Tests Completed</p>
+          <p className="card-value-c1">{`${dashboard.tests_completed}`}</p>
+          <div className="card-c1-progress">
+            <div className="fill" style={{ width: "82%" }} />
           </div>
-        </section>
-
-        {/* Sample Management */}
-        <section>
-          <div className="panel stack">
-            <p className="text-base font-medium">Sample Management</p>
-
-            <div className="overflow-x-auto">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Sample ID</th>
-                    <th>Patient Name</th>
-                    <th>Test Type</th>
-                    <th>Status</th>
-                    <th>Result</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    ['LAB-2023-001', 'Ethan Harper', 'Blood Test', 'Completed', 'Normal'],
-                    ['LAB-2023-002', 'Olivia Bennett', 'Urine Analysis', 'In Progress', 'N/A'],
-                    ['LAB-2023-003', 'Liam Carter', 'Biopsy', 'Pending', 'N/A'],
-                    ['LAB-2023-004', 'Sophia Davis', 'Genetic Screening', 'Completed', 'Positive'],
-                    ['LAB-2023-005', 'Noah Evans', 'Allergy Test', 'Completed', 'Negative'],
-                  ].map(([id, name, type, status, result]) => (
-                    <tr key={id}>
-                      <td>{id}</td>
-                      <td>{name}</td>
-                      <td>{type}</td>
-                      <td>
-                        <span className="badge">
-                          <i className="dot" />
-                          {status}
-                        </span>
-                      </td>
-                      <td>{result}</td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td colSpan={5}>Showing 5 of 5 samples</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+        </div>
+        <div className="card-c1">
+          <p className="card-label-c1">Results Interpreted</p>
+          <p className="card-value-c1">{`${dashboard.results_interpret}`}</p>
+          <div className="card-c1-progress">
+            <div className="fill" style={{ width: "92%" }} />
           </div>
-        </section>
+        </div>
       </div>
+
+      <div className="card-c2-container">
+        <div className="card-c2">
+          <p className="card-value-c2">Sample Registration Trends </p>
+          <p className="card-value-c2-l">Last 7 Days</p>
+          <div className="bar-chart">
+            {trends.map(t => (
+              <div className="bar" key={t.day}>
+                <div
+                  className="bar-fill"
+                  style={{ height: `${(t.value / maxVal) * 100}%` }}
+                  aria-label={`${t.day}: ${t.value}`}
+                />
+                <span className="bar-label">{t.day}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="card-c2">
+          <p className="card-value-c2">Test Execution Status</p>
+          <p className="card-value-c2-l">Real-time workflow progress tracking</p>
+          <div className="status-list">
+            <div className="status-row">
+              <span className="status-label s1">Submitted for Inspection</span>
+              <span className="status-val">{`${dashboard.submitted_inspection}`}</span>
+            </div>
+            <div className="status-rail">
+              <div className="status-fill s1" style={{ width: "20%" }} />
+            </div>
+
+            <div className="status-row">
+              <span className="status-label s2">Awaiting Inspection</span>
+              <span className="status-val">{`${dashboard.awaiting_inspection}`}</span>
+            </div>
+            <div className="status-rail">
+              <div className="status-fill s2" style={{ width: "35%" }} />
+            </div>
+
+            <div className="status-row">
+              <span className="status-label s3">In Progress</span>
+              <span className="status-val">{`${dashboard.inprogress}`}</span>
+            </div>
+            <div className="status-rail">
+              <div className="status-fill s3" style={{ width: "70%" }} />
+            </div>
+
+            <div className="status-row">
+              <span className="status-label s4">Completed</span>
+              <span className="status-val">{`${dashboard.completed}`}</span>
+            </div>
+            <div className="status-rail">
+              <div className="status-fill s4" style={{ width: "92%" }} />
+            </div>
+
+            <div className="status-row">
+              <span className="status-label s5">Awaiting Report</span>
+              <span className="status-val">{`${dashboard.awaiting_approve}`}</span>
+            </div>
+            <div className="status-rail">
+              <div className="status-fill s5" style={{ width: "14%" }} />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className='card-c3-container'>
+        <div className="card-c3">
+          <p className="card-value-c3">Sample Management</p>
+
+          <div className="card-value-c3-subt header">
+            <span className="col-id">Sample ID</span>
+            <span className="col-name">Patient Name</span>
+            <span className="col-type">Test Type</span>
+            <span className="col-status">Status</span>
+          </div>
+
+          {loadingReport ? (
+            <div style={{ padding: 12 }}>Loading patients…</div>
+          ) : (
+            <div className="mt-6 max-h-[420px] overflow-y-auto pr-2 snap-y snap-mandatory scroll-pt-4">
+              {Report.map((s) => (
+                <div key={s.id} className="card-value-c3-subt snap-start">
+                  <span className="col-id" title={s.id}>{s.id}</span>
+                  <span className="col-name" title={s.Eng_name}>{s.Eng_name}</span>
+                  <span className="col-type">{s.specimen_name}</span>
+                  <span className="col-status">
+                    <span className={`status ${s.status}`}>
+                      {s.status.replace(/^\w/, (c) => c.toUpperCase())}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
     </div>
   );
-}
+} 
