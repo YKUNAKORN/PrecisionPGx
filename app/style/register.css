@@ -46,7 +46,7 @@
   box-shadow: 0 0 0 3px #6b4eff33;      
 }
 
-.step .label{
+.step .label-2{
   font-size:16px;
   font-weight: 600;
 }
@@ -112,6 +112,7 @@
 
 /* ปุ่ม Add */
 .add-btn{
+  border: 1px solid #444;
   font-weight: 500;
   color: #1f1c21;
   background: #cdb6ff;
@@ -140,7 +141,7 @@
 .search-input::placeholder{ 
   color: #c1c1c7; 
 }
-.search-input:hover{ border-color: #ffffff40; }
+
 .search-input:focus{
   border-color: #161617;
   box-shadow: 0 0 0 3px #6b4eff25;
@@ -152,7 +153,7 @@
   padding: 0 14px;
   color: #1f1c21;
   background:#cdb6ff;       /* ม่วงโปร่ง */
-  border: 1px solid #00000040;
+  border: 1px solid #444;
   border-radius: 12px;
   cursor: pointer;
 }
@@ -285,6 +286,8 @@
 }
 
 .under-topic{
+  margin-top: 3px;
+  font-size: 13px;
   padding-bottom: 24px;
 }
 
@@ -294,7 +297,6 @@
 }
 
 .select-trigger{
-  display: block;
   width: 100%;
   height: 40px;
   padding: 0 40px 0 12px;
@@ -335,7 +337,6 @@
   position: absolute;
   right: 12px;
   cursor: pointer;
-  filter: invert(1);  
 }
 
 .priority-group {
@@ -362,6 +363,7 @@
 }
 
 .field {
+  
   display: grid;
   row-gap: 5px;         
 }
@@ -450,7 +452,7 @@
   }
 
   .main-topic{ font-size: 14px; }
-  .under-topic{ font-size: 13px; padding-bottom: 16px; }
+  .under-topic{ font-size: 12px; padding-bottom: 16px; }
 
   .priority-group{
     flex-wrap: wrap;
@@ -580,4 +582,162 @@ html, body {
 @media (max-width: 1024px){
   .Barcodes{ grid-template-columns:1fr; }
 }
+
+
+
+/* ===== Modal Base ===== */
+/* ===== Backdrop + Sheet ===== */
+
+.modal-backdrop{
+  position: fixed; inset: 0;
+  display:flex; align-items:center; justify-content:center;
+  background: rgba(0,0,0,.55);
+  z-index:1000;
+  padding:24px;
+}
+
+.modal-sheet{
+  width: min(510px, 92vw);       /* กว้างพอดีจอ */
+  max-height: 86vh;              /* สูงไม่ล้น */
+  background: #2C2733;           /* พื้นเข้มแบบภาพขวา */
+  border: 1px solid #3d3942;     /* ขอบหม่นๆ */
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  display:flex; flex-direction:column;
+  overflow:hidden;               /* ให้หัว/ท้ายแนบแผ่น */
+}
+
+/* ===== Header / Desc ===== */
+.modal-header{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:18px 20px 6px 20px;
+}
+.modal-title{
+  display:flex; align-items:center; gap:8px;
+  font-size:18px; font-weight:500; color:#fff;
+}
+.modal-desc{
+  margin-left: 5px;
+  font-size: 14px;
+  color:#c1c1c7; 
+  padding:0 20px 10px 20px;
+}
+.modal-close{
+  appearance:none; background:transparent; border:0;
+  color:#c1c1c7; font-size:18px; cursor:pointer; padding:6px;
+}
+.modal-close:hover{ color:#fff; }
+
+/* ===== Body / Grid ===== */
+.modal-body{
+  padding:10px 20px 16px 20px;
+  overflow:auto;                 /* scroll แค่เนื้อหา */
+  display:grid; gap:16px;
+}
+.modal-section-title{
+  margin-left: 5px;
+  font-weight:500; color:#fff; 
+  font-size: 20px;
+}
+
+/* 2 คอลัมน์บนจอกว้าง / 1 คอลัมน์บนจอแคบ */
+.grid2{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap:14px;
+}
+
+.grid1{
+  display:grid;
+  grid-template-columns: repeat(1);
+  gap:14px;
+}
+
+@media (max-width: 640px){
+  .grid2{ grid-template-columns:1fr; }
+}
+
+/* ===== Field / Label / Inputs ===== */
+.field{ display:grid; gap:6px; }
+.label-2{ color:#e9e6f7; font-size:14px; margin-left: 5px; }
+.req{ color:#ff3b7b; }
+
+
+.input-2,
+.select-trigger-2,
+.date-trigger-2{
+  width:100%; height:36px;
+  color:#e9e6f7;
+  background:#3A3445;        /* พื้นช่องกรอกเข้ม */
+  border:1px solid #3d3942;       /* ขอบหม่น */
+  border-radius:12px;
+  padding:0 12px;
+  line-height:38px;
+  outline:none;
+}
+.input-2::placeholder{ 
+  font-size: 15px;
+  color:#8e8a95; }
+
+.input-2:focus,
+.select-trigger-2:focus,
+.date-trigger-2:focus{
+  border-color:#161617;
+  box-shadow:0 0 0 3px #6b4eff33; /* วงม่วงจาง */
+}
+
+/* ===== Select (ทำลูกศรขวา) ===== */
+.select-type-2{ position:relative; }
+.select-trigger-2{
+  appearance:none; -webkit-appearance:none;
+  padding-right:44px;            /* เว้นที่ให้ลูกศร */
+}
+.select-type-2::after{
+  content:"";
+  position:absolute; right:12px; top:50%;
+  transform:translateY(-50%);
+  border:6px solid transparent;
+  border-top-color:#c1c1c7;      /* สีลูกศร */
+  pointer-events:none;
+}
+
+/* ===== Date icon ===== */
+.date-type-2{ position:relative; }
+.date-trigger-2{ padding-right:44px; }
+.date-trigger-2::-webkit-calendar-picker-indicator{
+  position:absolute; right:12px; top:50%;
+  transform:translateY(-50%);
+  cursor:pointer;
+}
+
+/* ===== กล่องข้อความช่วยท้ายฟอร์ม (ข้อความล้วน ๆ) ===== */
+.auto-id-hint{
+  grid-column:1 / -1;
+  font-size:13.5px;
+  color:#c1c1c7;
+  background:#221e28;            /* แถบม่วงเทาอ่อน */
+  border:1px solid #3d3942;
+  border-radius:12px;
+  padding:12px 14px;
+}
+
+/* ===== Footer ===== */
+.modal-footer{
+  display:flex; justify-content:flex-end; gap:10px;
+  padding:12px 20px 18px 20px;
+  border-top:1px solid #211e25;
+}
+.btn-ghost{
+  background:#2a262c; color:#e9e6f7;
+  border:1px solid #3b3740; border-radius:10px;
+  padding:6px 12px; cursor:pointer;
+}
+.btn-ghost:hover{ border-color:#6b4eff66; }
+
+.btn-primary{
+  background:#cdb6ff; color:#1f1c21;
+  border:0; border-radius:10px;
+  font-weight:500; padding: 6px 16px; cursor:pointer;
+}
+.btn-primary:hover{ filter:brightness(.96); }
 
