@@ -34,6 +34,8 @@ export async function CreateReport(inputReportModel) {
         }
         let StorageModel = {};
         StorageModel.specimen_id = specimenResponse[0].id;
+        console.log(specimenResponse[0].id);
+        console.log(StorageModel.specimen_id)
         StorageModel.fridge_id = inputReportModel.fridge_id;
         StorageModel.collected_at = inputReportModel.collected_at;
         let collectdate = new Date(inputReportModel.collected_at);
@@ -52,8 +54,8 @@ export async function CreateReport(inputReportModel) {
             console.error("Error updating fridge:", fridgeUpdateResult.error);
             return { data: null, error: fridgeUpdateResult.error.message }; //for User
         }
-        ReportModel.specimens_id = specimenResponse.id;
-        ReportModel.note_id = noteResponse.id;
+        ReportModel.specimens_id = specimenResponse[0].id;
+        ReportModel.note_id = noteResponse[0].id;
         ReportModel.patient_id = inputReportModel.patient_id;
         ReportModel.priority = inputReportModel.priority;
         ReportModel.doctor_id = inputReportModel.doctor_id;
@@ -261,38 +263,47 @@ export async function GetAllReports() {
 }
 
 export async function UpdateReportByID(id, row) {
+    console.log("UpdateReportByID called with:", { id, row });
     const { data, error } = await Update(db, "reports", id, row);
-    if (data.length === 0) {
-        return { data: [], error: new Error("Data Not Found : " + id) }; //for User
-    }
+    console.log("Update result from DB:", { data, error });
     if (error) {
-        console.log(error);
+        console.error("Update error:", error);
         return { data: null, error: error }; //for User
     }
-    try {
-        ReportResult.id = data[0].id;
-        ReportResult.specimens_id = data[0].specimens_id;
-        ReportResult.doctor_id = data[0].doctor_id;
-        ReportResult.patient_id = data[0].patient_id;
-        ReportResult.pharm_verify = data[0].pharm_verify;
-        ReportResult.medtech_verify = data[0].medtech_verify;
-        ReportResult.note_id = data[0].note_id;
-        ReportResult.rule_id = data[0].rule_id;
-        ReportResult.more_information = data[0].more_information;
-        ReportResult.medical_technician_id = data[0].medical_technician_id;
-        ReportResult.status = data[0].status;
-        ReportResult.request_date = data[0].request_date;
-        ReportResult.report_date = data[0].report_date;
-        ReportResult.priority = data[0].priority;
-        ReportResult.ward_id = data[0].ward_id;
-        ReportResult.contact_number = data[0].ward.contact_number;
-        ReportResult.created_at = data[0].created_at;
-        ReportResult.updated_at = data[0].updated_at;
-    } catch (err) {
-        console.error("Failed to parse data" + err); //for Debug
-        return { data: null, error: "Failed to parse data" + err };
+    if (!data || data.length === 0) {
+        console.error("No data returned from update for ID:", id);
+        return { data: [], error: new Error("Data Not Found : " + id) }; //for User
     }
-    return { data: ReportResult, error: null };
+    try {
+        // ส่งข้อมูลที่ได้จาก database โดยตรง ไม่ต้องแปลง
+        const result = {
+            id: data[0].id,
+            specimens_id: data[0].specimens_id,
+            doctor_id: data[0].doctor_id,
+            patient_id: data[0].patient_id,
+            pharm_verify: data[0].pharm_verify,
+            medtech_verify: data[0].medtech_verify,
+            note_id: data[0].note_id,
+            rule_id: data[0].rule_id,
+            index_rule: data[0].index_rule,
+            more_information: data[0].more_information,
+            pharmacist_id: data[0].pharmacist_id,
+            medical_technician_id: data[0].medical_technician_id,
+            status: data[0].status,
+            request_date: data[0].request_date,
+            report_date: data[0].report_date,
+            priority: data[0].priority,
+            ward_id: data[0].ward_id,
+            contact_number: data[0].contact_number,
+            created_at: data[0].created_at,
+            updated_at: data[0].updated_at
+        };
+        console.log("Returning result:", result);
+        return { data: result, error: null };
+    } catch (err) {
+        console.error("Failed to parse data:", err); //for Debug
+        return { data: null, error: "Failed to parse data: " + err.message };
+    }
 }
 
 export async function DeleteReportByID(id) {
@@ -624,6 +635,7 @@ export async function GetAllReportsDashboard() {
 export async function EditReportByID(id, body) {
     body.report_date = new Date().toISOString();
     body.updated_at = new Date().toISOString();
+    console.log("EditReportByID called with:", { id, body });
     const { data, error } = await Update(db, "reports", id, body);
     if (data.length === 0) {
         return { data: [], error: new Error("Data Not Found : " + id) }; //for User
@@ -632,7 +644,7 @@ export async function EditReportByID(id, body) {
         console.log(error);
         return { data: null, error: error }; //for User
     }
-    return { data: data[0], error: null };
+    return { data: data, error: null };
 }
 
 
@@ -657,4 +669,16 @@ export async function Pharm_verify(report_id, pharmacist_id) {
         return { data: null, error: error }; //for User
     }
     return { data: data[0], error: null };
+}
+
+export async function UpdateStatusReportById(id, statusupdate) {
+    const { data, error } = await Update(db, "reports", id, statusupdate);
+    if (data.length === 0) {
+        return { data: [], error: new Error("Data Not Found : " + id) }; //for User
+    }
+    if (error) {
+        console.log(error);
+        return { data: null, error: error }; //for User
+    }
+    return { data: data, error: null };
 }

@@ -38,3 +38,38 @@ export function Darkmode() {
     </DropdownMenu>
   )
 }
+
+// 'use client'
+// import { useEffect, useState } from 'react'
+// import { useTheme } from 'next-themes'
+
+// export function Darkmode() {
+//   const { theme, setTheme, systemTheme } = useTheme()
+//   const [mounted, setMounted] = useState(false)
+//   useEffect(() => setMounted(true), [])
+//   if (!mounted) return null
+
+//   const current = theme === 'system' ? systemTheme : theme
+
+//   return (
+//     <div className="inline-flex items-center gap-2">
+//       <button
+//         onClick={() => setTheme(current === 'dark' ? 'light' : 'dark')}
+//         className="rounded-lg border border-border px-3 py-1.5 bg-card"
+//         title="Toggle theme"
+//       >
+//         {current === 'dark' ? '🌙 Dark' : '☀️ Light'}
+//       </button>
+
+//       <select
+//         onChange={(e) => setTheme(e.target.value)}
+//         value={theme}
+//         className="rounded-md border border-border bg-card px-2 py-1 text-sm"
+//       >
+//         <option value="system">System</option>
+//         <option value="light">Light</option>
+//         <option value="dark">Dark</option>
+//       </select>
+//     </div>
+//   )
+// }

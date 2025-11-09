@@ -32,8 +32,6 @@ import { GetAllPatient, CreatePatient } from '@/app/api/user/service//patient_se
  *                       id:
  *                         type: string
  *                         format: uuid
- *                       name:
- *                         type: string
  *                       phone:
  *                         type: string
  *                       age:
@@ -41,6 +39,16 @@ import { GetAllPatient, CreatePatient } from '@/app/api/user/service//patient_se
  *                       gender:
  *                         type: string
  *                       Ethnicity:
+ *                         type: string
+ *                       Eng_name:
+ *                         type: string
+ *                       Thai_name:
+ *                         type: string
+ *                       dob:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                       address:
  *                         type: string
  *                       created_at:
  *                         type: string
@@ -58,27 +66,43 @@ import { GetAllPatient, CreatePatient } from '@/app/api/user/service//patient_se
  *           schema:
  *             type: object
  *             required:
- *               - name
  *               - phone
  *               - age
  *               - gender
  *               - Ethnicity
+ *               - Eng_name
+ *               - Thai_name
+ *               - dob
+ *               - email
+ *               - address
  *             properties:
- *               name:
- *                 type: string
- *                 example: Sergio Busquets 
  *               phone:
  *                 type: string
- *                 example: 0555555555
+ *                 example: "0555555555"
  *               age:
  *                 type: integer
  *                 example: 37
  *               gender:
  *                 type: string
- *                 example: Male
+ *                 example: "Male"
  *               Ethnicity:
  *                 type: string
- *                 example: Spanish
+ *                 example: "Spanish"
+ *               Eng_name:
+ *                 type: string
+ *                 example: "Leny Yoro"
+ *               Thai_name:
+ *                 type: string
+ *                 example: "เลนี่ โยโร่"
+ *               dob:
+ *                 type: string
+ *                 example: "13/11/2548"
+ *               email:
+ *                 type: string
+ *                 example: "yoro@manu.com"
+ *               address:
+ *                 type: string
+ *                 example: "Manchester, England"
  *     responses:
  *       201:
  *         description: Patient created successfully
