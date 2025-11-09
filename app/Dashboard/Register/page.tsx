@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { createPatientQueryOptions } from "../../../lib/fetch/Patient";
+import { createWardQueryOptions } from "../../../lib/fetch/Ward";
 import { createDoctorQueryOptions } from "../../../lib/fetch/Position";
 import { createFridgeQueryOptions } from "../../../lib/fetch/Fridge";
 import { mutateReportQueryOptions, ReportsDTO } from "../../../lib/fetch/Report";
@@ -42,6 +43,12 @@ export default function Page() {
         isLoading: loadingfridges,
         error: errorfridges,
     } = useQuery(createFridgeQueryOptions.all());
+
+    const {
+        data: wards,
+        isLoading: loadingwards,
+        error: errorwards,
+    } = useQuery(createWardQueryOptions.all());
 
     const { data: patientDetail } = useQuery({
         ...createPatientQueryOptions.detail(currentId ?? ""),
@@ -201,7 +208,7 @@ export default function Page() {
             fridge_id: fridge, //doop
             medical_technician_id: "", //user id
             note: notes,
-            };
+        };
 
         try {
             await createReport.mutateAsync(reportDTO);
@@ -383,8 +390,21 @@ export default function Page() {
                         <div className="field">
                             <div className="main-topic">Ward</div>
                             <div className="textarea-type">
-                                <textarea className="textarea-oneline" placeholder="Enter ward/department" rows={1} value={ward} onChange={(e) => setWard(e.target.value)} />
-                                <div className="under-topic">Patient location or department.</div>
+                                <select
+                                    className="textarea-oneline"
+                                    value={ward}
+                                    onChange={(e) => setWard(e.target.value)}
+                                    disabled={loadingwards || !wards} // disable จนกว่าจะโหลดเสร็จ
+                                >
+                                    <option value="" disabled>
+                                        {loadingdoctors ? "Loading wards..." : "Select ward name"}
+                                    </option>
+                                    {wards?.map((ward: any, index: number) => (
+                                        <option key={index} value={ward.id}>
+                                            {ward.name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
 
@@ -441,36 +461,36 @@ export default function Page() {
             )}
 
             {/* STEP 3 */}
-                {currentStep === "3" && (
-                    <div className="Barcodes">
-                        <div className="bc-left">
-                            <div className="bc-title">Barcode Preview</div>
-                            <div className="bc-canvas">
-                                {barcodeSvg ? (
+            {currentStep === "3" && (
+                <div className="Barcodes">
+                    <div className="bc-left">
+                        <div className="bc-title">Barcode Preview</div>
+                        <div className="bc-canvas">
+                            {barcodeSvg ? (
                                 <div className="bc-svg" dangerouslySetInnerHTML={{ __html: barcodeSvg }} />
-                                ) : (
-                                    <div className="bc-placeholder">No barcode yet</div>
-                                )}
-                            </div>
-                        <button className="bc-generate" onClick={handleGenerateLocal}>Generate Barcode (Local)</button>
+                            ) : (
+                                <div className="bc-placeholder">No barcode yet</div>
+                            )}
                         </div>
+                        <button className="bc-generate" onClick={handleGenerateLocal}>Generate Barcode (Local)</button>
+                    </div>
 
-                        <div className="bc-right">
-                            <div className="bc-panel-title">Label Details</div>
-                            <div className="bc-rows">
+                    <div className="bc-right">
+                        <div className="bc-panel-title">Label Details</div>
+                        <div className="bc-rows">
                             <div className="bc-row"><span>Lab Number</span><b>{barcodeText || "Pending"}</b></div>
                             <div className="bc-row"><span>Patient</span><b>{activePatient?.Thai_name ?? activePatient?.Eng_name ?? "—"}</b></div>
                             <div className="bc-row"><span>Priority</span><b>{selectedPriority.toUpperCase()}</b></div>
-                                </div>
+                        </div>
                         <p className="bc-note">This is a visual preview and supports printing via browser print dialog.</p>
-                            <div className="bc-actions">
+                        <div className="bc-actions">
                             <button className="bc-print" onClick={handlePrint}>Print Label</button>
                             <button className="bc-register" onClick={() => alert(`Registered sample for ${activePatient?.Thai_name ?? activePatient?.Eng_name ?? "(unknown)"} with ${barcodeText || "(no barcode)"}`)}>Register Sample</button>
-                            </div>
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
+        </div>
     );
 }
 
