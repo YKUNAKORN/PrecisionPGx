@@ -144,3 +144,10 @@ export type Dashboard = {
     sample_received_d1: number;
     sample_received_d0: number;
 }
+
+export type Ward = {
+    id: string;
+    name: string;
+    number: string;
+    created_at: string; // ISO8601 timestamp
+};
