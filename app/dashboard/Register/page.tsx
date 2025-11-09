@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { createPatientQueryOptions } from "../../../lib/fetch/Patient";
+import { createWardQueryOptions } from "../../../lib/fetch/Ward";
 import { createDoctorQueryOptions } from "../../../lib/fetch/Position";
 import { createFridgeQueryOptions } from "../../../lib/fetch/Fridge";
 import { mutateReportQueryOptions, ReportsDTO } from "../../../lib/fetch/Report";
@@ -42,6 +43,12 @@ export default function Page() {
         isLoading: loadingfridges,
         error: errorfridges,
     } = useQuery(createFridgeQueryOptions.all());
+
+    const {
+        data: wards,
+        isLoading: loadingwards,
+        error: errorwards,
+    } = useQuery(createWardQueryOptions.all());
 
     const { data: patientDetail } = useQuery({
         ...createPatientQueryOptions.detail(currentId ?? ""),
@@ -383,8 +390,21 @@ export default function Page() {
                         <div className="field">
                             <div className="main-topic">Ward</div>
                             <div className="textarea-type">
-                                <textarea className="textarea-oneline" placeholder="Enter ward/department" rows={1} value={ward} onChange={(e) => setWard(e.target.value)} />
-                                <div className="under-topic">Patient location or department.</div>
+                                <select
+                                    className="textarea-oneline"
+                                    value={ward}
+                                    onChange={(e) => setWard(e.target.value)}
+                                    disabled={loadingwards || !wards} // disable จนกว่าจะโหลดเสร็จ
+                                >
+                                    <option value="" disabled>
+                                        {loadingdoctors ? "Loading wards..." : "Select ward name"}
+                                    </option>
+                                    {wards?.map((ward: any, index: number) => (
+                                        <option key={index} value={ward.id}>
+                                            {ward.name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
 
