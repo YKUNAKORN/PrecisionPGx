@@ -2,20 +2,22 @@
 
 import { useMemo, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
-// ✅ ใช้บริการจากไฟล์ที่มีอยู่
-import { createPatientQueryOptions } from "../../../lib/fetch/Patient"; // ดึงรายชื่อผู้ป่วย
-import { mutateSpecimenQueryOptions } from "../../../lib/fetch/Specimen"; // POST /api/user/specimen  -> { name, expire_in }
-import { mutateStorageQueryOptions } from "../../../lib/fetch/Storage";   // POST /api/user/storage   -> { patient_id, location, specimen_id, status }
-import createBarcodeQueryOptions from "../../../lib/fetch/Barcode"; // ดึง barcode/labNumber จาก backend (ถ้ามี)
-import type { Patient as PatientBase, Specimen as SpecimenType, Storage as StorageType } from "../../../lib/fetch/type";
+import { createPatientQueryOptions } from "../../../lib/fetch/Patient";
+import { createWardQueryOptions } from "../../../lib/fetch/Ward";
+import { createDoctorQueryOptions } from "../../../lib/fetch/Position";
+import { createFridgeQueryOptions } from "../../../lib/fetch/Fridge";
+import { mutateReportQueryOptions, ReportsDTO } from "../../../lib/fetch/Report";
+import createBarcodeQueryOptions from "../../../lib/fetch/Barcode"; // ถ้ามี
+import type { Fridge, Patient as PatientBase } from "../../../lib/fetch/type";
+
 import "@/app/globals.css";
 import "@/app/style/register.css";
 
-// ถ้า Patient ใน type.ts ยังไม่มี id ให้ใช้ส่วนขยายนี้
 type PatientWithId = PatientBase & { id: string };
 
+// ---- Page ----
 export default function Page() {
     const router = useRouter();
     const sp = useSearchParams();
@@ -23,34 +25,44 @@ export default function Page() {
     const currentId = sp.get("id") ?? "";
     const currentStep = sp.get("step") ?? (currentId ? "2" : "1");
 
-    // -----------------------------
     // Patients
-    // -----------------------------
     const {
         data: patients,
         isLoading: loadingPatients,
         error: errorPatients,
     } = useQuery(createPatientQueryOptions.all());
 
+    const {
+        data: doctors,
+        isLoading: loadingdoctors,
+        error: errordoctors,
+    } = useQuery(createDoctorQueryOptions.all());
+
+    const {
+        data: fridges,
+        isLoading: loadingfridges,
+        error: errorfridges,
+    } = useQuery(createFridgeQueryOptions.all());
+
+    const {
+        data: wards,
+        isLoading: loadingwards,
+        error: errorwards,
+    } = useQuery(createWardQueryOptions.all());
+
     const { data: patientDetail } = useQuery({
         ...createPatientQueryOptions.detail(currentId ?? ""),
         enabled: !!currentId,
     });
 
-
-    // -----------------------------
-    // Barcode (manual refetch)
-    // -----------------------------
-
-
-
     const patientDetailEntity = useMemo(() => {
         const raw = patientDetail as any;
-        return raw && typeof raw === "object" && "data" in raw ? (raw.data as PatientWithId) : (raw as PatientWithId | null);
+        return raw && typeof raw === "object" && "data" in raw
+            ? (raw.data as PatientWithId)
+            : (raw as PatientWithId | null);
     }, [patientDetail]);
-    // -----------------------------
-    // Local states
-    // -----------------------------
+
+    // local states
     const [q, setQ] = useState("");
     const [selected, setSelected] = useState<PatientWithId | null>(null);
 
@@ -58,31 +70,37 @@ export default function Page() {
     const [barcodeSvg, setBarcodeSvg] = useState<string>("");
 
     const [detailsSaved, setDetailsSaved] = useState(false);
-    const [selectedPriority, setSelectedPriority] = useState<"Routine" | "Urgent" | "STAT">("Routine");
-    const priority: Array<"Routine" | "Urgent" | "STAT"> = ["Routine", "Urgent", "STAT"];
+    const [selectedPriority, setSelectedPriority] =
+        useState<"Routine" | "Urgent" | "STAT">("Routine");
+    const priority: Array<"Routine" | "Urgent" | "STAT"> = [
+        "Routine",
+        "Urgent",
+        "STAT",
+    ];
 
-    // Step 2 form
-    const [sampleType, setSampleType] = useState<"blood" | "saliva" | "tissue" | "buccal">("blood");
-    const [testPanel, setTestPanel] = useState<"PGx Panel" | "CYP2D6" | "CYP2C19" | "UGT1A1" | "TPMT/NUDT15" | "ABCB1" | "BRCA1/2" | "HLA-B*57:01" | "HLA-B*15:02" | "Thalassemia" | "CFTR" | "Factor V Leiden">("PGx Panel");
+    // Step 2 fields
+    const [sampleType, setSampleType] =
+        useState<"blood" | "saliva" | "tissue" | "buccal">("blood");
     const [collectedAt, setCollectedAt] = useState<string>(() => toDatetimeLocal());
     const [doctor, setDoctor] = useState("");
     const [ward, setWard] = useState("");
     const [notes, setNotes] = useState("");
     const [contact, setContact] = useState("");
+    const [fridge, setFridge] = useState("");
+
 
     const activePatient = (selected ?? patientDetailEntity) || null;
-
     const canGoStep2 = !!activePatient?.id;
     const canGoStep3 = detailsSaved;
 
-
+    // barcode manual refetch (optional)
     const barcodeQuery = createBarcodeQueryOptions(activePatient?.id || "");
-const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
-  ...barcodeQuery,
-  enabled: false, // manual refetch
-});
+    const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
+        ...barcodeQuery,
+        enabled: false,
+    });
+
     const patientList: PatientWithId[] = useMemo(() => {
-        // patients อาจเป็น Array หรือเป็น { data: [...] }
         const raw = patients as any;
         const arr = Array.isArray(raw) ? raw : raw?.data;
         return Array.isArray(arr) ? (arr as PatientWithId[]) : [];
@@ -92,27 +110,20 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
         const t = q.trim().toLowerCase();
         if (!t) return patientList;
         return patientList.filter((p) =>
-            `${p.name} ${p.phone ?? ""} ${p.gender ?? ""} ${p.Ethnicity ?? ""}`
+            `${p.Thai_name ?? ""} ${p.Eng_name ?? ""} ${p.phone ?? ""} ${p.gender ?? ""} ${p.Ethnicity ?? ""}`
                 .toLowerCase()
                 .includes(t)
         );
     }, [patientList, q]);
 
-    
+    // -----------------------------
+    // Mutations (Report only)
+    // -----------------------------
 
 
-    // -----------------------------
-    // Mutations
-    // -----------------------------
-    const qc = useQueryClient();
+    const createReport = useMutation(mutateReportQueryOptions.post);
 
-    const createSpecimen = useMutation(mutateSpecimenQueryOptions.post());
-
-    const createStorage = useMutation(mutateStorageQueryOptions.post());
-    
-    // -----------------------------
-    // Actions
-    // -----------------------------
+    // Actions: navigation
     const goTab = (n: number) => {
         const url = new URL(window.location.href);
         if (n === 1) {
@@ -165,12 +176,12 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
     };
 
     // -----------------------------
-    // Save Step 2 = fetch barcode (optional) -> POST specimen -> POST storage -> Step 3
+    // Save Step 2 -> POST report -> Step 3
     // -----------------------------
     const handleSaveSample = async () => {
         if (!activePatient?.id) return;
 
-        // 1) ขอ barcode จาก backend ถ้ายังไม่มี (fallback gen local)
+        // ensure barcode
         let lab = barcodeText;
         if (!lab) {
             try {
@@ -185,35 +196,24 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
             setBarcodeSvg(makeBarcodeSVG(lab));
         }
 
-        // 2) POST /api/user/specimen  -> { name, expire_in }
-        //    ใช้วันที่เก็บเป็น expire_in (ถ้าต้องการ logic อื่น เปลี่ยนที่นี่ได้)
 
-        const specimenDTO = { name: sampleType, expire_in: 2 };
+        const reportDTO: ReportsDTO = {
+            specimens: sampleType || "blood",
+            doctor_id: doctor || "", //doop
+            patient_id: activePatient.id || "",
+            priority: selectedPriority || "Routine",
+            ward_id: ward || "",
+            contact_number: contact || "",
+            collected_at: collectedAt || new Date().toISOString(),
+            fridge_id: fridge, //doop
+            medical_technician_id: "", //user id
+            note: notes,
+        };
 
         try {
-            const createdSpecimen: any = await createSpecimen.mutateAsync(specimenDTO);
+            await createReport.mutateAsync(reportDTO);
 
-            // พยายามอ่าน id จากหลายรูปแบบ response
-            const specimenId =
-                createdSpecimen?.data[0]?.id ??
-                createdSpecimen?.id ??
-                createdSpecimen?.data[0]?.specimen_id;
-
-            if (!specimenId) {
-                alert("Specimen created but no id returned from API");
-                return;
-            }
-
-            // 3) POST /api/user/storage -> { patient_id, location, specimen_id, status }
-            const storageDTO = {
-                patient_id: activePatient.id,
-                location: "Freezer-A",  // TODO: ทำ input ให้ผู้ใช้เลือกเองได้
-                specimen_id: specimenId,
-                status: "stored",
-            };
-            await createStorage.mutateAsync(storageDTO);
-
-            // 4) ไป Step 3
+            // success -> go to step 3
             setDetailsSaved(true);
             const url = new URL(window.location.href);
             url.searchParams.set("id", activePatient.id);
@@ -221,7 +221,7 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
             url.searchParams.set("ok2", "1");
             router.push(`${url.pathname}?${url.searchParams.toString()}`);
         } catch (e) {
-            alert(`Cannot register sample: ${(e as Error).message}`);
+            alert(`Cannot create report: ${(e as Error).message}`);
         }
     };
 
@@ -343,22 +343,16 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
 
     if (errorPatients) return <div className="container">Failed to load patients.</div>;
 
-    // -----------------------------
-    // UI
-    // -----------------------------
-    
+    // ---- UI ----
     return (
         <div className="container">
             <div className="title-1">Sample Registration</div>
-            <div className="title-2">
-                Search patient, enter sample details, and generate barcode labels. All designed with Material 3 patterns.
-            </div>
+            <div className="title-2">Search patient, enter sample details, and generate barcode labels.</div>
 
             {/* Tabs */}
             <div className="tabs">
                 <button className={`step ${currentStep === "1" ? "active" : ""}`} onClick={() => goTab(1)}>
-                    <span className="dot">1</span>
-                    <span className="label">Patient</span>
+                    <span className="dot">1</span><span className="label">Patient</span>
                 </button>
 
                 <span className="sep" />
@@ -369,9 +363,7 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
                     disabled={!canGoStep2}
                 >
                     <span className="dot">2</span>
-                    <span className="label">
-                        Sample Details {fetchingBarcode ? "(getting barcode…)" : ""}
-                    </span>
+                    <span className="label">Sample Details {fetchingBarcode ? "(getting barcode…)" : ""}</span>
                 </button>
 
                 <span className="sep" />
@@ -398,12 +390,7 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
                         </div>
 
                         <div className="row-search">
-                            <input
-                                className="search-input"
-                                placeholder="Search by name / phone / gender / ethnicity"
-                                value={q}
-                                onChange={(e) => setQ(e.target.value)}
-                            />
+                            <input className="search-input" placeholder="Search by name / phone / gender / ethnicity" value={q} onChange={(e) => setQ(e.target.value)} />
                             <button className="scan-btn">Scan</button>
                         </div>
 
@@ -412,18 +399,20 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
                         {loadingPatients ? (
                             <div style={{ padding: 12 }}>Loading patients…</div>
                         ) : (
-                            <div style={{ display: "grid", gap: 12 }}>
-                                {filtered.map((p) => (
-                                    <div key={p.id} className="patient-card ">
-                                        <div className="patient-info">
-                                            <p className="patient-name ">{p.name}</p>
-                                            <p className="patient-detail">
-                                                Phone: {p.phone ?? "—"} • Gender: {p.gender ?? "—"} • Age: {p.age ?? "—"} • Ethnicity: {p.Ethnicity ?? "—"}
-                                            </p>
+                            <div className="mt-6 max-h-[420px] overflow-y-auto pr-2 snap-y snap-mandatory scroll-pt-4">
+                                <div className="flex flex-col gap-3">
+                                    {filtered.map((p) => (
+                                        <div key={p.id} className="patient-card snap-start">
+                                            <div className="patient-info">
+                                                <p className="patient-name">{p.Thai_name ?? p.Eng_name ?? "(no name)"}</p>
+                                                <p className="patient-detail">
+                                                    Phone: {p.phone ?? "—"} • Gender: {p.gender ?? "—"} • Age: {p.age ?? "—"} • Ethnicity: {p.Ethnicity ?? "—"}
+                                                </p>
+                                            </div>
+                                            <button className="select-btn" onClick={() => setSelected(p)}>Select</button>
                                         </div>
-                                        <button className="select-btn" onClick={() => setSelected(p)}>Select</button>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -435,7 +424,7 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
                             <div className="sel-empty">No patient selected.</div>
                         ) : (
                             <>
-                                <div className="sel-name">{activePatient.name}</div>
+                                <div className="sel-name">{activePatient.Thai_name ?? activePatient.Eng_name}</div>
                                 <div className="sel-line" />
                                 <div className="sel-rows">
                                     <div className="sel-row"><span>Phone:</span>{activePatient.phone ?? "—"}</div>
@@ -444,11 +433,7 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
                                     <div className="sel-row"><span>Ethnicity:</span>{activePatient.Ethnicity ?? "—"}</div>
                                 </div>
 
-                                {!currentId && (
-                                    <button className="continue-btn" onClick={handleContinue}>
-                                        Continue to Sample Details
-                                    </button>
-                                )}
+                                {!currentId && <button className="continue-btn" onClick={handleContinue}>Continue to Sample Details</button>}
                             </>
                         )}
                     </div>
@@ -458,6 +443,7 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
             {/* STEP 2 */}
             {currentStep === "2" && (
                 <div className="Sample-Detail">
+                    {/* sample type / datetime */}
                     <div className="row">
                         <div className="field">
                             <div className="main-topic">Sample Type</div>
@@ -471,122 +457,122 @@ const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
                             </div>
                             <div className="under-topic">Choose specimen type.</div>
                         </div>
+
                         <div className="field">
                             <div className="main-topic">Collection Date/Time</div>
                             <div className="date-type">
-                                <input
-                                    type="datetime-local"
-                                    className="date-trigger"
-                                    value={collectedAt}
-                                    onChange={(e) => setCollectedAt(e.target.value)}
-                                />
+                                <input type="datetime-local" className="date-trigger" value={collectedAt} onChange={(e) => setCollectedAt(e.target.value)} />
                             </div>
                             <div className="under-topic">Record collection timestamp.</div>
                         </div>
                     </div>
 
+                    {/* priority / doctor */}
                     <div className="row">
                         <div className="field">
                             <div className="main-topic">Priority</div>
                             <div className="priority-group">
                                 {priority.map((p) => (
-                                    <button
-                                        key={p}
-                                        className={`priority-btn ${p} ${selectedPriority === p ? "active" : ""}`}
-                                        onClick={() => setSelectedPriority(p)}
-                                    >
-                                        {p}
-                                    </button>
+                                    <button key={p} className={`priority-btn ${p} ${selectedPriority === p ? "active" : ""}`} onClick={() => setSelectedPriority(p)}>{p}</button>
                                 ))}
                             </div>
                             <div className="under-topic">Set processing priority.</div>
                         </div>
 
                         <div className="field">
-                            <div className="main-topic">Examining Doctor</div>
+                            <div className="main-topic">Doctor</div>
                             <div className="textarea-type">
-                                <textarea
+                                <select
                                     className="textarea-oneline"
-                                    placeholder="Enter doctor's name"
-                                    rows={1}
                                     value={doctor}
                                     onChange={(e) => setDoctor(e.target.value)}
-                                />
+                                    disabled={loadingdoctors || !doctors} // disable จนกว่าจะโหลดเสร็จ
+                                >
+                                    <option value="" disabled>
+                                        {loadingdoctors ? "Loading doctors..." : "Select doctor's name"}
+                                    </option>
+                                    {doctors?.map((doc: any, index: number) => (
+                                        <option key={index} value={doc.id}>
+                                            {doc.fullname}
+                                        </option>
+                                    ))}
+                                </select>
                                 <div className="under-topic">Name of the examining physician.</div>
                             </div>
                         </div>
+
                     </div>
 
-                    <div className="row">
-                        <div className="field">
-                            <div className="main-topic">Test Panels</div>
-                            <div className="select-type">
-                                <select className="select-trigger" value={testPanel} onChange={(e) => setTestPanel(e.target.value as any)}>
-                                    <option value="PGx Panel">PGx Panel</option>
-                                    <option value="CYP2D6">CYP2D6</option>
-                                    <option value="CYP2C19">CYP2C19</option>
-                                    <option value="UGT1A1">UGT1A1</option>
-                                    <option value="TPMT/NUDT15">TPMT/NUDT15</option>
-                                    <option value="ABCB1">ABCB1</option>
-                                    <option value="BRCA1/2">BRCA1/2</option>
-                                    <option value="HLA-B*57:01">HLA-B*57:01</option>
-                                    <option value="HLA-B*15:02">HLA-B*15:02</option>
-                                    <option value="Thalassemia">Thalassemia</option>
-                                    <option value="CFTR">CFTR</option>
-                                    <option value="Factor V Leiden">Factor V Leiden</option>
-                                </select>
-                            </div>
-                            <div className="under-topic">Choose one panel from the dropdown or use search to find specific tests.</div>
-                        </div>
+                    {/* ward / notes */}
                         <div className="field">
                             <div className="main-topic">Ward</div>
                             <div className="textarea-type">
-                                <textarea
+                                <select
                                     className="textarea-oneline"
-                                    placeholder="Enter ward/department"
-                                    rows={1}
                                     value={ward}
                                     onChange={(e) => setWard(e.target.value)}
-                                />
-                                <div className="under-topic">Patient location or department.</div>
+                                    disabled={loadingwards || !wards} // disable จนกว่าจะโหลดเสร็จ
+                                >
+                                    <option value="" disabled>
+                                        {loadingdoctors ? "Loading wards..." : "Select ward name"}
+                                    </option>
+                                    {wards?.map((ward: any, index: number) => (
+                                        <option key={index} value={ward.id}>
+                                            {ward.name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
-                    </div>
 
                     <div className="row">
                          <div className="field">
                             <div className="main-topic">Clinical Notes</div>
                             <div className="textarea-type">
-                                <textarea
-                                    className="textarea-trigger"
-                                    placeholder="Special handling, storage, or clinical indications"
-                                    rows={1}
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                />
+                                <textarea className="textarea-trigger" placeholder="Special handling, storage, or clinical indications" rows={1} value={notes} onChange={(e) => setNotes(e.target.value)} />
                             </div>
                         </div>
+                    </div>
+
+                    {/* fridge */}
+                    <div className="row">
+                        <div className="field">
+                            <div className="main-topic">Fridge</div>
+                            <div className="textarea-type">
+                                <select
+                                    className="textarea-oneline"
+                                    value={fridge}
+                                    onChange={(e) => setFridge(e.target.value)}
+                                    disabled={loadingfridges || !fridges} // disable จนกว่าจะโหลดเสร็จ
+                                >
+                                    <option value="" disabled>
+                                        {loadingfridges ? "Loading fridges..." : "Select fridges location"}
+                                    </option>
+                                    {fridges?.map((fri: Fridge, index: number) => (
+                                        <option key={index} value={fri.id}>
+                                            {fri.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="under-topic">Fridge location.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* contact */}
+                    <div className="row">
                         <div className="field">
                             <div className="main-topic">Contact Number</div>
                             <div className="textarea-type">
-                                <textarea
-                                    className="textarea-oneline"
-                                    placeholder="Enter contact number"
-                                    rows={1}
-                                    value={contact}
-                                    onChange={(e) => setContact(e.target.value)}
-                                />
+                                <textarea className="textarea-oneline" placeholder="Enter contact number" rows={1} value={contact} onChange={(e) => setContact(e.target.value)} />
                                 <div className="under-topic">Phone number for follow-up.</div>
                             </div>
                         </div>
                     </div>
 
                     <div className="sample-submit">
-                        <button
-                            disabled={fetchingBarcode || createSpecimen.isPending || createStorage.isPending || !activePatient?.id}
-                            onClick={handleSaveSample}
-                        >
-                            {fetchingBarcode || createSpecimen.isPending || createStorage.isPending ? "Saving…" : "Save Sample Details"}
+                        <button disabled={fetchingBarcode || createReport.isLoading || !activePatient?.id} onClick={handleSaveSample}>
+                            {fetchingBarcode || createReport.isLoading ? "Saving…" : "Save Sample Details"}
                         </button>
                     </div>
                 </div>

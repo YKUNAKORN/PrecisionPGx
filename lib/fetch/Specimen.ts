@@ -70,12 +70,12 @@ export const createSpecimenQueryOptions = {
   }
 
 export const mutateSpecimenQueryOptions = {
-  put: () => ({
+  put:  ({
       mutationFn: async (data: Specimen) => await putSpecimen(data),
     }),
   delete: ({
       mutationFn: async (id: string) => await deleteSpecimen(id),
     }),
-  post: () => ({ mutationFn: async (dto: CreateSpecimenDTO) => await postSpecimen(dto),
+  post:  ({ mutationFn: async (dto: CreateSpecimenDTO) => await postSpecimen(dto),
     }),
   };
