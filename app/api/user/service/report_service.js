@@ -561,15 +561,15 @@ export async function GetAllReportsDashboard() {
             const q = String(row?.status ?? "")
                 .toLowerCase()
                 .trim();
-            if (q === "summited inspection" || q === "submitted inspection") {
+            if (q.toLowerCase() === "submitted for inspection" || q === "submitted inspection") {
                 submited_inspection++;
-            } else if (q === "awaiting inspection") {
+            } else if (q.toLowerCase() === "awaiting inspection") {
                 awaiting_inspection++;
-            } else if (q === "inprogress" || q === "in progress") {
+            } else if (q.toLowerCase() === "in progress" || q === "in progress") {
                 inprogress++;
-            } else if (q === "completed") {
+            } else if (q.toLowerCase() === "completed") {
                 completed++;
-            } else if (q === "awaiting approve" || q === "awaiting approval") {
+            } else if (q.toLowerCase() === "awaiting approve" || q.toLowerCase() === "awaiting approval") {
                 awaiting_approve++;
             } else {
                 console.warn("Status type doesn't exist for item:", row);
@@ -582,8 +582,8 @@ export async function GetAllReportsDashboard() {
             // วันนี้ (BKK)
             if (ts >= startTs && ts < endTs) {
                 sample_received++;
-                if (q === "completed") tests_completed++;
-                if (q === "inprogress") results_interpret++;
+                if (q.toLowerCase() === "completed") tests_completed++;
+                if (q.toLowerCase() === "in progress") results_interpret++;
             }
 
             // 7 วัน (BKK)
