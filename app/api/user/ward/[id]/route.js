@@ -50,8 +50,8 @@ import { GetWardById } from '../../service/ward_service'
  */
 
 export async function GET(req, { params }) {
-    const { id } = params
-    try {
+    const { id } = await params
+    try { 
         const ward = await GetWardById(id)
 
         ResponseModel.status = '200'
