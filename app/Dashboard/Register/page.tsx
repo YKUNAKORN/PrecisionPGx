@@ -5,9 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { createPatientQueryOptions } from "../../../lib/fetch/Patient";
+import { createDoctorQueryOptions } from "../../../lib/fetch/Position";
+import { createFridgeQueryOptions } from "../../../lib/fetch/Fridge";
 import { mutateReportQueryOptions, ReportsDTO } from "../../../lib/fetch/Report";
 import createBarcodeQueryOptions from "../../../lib/fetch/Barcode"; // ถ้ามี
-import type { Patient as PatientBase } from "../../../lib/fetch/type";
+import type { Fridge, Patient as PatientBase } from "../../../lib/fetch/type";
 
 import "@/app/globals.css";
 import "@/app/style/register.css";
@@ -28,6 +30,18 @@ export default function Page() {
         isLoading: loadingPatients,
         error: errorPatients,
     } = useQuery(createPatientQueryOptions.all());
+
+    const {
+        data: doctors,
+        isLoading: loadingdoctors,
+        error: errordoctors,
+    } = useQuery(createDoctorQueryOptions.all());
+
+    const {
+        data: fridges,
+        isLoading: loadingfridges,
+        error: errorfridges,
+    } = useQuery(createFridgeQueryOptions.all());
 
     const { data: patientDetail } = useQuery({
         ...createPatientQueryOptions.detail(currentId ?? ""),
@@ -65,6 +79,8 @@ export default function Page() {
     const [ward, setWard] = useState("");
     const [notes, setNotes] = useState("");
     const [contact, setContact] = useState("");
+    const [fridge, setFridge] = useState("");
+
 
     const activePatient = (selected ?? patientDetailEntity) || null;
     const canGoStep2 = !!activePatient?.id;
@@ -179,11 +195,11 @@ export default function Page() {
             doctor_id: doctor || "", //doop
             patient_id: activePatient.id || "",
             priority: selectedPriority || "Routine",
-            ward_id: ward   || "",
+            ward_id: ward || "",
             contact_number: contact || "",
-            collected_at: collectedAt  || new Date().toISOString(),
-            fridge_id: "hgmdghm", //doop
-            medical_technician_id: "fhjdgh", //user id
+            collected_at: collectedAt || new Date().toISOString(),
+            fridge_id: fridge, //doop
+            medical_technician_id: "", //user id
             note: notes,
             };
 
@@ -339,12 +355,27 @@ export default function Page() {
                         </div>
 
                         <div className="field">
-                            <div className="main-topic">Examining Doctor</div>
+                            <div className="main-topic">Doctor</div>
                             <div className="textarea-type">
-                                <textarea className="textarea-oneline" placeholder="Enter doctor's name" rows={1} value={doctor} onChange={(e) => setDoctor(e.target.value)} />
+                                <select
+                                    className="textarea-oneline"
+                                    value={doctor}
+                                    onChange={(e) => setDoctor(e.target.value)}
+                                    disabled={loadingdoctors || !doctors} // disable จนกว่าจะโหลดเสร็จ
+                                >
+                                    <option value="" disabled>
+                                        {loadingdoctors ? "Loading doctors..." : "Select doctor's name"}
+                                    </option>
+                                    {doctors?.map((doc: any, index: number) => (
+                                        <option key={index} value={doc.id}>
+                                            {doc.fullname}
+                                        </option>
+                                    ))}
+                                </select>
                                 <div className="under-topic">Name of the examining physician.</div>
                             </div>
                         </div>
+
                     </div>
 
                     {/* ward / notes */}
@@ -361,6 +392,31 @@ export default function Page() {
                             <div className="main-topic">Clinical Notes</div>
                             <div className="textarea-type">
                                 <textarea className="textarea-trigger" placeholder="Special handling, storage, or clinical indications" rows={1} value={notes} onChange={(e) => setNotes(e.target.value)} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* fridge */}
+                    <div className="row">
+                        <div className="field">
+                            <div className="main-topic">Fridge</div>
+                            <div className="textarea-type">
+                                <select
+                                    className="textarea-oneline"
+                                    value={fridge}
+                                    onChange={(e) => setFridge(e.target.value)}
+                                    disabled={loadingfridges || !fridges} // disable จนกว่าจะโหลดเสร็จ
+                                >
+                                    <option value="" disabled>
+                                        {loadingfridges ? "Loading fridges..." : "Select fridges location"}
+                                    </option>
+                                    {fridges?.map((fri: Fridge, index: number) => (
+                                        <option key={index} value={fri.id}>
+                                            {fri.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="under-topic">Fridge location.</div>
                             </div>
                         </div>
                     </div>
