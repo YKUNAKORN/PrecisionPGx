@@ -113,7 +113,9 @@ import { ReportModel, ReportUpdate, CreateReportModel } from '../../../../lib/mo
 
 export async function POST(req) {
     const body = await req.json()
-    if (!body || !body.specimens || !body.patient_id || !body.priority || !body.doctor_id || !body.ward_id || !body.contact_number || !body.collected_at || !body.fridge_id || !body.medical_technician_id ) {
+    const cookies = req.cookies;
+    body.medical_technician_id = cookies._headers.get('x-user-id');
+    if (!body || !body.specimens || !body.patient_id || !body.priority || !body.doctor_id || !body.ward_id || !body.contact_number || !body.collected_at || !body.fridge_id  || !body.medical_technician_id) {
         ResponseModel.status = '400'
         ResponseModel.message = 'Invalid Data'
         ResponseModel.data = null;
@@ -227,6 +229,7 @@ export async function PUT(req) {
     const { searchParams } = new URL(req.url); //querystring
     const id = searchParams.get('id');
     const body = await req.json()
+    // console.log("PUT Request Body:", body); // Debug log
     if (!body || !body.medtech_verify  || !body.rule_id || !body.index_rule || !body.more_information || !body.medical_technician_id ) {
         ResponseModel.status = '400'
         ResponseModel.message = 'Invalid Data'
@@ -239,7 +242,8 @@ export async function PUT(req) {
     ReportUpdate.index_rule = body.index_rule;
     ReportUpdate.more_information = body.more_information;
     ReportUpdate.medical_technician_id = body.medical_technician_id;
-    ReportUpdate.status = body.status;
+    ReportUpdate.status = "In Progress";
+    ReportUpdate.quality_id = body.quality_id;
     console.log(ReportUpdate)
     try {
         const { data, error } = await EditReportByID(id, ReportUpdate)
@@ -292,3 +296,4 @@ export async function DELETE(req) {
     ResponseModel.data = data;
     return NextResponse.json(ResponseModel, { status: 200 });
 }
+

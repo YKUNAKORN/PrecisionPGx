@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "./Providers";
 import LayoutWrapper from "./LayoutWrapper";
+import { ThemeDebug } from "@/components/ThemeDebug";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className=" mx-auto w-full p-4 my-10 ">
               {children}
             </div>
+
           </LayoutWrapper>
         </Providers>
       </body>

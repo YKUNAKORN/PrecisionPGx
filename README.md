@@ -9,10 +9,11 @@ npm install
 
 .env.local set up
 ```
-NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_or_anon_key
 NEXT_PUBLIC_SUPABASE_SECRET_KEY=sb-secret-key
-JWT_SECRET=sb-jwt-secret-key
+NEXT_PUBLIC_BASE_URL=your-project-url
+JWT_SECRET=sb-jwt-secret-ke
 NODE_ENV=your-status
 ```
 

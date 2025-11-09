@@ -24,7 +24,7 @@ export default function AccountSettingsPage() {
 
   // ถ้ามี sidebar fixed ซ้าย 64px/80px ให้เพิ่ม pl-20 ที่ div นอกสุดตัวนี้
   return (
-    <div className="min-h-dvh px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-dvh px-4 sm:px-6 lg:px-8 py-8 bg-background text-foreground">
       {/* wrapper ที่ทำให้คอนเทนอยู่กลางจอ */}
       <div className="w-full max-w-6xl mx-auto relative">
         {/* ✅ ปุ่ม Log Out มุมขวาบน */}

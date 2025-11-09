@@ -80,3 +80,4 @@ export const mutatePatientQueryOptions = {
     mutationFn: async (data: Patient) => await postPatient(data),
   }),
 };
+

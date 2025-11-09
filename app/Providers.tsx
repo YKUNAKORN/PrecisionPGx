@@ -13,7 +13,8 @@ export default function Providers({ children }: { children: ReactNode }) {
       <ThemeProvider
         attribute="class"
         defaultTheme="light"
-        enableSystem={false}
+        enableSystem={true}
+        disableTransitionOnChange
         storageKey="theme"
       >
         {children}
