@@ -58,14 +58,14 @@ import { GetAllSpecimens, CreateSpecimen } from '@/app/api/user/service/specimen
  *             properties:
  *               name:
  *                 type: string
- *                 example: Kevin De Bruyne
+ *                 example: blood
  *               expire_in:
  *                 type: integer
- *                 example: 7
+ *                 example: 9
  *               patient_id:
  *                 type: string
  *                 format: uuid
- *                 example: "60b3d5cb-0c24-4bc4-95c2-a733c2b65175"
+ *                 example: "2a4c77f1-c6e8-4b85-bd7e-152d88666b63"
  *     responses:
  *       201:
  *         description: Specimen created successfully
@@ -105,10 +105,10 @@ export async function GET() {
 }
 
 export async function POST(req) {
-    const body = await req.json()
     try {
-        
-        if (!body.name || !body.patient_id) {
+        const body = await req.json()
+        const { name, expire_in, patient_id} = body
+        if (!name || !expire_in || !patient_id) {
             ResponseModel.status = '400'
             ResponseModel.message = 'Missing required fields'
             ResponseModel.data = null

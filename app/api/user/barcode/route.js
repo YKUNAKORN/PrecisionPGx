@@ -5,7 +5,7 @@ import { GetPatientById } from '@/app/api/user/service/patient_service'
 
 /**
  * @swagger
- * /api/barcode:
+ * /api/user/barcode:
  *   get:
  *     summary: Get Barcode by Patient ID
  *     description: Generate and retrieve a barcode image for a specific patient

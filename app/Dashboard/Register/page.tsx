@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
@@ -225,6 +225,122 @@ export default function Page() {
         }
     };
 
+    const [openAdd, setOpenAdd] = useState(false);
+
+    const [newPatient, setNewPatient] = useState({
+        thaiName: "",
+        engName: "",
+        dob: "",
+        gender: "",
+        phone: "",
+        email: "",
+        address: "",
+        ethnicity: "",
+    });
+
+    const resetNewPatient = () => setNewPatient({
+        thaiName: "",
+        engName: "",
+        dob: "",
+        gender: "",
+        phone: "",
+        email: "",
+        address: "",
+        ethnicity: "",
+    });
+
+    const handleNewChange = (
+        field: keyof typeof newPatient,
+        value: string
+    ) => {
+        setNewPatient((prev) => ({ ...prev, [field]: value }));
+    };
+
+    const calcAgeFromDob = (dobStr: string): number => {
+        const dob = new Date(dobStr);
+        if (Number.isNaN(dob.getTime())) return 0;
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+            age--;
+        }
+        return age;
+    }; 
+
+    const createPatientMutation = useMutation({
+        mutationFn: async (body: any) => {
+            const res = await fetch("/api/user/patient", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+            });
+
+            if (!res.ok) {
+            const text = await res.text();
+            throw new Error(text || "Failed to create patient");
+            }
+
+            return res.json();
+        },
+        onSuccess: async (res: any) => {
+            await qc.invalidateQueries({
+            queryKey: createPatientQueryOptions.all().queryKey,
+            });
+
+            const raw = res?.data ?? res;
+            const created = Array.isArray(raw) ? raw[0] : raw;
+            if (created) setSelected(created);
+
+            setOpenAdd(false);
+            resetNewPatient();
+        },
+    });
+
+
+
+    const handleAddPatient = async () => {
+        const { thaiName, engName, dob, gender, phone, email, address, ethnicity } = newPatient;
+
+        if (!thaiName || !engName || !dob || !gender || !phone || !email || !address || !ethnicity) {
+            alert("Please fill all required fields.");
+            return;
+        }
+
+        const age = calcAgeFromDob(dob);
+        if (!age || age <= 0) {
+            alert("Invalid date of birth.");
+            return;
+        }
+
+        const payload = {
+            Thai_name: thaiName.trim(),
+            Eng_name: engName.trim(),
+            dob,
+            age,
+            gender,
+            phone: phone.trim(),
+            email: email.trim(),
+            address: address.trim(),
+            Ethnicity: ethnicity.trim(),
+        };
+
+        try {
+            await createPatientMutation.mutateAsync(payload);
+        } catch (err: any) {
+            console.error(err);
+            // backend ส่ง string JSON กลับมา อาจเห็น Missing required fields ตรงๆ
+            alert(err?.message || "Cannot create patient");
+        }
+    };
+
+
+
+    const onBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) setOpenAdd(false);
+    };
+    const dialogRef = useRef<HTMLDivElement>(null);
+
     if (errorPatients) return <div className="container">Failed to load patients.</div>;
 
     // ---- UI ----
@@ -268,7 +384,9 @@ export default function Page() {
                     <div className="topic-1-3-l">
                         <div className="row-top">
                             <div className="box-title">Patient Search</div>
-                            <button className="add-btn">Add New Patient</button>
+                            <button className="add-btn" onClick={() => setOpenAdd(true)}>
+                                Add New Patient
+                            </button>
                         </div>
 
                         <div className="row-search">
@@ -388,6 +506,26 @@ export default function Page() {
                     {/* ward / notes */}
                     <div className="row">
                         <div className="field">
+                            <div className="main-topic">Test Panels</div>
+                            <div className="select-type">
+                                <select className="select-trigger" value={testPanel} onChange={(e) => setTestPanel(e.target.value as any)}>
+                                    <option value="PGx Panel">PGx Panel</option>
+                                    <option value="CYP2D6">CYP2D6</option>
+                                    <option value="CYP2C19">CYP2C19</option>
+                                    <option value="UGT1A1">UGT1A1</option>
+                                    <option value="TPMT/NUDT15">TPMT/NUDT15</option>
+                                    <option value="ABCB1">ABCB1</option>
+                                    <option value="BRCA1/2">BRCA1/2</option>
+                                    <option value="HLA-B*57:01">HLA-B*57:01</option>
+                                    <option value="HLA-B*15:02">HLA-B*15:02</option>
+                                    <option value="Thalassemia">Thalassemia</option>
+                                    <option value="CFTR">CFTR</option>
+                                    <option value="Factor V Leiden">Factor V Leiden</option>
+                                </select>
+                            </div>
+                            <div className="under-topic">Choose one panel from the dropdown or use search to find specific tests.</div>
+                        </div>
+                        <div className="field">
                             <div className="main-topic">Ward</div>
                             <div className="textarea-type">
                                 <select
@@ -408,7 +546,8 @@ export default function Page() {
                             </div>
                         </div>
 
-                        <div className="field">
+                    <div className="row">
+                         <div className="field">
                             <div className="main-topic">Clinical Notes</div>
                             <div className="textarea-type">
                                 <textarea className="textarea-trigger" placeholder="Special handling, storage, or clinical indications" rows={1} value={notes} onChange={(e) => setNotes(e.target.value)} />
@@ -461,35 +600,211 @@ export default function Page() {
             )}
 
             {/* STEP 3 */}
+             <div>
+            {/* STEP 3 */}
             {currentStep === "3" && (
                 <div className="Barcodes">
-                    <div className="bc-left">
-                        <div className="bc-title">Barcode Preview</div>
-                        <div className="bc-canvas">
-                            {barcodeSvg ? (
-                                <div className="bc-svg" dangerouslySetInnerHTML={{ __html: barcodeSvg }} />
-                            ) : (
-                                <div className="bc-placeholder">No barcode yet</div>
-                            )}
-                        </div>
-                        <button className="bc-generate" onClick={handleGenerateLocal}>Generate Barcode (Local)</button>
+                <div className="bc-left">
+                    <div className="bc-title">Barcode Preview</div>
+                    <div className="bc-canvas">
+                    {barcodeSvg ? (
+                        <div
+                        className="bc-svg"
+                        // แสดง SVG ที่สร้างจาก JsBarcode
+                        dangerouslySetInnerHTML={{ __html: barcodeSvg }}
+                        />
+                    ) : (
+                        <div className="bc-placeholder">No barcode yet</div>
+                    )}
                     </div>
-
-                    <div className="bc-right">
-                        <div className="bc-panel-title">Label Details</div>
-                        <div className="bc-rows">
-                            <div className="bc-row"><span>Lab Number</span><b>{barcodeText || "Pending"}</b></div>
-                            <div className="bc-row"><span>Patient</span><b>{activePatient?.Thai_name ?? activePatient?.Eng_name ?? "—"}</b></div>
-                            <div className="bc-row"><span>Priority</span><b>{selectedPriority.toUpperCase()}</b></div>
-                        </div>
-                        <p className="bc-note">This is a visual preview and supports printing via browser print dialog.</p>
-                        <div className="bc-actions">
-                            <button className="bc-print" onClick={handlePrint}>Print Label</button>
-                            <button className="bc-register" onClick={() => alert(`Registered sample for ${activePatient?.Thai_name ?? activePatient?.Eng_name ?? "(unknown)"} with ${barcodeText || "(no barcode)"}`)}>Register Sample</button>
-                        </div>
-                    </div>
+                    <button className="bc-generate" onClick={handleGenerateLocal}>
+                    Generate Barcode (Local)
+                    </button>
                 </div>
+
+                <div className="bc-right">
+                    <div className="bc-panel-title">Label Details</div>
+                    <div className="bc-rows">
+                    <div className="bc-row">
+                        <span>Lab Number</span>
+                        <b>{barcodeText || "Pending"}</b>
+                    </div>
+                    <div className="bc-row">
+                        <span>Patient</span>
+                        <b>{activePatient?.name ?? "—"}</b>
+                    </div>
+                    <div className="bc-row">
+                        <span>Priority</span>
+                        <b>{selectedPriority.toUpperCase()}</b>
+                    </div>
+                    </div>
+                    <p className="bc-note">
+                    This is a visual preview and supports printing via the browser’s print dialog.
+                    </p>
+                    <div className="bc-actions">
+                    <button className="bc-print" onClick={handlePrint}>
+                        Print Label
+                    </button>
+                    <button
+                        className="bc-register"
+                        onClick={() =>
+                        alert(
+                            `Registered sample for ${
+                            activePatient?.name ?? "(unknown)"
+                            } with ${barcodeText || "(no barcode)"}`
+                        )
+                        }
+                    >
+                        Register Sample
+                    </button>
+                    </div>
+                </div>     
+            </div>
             )}
+            </div>
+        {openAdd && (
+            <div className="modal-backdrop" onMouseDown={onBackdropClick}>
+            <div
+            className="modal-sheet"
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-title"
+            >
+            <div className="modal-header">
+                <div className="modal-title">
+                    <span className="i-user-plus">👤</span>
+                    <span id="add-title">Add New Patient</span>
+                </div>
+                <button className="modal-close" onClick={() => setOpenAdd(false)}>
+                ✕
+                </button>
+            </div>
+
+            <p className="modal-desc">
+                Register a new patient in the system. All required fields must be completed.
+            </p>
+
+            <div className="modal-body">
+                <div className="modal-section-title">Patient Information</div>
+
+                <div className="grid1">
+                    <label className="field">
+                        <span className="label-2">Thai Name <b className="req">*</b></span>
+                        <input
+                        className="input-2"
+                        value={newPatient.thaiName}
+                        onChange={(e) => handleNewChange("thaiName", e.target.value)}
+                        placeholder="ชื่อ-นามสกุล (ภาษาไทย)"
+                        />
+                    </label>
+                    <label className="field">
+                        <span className="label-2">English Name <b className="req">*</b></span>
+                        <input
+                        className="input-2"
+                        value={newPatient.engName}
+                        onChange={(e) => handleNewChange("engName", e.target.value)}
+                        placeholder="First Last (English)"
+                        />
+                    </label>
+                    <label className="field">
+                        <span className="label-2">
+                            Ethnicity <b className="req">*</b>
+                        </span>
+                        <input
+                            className="input-2"
+                            placeholder="e.g. Thai"
+                            value={newPatient.ethnicity}
+                            onChange={(e) => handleNewChange("ethnicity", e.target.value)}
+                        />
+                    </label>
+                </div>
+
+                <div className="grid2">
+                    <label className="field">
+                        <span className="label-2">Date of Birth <b className="req">*</b></span>
+                        <input
+                        className="input-2"
+                        type="date"
+                        value={newPatient.dob}
+                        onChange={(e) => handleNewChange("dob", e.target.value)}
+                        />
+                    </label>
+                    <label className="field">
+                        <span className="label-2">Gender <b className="req">*</b></span>
+                        <select
+                        className="select-trigger-2"
+                        value={newPatient.gender}
+                        onChange={(e) => handleNewChange("gender", e.target.value)}
+                        >
+                        <option value="">Select gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div className="modal-section-title">Contact Information</div>
+                <div className="grid1">
+                    <label className="field">
+                        <span className="label-2">Phone Number<b className="req"> *</b></span>
+                        <input
+                        className="input-2"
+                        placeholder="089-123-4567"
+                        value={newPatient.phone}
+                        onChange={(e) => handleNewChange("phone", e.target.value)}
+                        />
+                    </label>
+                    <label className="field">
+                        <span className="label-2">Email Address<b className="req"> *</b></span>
+                        <input
+                        className="input-2"
+                        type="email"
+                        placeholder="patient@example.com"
+                        value={newPatient.email}
+                        onChange={(e) => handleNewChange("email", e.target.value)}
+                        />
+                    </label>
+                    <label className="field" style={{ gridColumn: "1 / -1" }}>
+                        <span className="label-2">Address<b className="req"> *</b></span>
+                        <input
+                        className="input-2"
+                        placeholder="Enter full address"
+                        value={newPatient.address}
+                        onChange={(e) => handleNewChange("address", e.target.value)}
+                        />
+                    </label>
+                    <p className="auto-id-hint">
+                        Hospital Number (HN) and Registration Number (RN) will be generated automatically on the server.
+                    </p>
+                </div>
+            </div>
+
+           <div className="modal-footer">
+                <button
+                    className="btn-ghost"
+                    onClick={() => {
+                    resetNewPatient();
+                    setOpenAdd(false);
+                    }}
+                    disabled={createPatientMutation.isPending}
+                >
+                    Cancel
+                </button>
+                <button
+                    className="btn-primary"
+                    onClick={handleAddPatient}
+                    disabled={createPatientMutation.isPending}
+                >
+                    {createPatientMutation.isPending ? "Saving..." : "Add Patient"}
+                </button>
+            </div>
+            </div>
+            </div>
+        )}
+
+        
         </div>
     );
 }

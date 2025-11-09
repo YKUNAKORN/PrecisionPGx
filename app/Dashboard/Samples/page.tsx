@@ -40,13 +40,14 @@ export default function Page() {
       </div>
 
       {/* Tabs */}
-      <div className="flex justify-center mt-6 space-x-2">
+      <div className="w-full inline-flex items-center justify-center border rounded-full mt-6 space-x-1">
         {(["Inventory", "Storage", "Clinical Controls", "Historical"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-6 py-2 rounded-full font-medium transition shadow-sm ${activeTab === tab ? "bg-primary" : "hover:bg-primary/90"
-              }`}
+            className={`w-full inline-flex items-center justify-center  px-6 py-2 rounded-full font-medium transition shadow-sm ${
+              activeTab === tab ? "bg-primary" : "hover:bg-primary/90"
+            }`}
           >
             {tab}
           </button>
@@ -157,7 +158,7 @@ function InventorySection({
           placeholder="Search by ID, patient, or test"
           value={filters.search}
           onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-          className="w-full placeholder-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
+          className="w-full placeholder-gray-500 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
         />
       </div>
 
@@ -169,7 +170,8 @@ function InventorySection({
             value={filters.fridge_id}
             onChange={(v) => setFilters((f) => ({ ...f, fridge_id: v }))}
             options={["All", "A", "B", "C"]}
-          />
+            className="border border-zinc-700"
+          />  
           <Filter
             label="Type"
             value={filters.type}
