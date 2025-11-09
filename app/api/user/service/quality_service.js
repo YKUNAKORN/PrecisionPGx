@@ -86,6 +86,33 @@ export async function CreateQualityMetrics(row) {
     return { data: data, error: null };
 }
 
+export async function CreateQualityMetricsAndUpdateReport(row, reportId) {
+    const { data, error } = await Create(db, "quality", row);
+    if (error) {
+        return { data: null, error: error }; //for User
+    }
+    try {
+        ResponseQuality.id = data.id;
+        ResponseQuality.tester_id = data.tester_id;
+        ResponseQuality.quality = data.quality;
+        ResponseQuality.updated_at = data.updated_at;
+        ResponseQuality.created_at = data.created_at;
+    } catch (err) {
+        return { data: null, error: err };
+    }
+    console.log(ResponseQuality.id)
+    const reportResponse = await Update(db, "reports", reportId, { quality_id: ResponseQuality.id });
+    if (reportResponse.error) {
+        const { data: _, error: deleteError } = await Delete(db, "quality", ResponseQuality.id);
+        if (deleteError) {
+            console.error("Failed to rollback quality metric after report update failure:", deleteError);
+        }
+        return { data: null, error: reportResponse.error };
+    }
+
+    return { data: ResponseQuality, error: null };
+}
+
 export async function DeleteQualityMetrics(id) {
     const { data, error } = await Delete(db, "quality", id);
     if (error) {
