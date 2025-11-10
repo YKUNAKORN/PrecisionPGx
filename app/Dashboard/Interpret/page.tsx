@@ -1317,12 +1317,12 @@ export function ResultInterpretation() {
             <div className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors" 
                  style={{ borderColor: selectedValidationCriteria.includes('coverage') ? '#7864B4' : '#C8C8D2' }}
                  onClick={() => {
-                   setSelectedValidationCriteria(['coverage']);
+                   setSelectedValidationCriteria(['Pass']);
                  }}>
               <div className="flex items-center gap-3">
-                <input 
-                  type="radio" 
-                  checked={selectedValidationCriteria.includes('coverage')}
+                <input
+                  type="radio"
+                  checked={selectedValidationCriteria.includes('Pass')}
                   onChange={() => {}}
                   className="w-4 h-4"
                   style={{ accentColor: '#7864B4' }}
@@ -1341,12 +1341,12 @@ export function ResultInterpretation() {
             <div className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors" 
                  style={{ borderColor: selectedValidationCriteria.includes('alleleBalance') ? '#7864B4' : '#C8C8D2' }}
                  onClick={() => {
-                   setSelectedValidationCriteria(['alleleBalance']);
+                   setSelectedValidationCriteria(['Warning']);
                  }}>
               <div className="flex items-center gap-3">
                 <input 
                   type="radio" 
-                  checked={selectedValidationCriteria.includes('alleleBalance')}
+                  checked={selectedValidationCriteria.includes('Warning')}
                   onChange={() => {}}
                   className="w-4 h-4"
                   style={{ accentColor: '#7864B4' }}
@@ -1365,12 +1365,12 @@ export function ResultInterpretation() {
             <div className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors" 
                  style={{ borderColor: selectedValidationCriteria.includes('qualityScore') ? '#7864B4' : '#C8C8D2' }}
                  onClick={() => {
-                   setSelectedValidationCriteria(['qualityScore']);
+                   setSelectedValidationCriteria(['Failed']);
                  }}>
               <div className="flex items-center gap-3">
-                <input 
-                  type="radio" 
-                  checked={selectedValidationCriteria.includes('qualityScore')}
+                <input
+                  type="radio"
+                  checked={selectedValidationCriteria.includes('Failed')}
                   onChange={() => {}}
                   className="w-4 h-4"
                   style={{ accentColor: '#7864B4' }}
