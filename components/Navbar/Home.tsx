@@ -23,7 +23,7 @@ const Account = () => {
             : "hover:bg-primary hover:text-white",
         ].join(" ")}
       >
-        <Link href="/" className="text-2xl">
+        <Link href="/Dashboard/Home" className="text-2xl">
           <HomeIcon />
         </Link>
       </Button>

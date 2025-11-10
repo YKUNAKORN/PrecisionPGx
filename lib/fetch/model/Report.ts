@@ -38,7 +38,7 @@ export interface ReportUpdate {
     report_date: string;
     status: string;
     updated_at: string;
-    quality_id?: string; // Optional: UUID of the quality/tester type
+    // quality_id?: string; // Optional: UUID of the quality/tester type
 }
 
 export const ReportResultExample: ReportResult[] = [{

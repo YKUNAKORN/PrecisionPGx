@@ -1,6 +1,41 @@
+'use client';
+
+import React from "react";
+
 import { AlertTriangle, Info } from "lucide-react";
+import type { Qualityper } from "../../../lib/fetch/type";
+import { createQualityQueryOptions } from "../../../lib/fetch/Quality";
+import { useQuery } from "@tanstack/react-query";
+
+
 
 const Page = () => {
+
+
+const {
+        data: qualityper,
+        isLoading: loadingqualityper,
+        error: errorqualityper,
+    } = useQuery(createQualityQueryOptions.pec());
+
+      if (loadingqualityper) return <div className="p-5">Loading...</div>;
+  if (errorqualityper)
+    return (
+      <div className="p-5 text-red-400">
+        Error loading data: {(errorqualityper as Error).message}
+      </div>
+    );
+
+  // Defensive defaults if backend shape differs
+  const q: Qualityper = {
+    pass: (qualityper as any)?.pass ?? 0,
+    fail: (qualityper as any)?.fail ?? 0,
+    warning: (qualityper as any)?.warning ?? 0,
+    total: (qualityper as any)?.total ?? 0,
+    ...(qualityper as object),
+  };
+
+
   return (
     <div className="p-8 bg-[#F6F2FA] min-h-screen text-[#4A4458]">
       {/* Header */}
@@ -11,10 +46,10 @@ const Page = () => {
 
       {/* Cards */}
       <div className="flex flex-wrap justify-center gap-6 mb-8">
-        <Card title="Pass Rate" value="96.4%" />
-        <Card title="Warnings (24h)" value="1" />
-        <Card title="Failures (24h)" value="0" />
-        <Card title="MTSF" value="36.5 h" />
+        <Card title="Pass Rate" value={`${q.pass}%`} />
+        <Card title="Warnings (24h)" value={`${q.fail}%`} />
+        <Card title="Failures (24h)" value={`${q.warning}%`} />
+        <Card title="Total" value={`${q.total}`} />
       </div>
 
       {/* Main content grid */}
