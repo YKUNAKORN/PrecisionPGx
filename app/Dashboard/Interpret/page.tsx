@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { createReportQueryOptions, mutateReportQueryOptions } from "@/lib/fetch/Report";
 import { createPatientQueryOptions } from "@/lib/fetch/Patient";
 import { createRuleQueryOptions } from "@/lib/fetch/Rule";
+import { createQualityQueryOptions } from "@/lib/fetch/Quality";
 import { Report, Patient } from "@/lib/fetch/type";
 import { RuleBased } from "@/lib/fetch/model/Rule";
 import { ReportUpdate } from "@/lib/fetch/model/Report";
@@ -25,6 +26,7 @@ import { ReportUpdate } from "@/lib/fetch/model/Report";
 import { CreateClientPublic } from "@/lib/supabase/client";
 import { isPharmacy } from "@/lib/auth/permission";
 import { set } from "date-fns";
+import { report } from "process";
 
 type ReportWithPatient = Report & {
   patient?: Patient;
@@ -191,6 +193,8 @@ export function ResultInterpretation() {
 
   console.log("Selected Rule State:", { selectedRuleId, selectedRuleData, loadingRuleDetail });
 
+
+
   // Fetch User and Role check
   useEffect(() => {
     const fetchUserData = async () => {
@@ -312,6 +316,11 @@ export function ResultInterpretation() {
     }
   };
 
+  const {
+    data: quality,
+    isLoading: loadingquality,
+    error: errorquality,
+  } = useQuery(createQualityQueryOptions.detail(report.id || ""));
 
   const handleSelectReport = (report: ReportWithPatient) => {
 
@@ -334,6 +343,8 @@ export function ResultInterpretation() {
     const ruleIndex = report.index_rule;
 
     setSelectedRuleRowIndex(ruleIndex !== null && ruleIndex !== undefined ? ruleIndex : null);
+
+    setSelectedValidationCriteria([quality?.quality || ""]);
 
   }
 
@@ -536,8 +547,7 @@ export function ResultInterpretation() {
                           className="text-white cursor-pointer"
                           style={{ backgroundColor: '#7864B4' }}
                           onClick={() => {
-                            setSelectedReport(report.id || null);
-                            setSelectedPatientData(report);
+                            handleSelectReport(report);
                             setCurrentStep(2);
                           }}
                         >
