@@ -91,19 +91,24 @@ export async function CreateQualityMetricsAndUpdateReport(row, reportId) {
     if (error) {
         return { data: null, error: error }; //for User
     }
+    console.log('Created quality metric:', data);
     try {
-        ResponseQuality.id = data.id;
-        ResponseQuality.tester_id = data.tester_id;
-        ResponseQuality.quality = data.quality;
-        ResponseQuality.updated_at = data.updated_at;
-        ResponseQuality.created_at = data.created_at;
+        ResponseQuality.id = data[0].id;
+        ResponseQuality.tester_id = data[0].tester_id;
+        ResponseQuality.quality = data[0].quality;
+        ResponseQuality.updated_at = data[0].updated_at;
+        ResponseQuality.created_at = data[0].created_at;
     } catch (err) {
         return { data: null, error: err };
     }
     console.log(ResponseQuality.id)
-    const reportResponse = await Update(db, "reports", reportId, { quality_id: ResponseQuality.id });
+    let rowToUpdate = {
+        quality_id: ResponseQuality.id
+    };
+    console.log('Updating report with ID:', reportId, 'to set quality_id to:', rowToUpdate);
+    const reportResponse = await Update(db, "reports", reportId, rowToUpdate);
     if (reportResponse.error) {
-        const { data: _, error: deleteError } = await Delete(db, "quality", ResponseQuality.id);
+        const { data: _, error: deleteError } = await Delete(db, "quality", data[0].id);
         if (deleteError) {
             console.error("Failed to rollback quality metric after report update failure:", deleteError);
         }

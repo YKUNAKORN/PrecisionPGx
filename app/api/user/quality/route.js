@@ -165,6 +165,11 @@ export async function POST(request) {
     const body = await request.json();
     const { searchParams } = new URL(request.url);
     const reportId = searchParams.get('reportId');
+    if (!reportId) {
+        ResponseModel.status = "400";
+        ResponseModel.message = "Report ID is required to create quality metrics";
+        return NextResponse.json(ResponseModel, { status: 400 });
+    }
     try {
         InsertQuality.tester_id = body.tester_id;
         InsertQuality.quality = body.quality;
@@ -173,6 +178,7 @@ export async function POST(request) {
         ResponseModel.message = "Invalid data format";
         return NextResponse.json(ResponseModel, { status: 400 });
     }
+    console.log('InsertQuality:', InsertQuality);
     const { data, error } = await CreateQualityMetricsAndUpdateReport(InsertQuality, reportId);
     if (error) {
         ResponseModel.status = "500";

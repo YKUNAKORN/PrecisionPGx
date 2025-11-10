@@ -243,7 +243,7 @@ export async function PUT(req) {
     ReportUpdate.more_information = body.more_information;
     ReportUpdate.medical_technician_id = body.medical_technician_id;
     ReportUpdate.status = "In Progress";
-    ReportUpdate.quality_id = body.quality_id;
+    // ReportUpdate.quality_id = body.quality_id;
     console.log(ReportUpdate)
     try {
         const { data, error } = await EditReportByID(id, ReportUpdate)
