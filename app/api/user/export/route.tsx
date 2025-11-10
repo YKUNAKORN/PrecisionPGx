@@ -16,10 +16,12 @@ const hospitalLogoPath = path.join(process.cwd(), "public", "medswu-logo.png");
 
 const styles = StyleSheet.create({
   page: {
-    padding: 28,
+    padding: 43,
     backgroundColor: "#ffffff",
     fontFamily: "THSarabunNew",
     fontSize: 7,
+    display: "flex",
+    flexDirection: "column",
   },
   topPurpleLine: {
     height: 3,
@@ -62,7 +64,7 @@ const styles = StyleSheet.create({
     objectFit: "contain",
   },
   headerTitleTH: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
   },
   headerSubtitleEN: {
@@ -150,10 +152,28 @@ const styles = StyleSheet.create({
     padding: 5,
     borderRightWidth: 1,
     borderRightColor: "#333333",
+    borderBottomWidth: 1,
+    borderBottomColor: "#333333",
+  },
+  tCellLeft: {
+    flex: 1,
+    padding: 5,
+    borderRightWidth: 1,
+    borderRightColor: "#333333",
+    borderBottomWidth: 1,
+    borderBottomColor: "#333333",
+    backgroundColor: "#f5f5f5",
+  },
+  tCellRight: {
+    flex: 2,
+    padding: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#333333",
+  },
+  tCellIndent: {
+    paddingLeft: 30,
   },
   highlightBox: {
-    borderWidth: 1,
-    borderColor: "#333333",
     padding: 8,
     marginTop: 10,
     borderStyle: "solid",
@@ -168,7 +188,7 @@ const styles = StyleSheet.create({
   signatureSection: {
     borderWidth: 1,
     borderColor: "#333333",
-    marginTop: 12,
+    marginTop: "auto",
   },
   signatureRow: {
     flexDirection: "row",
@@ -195,10 +215,22 @@ const styles = StyleSheet.create({
     textAlign: "right",
     color: "#444444",
   },
-  bodyParagraph: {
-    marginBottom: 5,
-    lineHeight: 1.2,
+  contentParagraph: {
+    marginBottom: 2,
+    lineHeight: 1,
     textAlign: "justify",
+    textIndent: 40,
+  },
+  contentParagraphFirst: {
+    marginBottom: 2,
+    lineHeight: 1,
+    textAlign: "justify",
+    textIndent: 0,
+  },
+  sectionTitle: {
+    fontWeight: "bold",
+    marginBottom: 4,
+    textDecoration: "underline",
   },
   evidenceHeader: {
     marginTop: 8,
@@ -212,6 +244,7 @@ const styles = StyleSheet.create({
   annotationText: {
     marginTop: 10,
     lineHeight: 1.2,
+    textDecoration: "none",
   },
 });
 
@@ -233,56 +266,49 @@ const TD = ({ children, flex = 1 }) => (
 // ------------------------
 const patientInfo = [
   [
-    { label: "ชื่อ-สกุล (Name)", value: "นาย" },
-    { label: "อายุ (Age)", value: "48 ปี (years)" },
-    { label: "เพศ (Gender)", value: "ชาย" },
+    { label: "ชื่อ-สกุล (Name)", value: "นาย", flex: 1 },
+    { label: "อายุ (Age)", value: "48", flex: 0.4 },
+    { label: "ปี (years)", value: "", flex: 0.4 },
+    { label: "เพศ (Gender)", value: "ชาย", flex: 0.5 },
   ],
   [
-    { label: "เลขประจำตัว (HN)", value: "" },
+    { label: "เลขประจำตัว (HN)", value: "", flex: 1 },
     {
       label: "หน่วยงานที่ส่งตรวจ (Hospital)",
       value: "Biomolecular laboratory",
-      flex: 1.6,
-      emphasize: true,
+      flex: 2,
     },
-    { label: "แพทย์ (Physician)", value: "-" },
   ],
   [
-    { label: "สิ่งส่งตรวจ (Specimen)", value: "EDTA Blood" },
-    { label: "เบอร์ติดต่อ (Phone/Fax)", value: "-" },
+    { label: "สิ่งส่งตรวจ (Specimen)", value: "EDTA Blood", flex: 1 },
+    { label: "เบอร์ติดต่อ (Phone/Fax)", value: "", flex: 1 },
   ],
   [
-    { label: "เชื้อชาติ (Ethnicity)", value: "ไทย" },
-    { label: "วันที่ส่งตรวจ (Requested date)", value: "11 มกราคม 2568" },
-    { label: "วันที่รายงานผล (Reported date)", value: "14 มกราคม 2568" },
+    { label: "เชื้อชาติ (Ethnicity)", value: "ไทย", flex: 1 },
+    { label: "วันที่ส่งตรวจ (Requested date)", value: "11 มกราคม 2568", flex: 1 },
+  ],
+  [
+    { label: "แพทย์ (Physician)", value: "-", flex: 1 },
+    { label: "วันที่รายงานผล (Reported date)", value: "14 มกราคม 2568", flex: 1 },
   ],
 ];
 
-const genotypeHeader = [
-  "Genotype†",
-  "CYP3A5*3 6986A>G",
-  "CYP3A5*6 14690G>A",
-  "CYP3A5*7 27131_27132insT",
-];
-const genotypeRows = [
-  ["CYP3A5 gene", "Homozygous wild type (AA)", "Homozygous wild type (GG)", "No insertion"],
-];
-const predictedRows = [
-  { label: "Predicted Genotype", value: "CYP3A5*1/*1" },
-  {
-    label: "Predicted Phenotype",
-    value: "เอนไซม์ CYP3A5 มีอัตราการทำงานปกติ (Normal metabolizer, NM)",
+const genotypeTableData = [
+  { label: "CYP3A5 gene", value: "", isHeader: true },
+  { label: "genotype: CYP3A5*3  6986A>G", value: "Homozygous wild type (AA)" },
+  { label: "CYP3A5*6  14690G>A", value: "Homozygous wild type (GG)", indent: true },
+  { label: "CYP3A5*7  27131_27132insT", value: "No insertion", indent: true },
+  { label: "Predicted Genotype:", value: "CYP3A5*1/*1" },
+  { label: "Predicted Phenotype:", value: "เอนไซม์ CYP3A5 มีอัตราการทำงานปกติ (Normal metabolizer, NM)" },
+  { 
+    label: "Implications for Tacrolimus:", 
+    value: "CYP3A5 expresser: Lower dose-adjusted trough concentrations of tacrolimus and decreased chance of achieving target tacrolimus concentrations." 
   },
-  {
-    label: "Implications for Tacrolimus††",
-    value:
-      "CYP3A5 expresser: Lower dose-adjusted trough concentrations of tacrolimus and decreased chance of achieving target tacrolimus concentrations.",
+  { 
+    label: "Therapeutic recommendation:", 
+    value: "1. สำหรับยา Tacrolimus: พิจารณาปรับเพิ่มขนาดเริ่มต้น 1.5 - 2 เท่า จากขนาดมาตรฐาน (total dose ไม่ควรเกิน 0.3 mg/kg/day) และตรวจติดตามระดับยาในกระแสเลือด (Therapeutic drug monitoring) เพื่อเป็นแนวทางในการปรับขนาดยาและเฝ้าระวังการเกิดอาการไม่พึงประสงค์\n\n2. สำหรับยาอื่นๆ: สามารถใช้ยาที่มีการเปลี่ยนแปลงผ่านเอนไซม์ CYP3A5 ได้ในขนาดมาตรฐาน",
+    isLongText: true
   },
-];
-
-const recommendations = [
-  "สำหรับยา Tacrolimus: พิจารณาปรับเพิ่มขนาดเริ่มต้น 1.5 - 2 เท่า จากขนาดมาตรฐาน (total dose ไม่ควรเกิน 0.3 mg/kg/day) และตรวจติดตามระดับยาในกระแสเลือด (Therapeutic drug monitoring) เพื่อเป็นแนวทางในการปรับขนาดยาและเฝ้าระวังการเกิดอาการไม่พึงประสงค์",
-  "สำหรับยาอื่นๆ: สามารถใช้ยาที่มีการเปลี่ยนแปลงผ่านเอนไซม์ CYP3A5 ได้ในขนาดมาตรฐาน",
 ];
 
 const notes = [
@@ -327,17 +353,16 @@ const SignatureSection = () => (
   </View>
 );
 
-const references = [
-  "The Human Cytochrome P450 (CYP) Allele Nomenclature Committee. CYP3A5 allele nomenclature.",
-  "Yang D, Mary FH, Nina I, Connie L, et al. Effect of CYP3A5 polymorphism on Tacrolimus metabolic clearance in vitro.",
-  "Daly AK. Significance of the minor cytochrome P450 3A isoforms.",
-  "Yates CR, Zhang W, Song P, Li S, Gaber AO, Kotb M, et al. The effect of CYP3A5 and MDR1 polymorphic expression on cyclosporine oral disposition in renal transplant patients.",
+const clinicalInfo = [
+  "ข้อมูลทางคลินิกของผูืป่วย  การตรวจเภสัชพันธุศาสตร์เพื่อเป็นข้อมูลการใช้ยา Tacrolimus",
+  "เอนไซม์ CYP3A5 ทำหน้าที่เมแทบอลิซึมในกลุ่มเดียวกับเอนไซม์ CYP3A4 แต่มีประสิทธิภาพที่ต่างกัน โดยความผิดปกติทางพันธุกรรมของยีน CYP3A5 ที่มีการรายงานในปัจจุบันไม่น้อยกว่า 11 อัลลีล โดย CYP3A5*3 เป็นอัลลีลที่มีความชุกสูงที่สุด (ชาวไทย 85-98%, แอฟริกา-อเมริกัน 35-48%, ยุโรป 70-75%, ญี่ปุ่น 74-77%) จากการศึกษาพบว่าประชากรเชื้อผิวขาว 10-20% เท่านั้นที่มีการแสดงออกของเอนไซม์ CYP3A5 ดังนั้นโดยทั่วไปการแสดงออกของเอนไซม์ CYP3A5 ในกลุ่มที่มีความชุกต่ำกว่าจะแสดงออกจาก CYP3A4 มาก ดังนั้นลักษณะทางพันธุกรรมของยีน CYP3A5 ในผู้ป่วยจึงมีบทบาทสำคัญในการกำหนดอัตราการขับถ่ายยาหรือออกจากร่างกาย โดยกระบวนการ first-pass metabolism",
+  "สำหรับยา Tacrolimus อาศัยเอนไซม์ CYP3A4 และ CYP3A5 เป็นตัวหลักในการเมแทบอลิซึม (Major metabolic pathway) แต่จากการศึกษา พบว่า เอนไซม์ CYP3A5 มีความสำคัญมากกว่า ดังนั้นความหลากหลายทางพันธุกรรมของเอนไซม์ CYP3A5 จึงมีบทบาทสำคัญต่อดอกรีการจัดยา Tacrolimus ซึ่งเป็นยาที่มีปากฏสิ่งที่จำเป็นในการป้องกันการปฏิเสธการปลูกถ่าย โดยพบว่า ผู้ป่วยที่มี homozygous CYP3A5*1/*1 หรือ heterozygous CYP3A5*1/*3 ที่ได้รับยา Tacrolimus จะมีระดับยาต่ำในเลือดกว่าผู้ป่วยที่มี homozygous CYP3A5*3/*3 และผู้ที่มี homozygous CYP3A5*3/*3 จะได้รับยา Tacrolimus ในขนาดที่ต่ำกว่าเพื่อให้ระดับยาอยู่ในช่วงการรักษา รวมทั้งยังมีโอกาสเกิดการปฏิเสธสิ่งปลูกถ่ายเฉียบพลัน (acute rejection episode) น้อยกว่า แต่จะมีโอกาสเกิดพิษต่อไตสูงกว่า ผู้ป่วยที่เป็น heterozygous CYP3A5*1/*3 หรือ homozygous CYP3A5*1/*1 สำหรับในการยับยั้ง CYP3A5 และยา Tacrolimus อ้างอิงจาก CPIC guideline แนะนำให้ผู้ที่มีเอนไซม์ CYP3A5 expresser (CYP3A5 normal metabolizer or intermediate metabolizer) ได้รับขนาดเริ่มต้นที่สูงกว่า และผู้ที่เป็น CYP3A5 non-expresser (CYP3A5 poor metabolizer) สามารถได้รับขนาดยาเริ่มต้นตามมาตรฐานได้ อย่างไรก็ดี การพิจารณาเลือกใช้หรือปรับขนาดยาในผู้ป่วยยังจำเป็นต้องอ้างอิงปัจจัยอื่น เช่น อันตรกิริยาระหว่างยา การทำงานของตับและไตร่วมด้วย",
 ];
 
-const interpretationParagraphs = [
-  "ข้อมูลทางคลินิก การตรวจเภสัชพันธุศาสตร์เพื่อเป็นข้อมูลการใช้ยา Tacrolimus เอนไซม์ CYP3A5 ทำหน้าที่เมแทบอลิซึมในกลุ่มเดียวกับเอนไซม์ CYP3A4 แต่มีประสิทธิภาพที่ต่างกัน โดยความผิดแปลพันธุกรรมของยีน CYP3A5 ที่มีการรายงานในปัจจุบันไม่น้อยกว่า 11 อัลลีล โดย CYP3A5*3 เป็นอัลลีลที่มีความชุกสูงที่สุด (ชาวไทย 85-98%, แอฟริกา-อเมริกัน 35-48%, ยุโรป 70-75%, ญี่ปุ่น 74-77%) จากการศึกษาพบว่าประชากรเชื้อผิวขาว 10-20% เท่านั้นที่มีการแสดงออกของเอนไซม์ CYP3A5 ดังนั้นโดยทั่วไปการแสดงออกของเอนไซม์ CYP3A5 ในกลุ่มที่มีความชุกต่ำกว่าจะแสดงออกจาก CYP3A4 มาก ดังนั้นลักษณะทางพันธุกรรมของยีน CYP3A5 ในผู้ป่วยจึงมีบทบาทสำคัญในการกำหนดอัตราการขับถ่ายยาหรือออกจากร่างกาย โดยกระบวนการ first-pass metabolism",
-  "สำหรับยา Tacrolimus อาศัยเอนไซม์ CYP3A4 และ CYP3A5 เป็นตัวหลักในการเมแทบอลิซึม (Major metabolic pathway) แต่จากการศึกษา พบว่า เอนไซม์ CYP3A5 มีความสำคัญมากกว่า ดังนั้นความหลากหลายทางพันธุกรรมของเอนไซม์ CYP3A5 จึงมีบทบาทสำคัญต่อดอกรีการจัดยา Tacrolimus ซึ่งเป็นยาที่มีปากฏสิ่งที่จำเป็นในการป้องกันการปฏิเสธการปลูกถ่าย โดยพบว่า ผู้ป่วยที่มี homozygous CYP3A5*1/*1 หรือ heterozygous CYP3A5*1/*3 ที่ได้รับยา Tacrolimus จะมีระดับยาต่ำในเลือดกว่าผู้ป่วยที่มี homozygous CYP3A5*3/*3 และผู้ที่มี homozygous CYP3A5*3/*3 จะได้รับยา Tacrolimus ในขนาดที่ต่ำกว่าเพื่อให้ระดับยาอยู่ในช่วงการรักษา รวมทั้งยังมีโอกาสเกิดการปฏิเสธสิ่งปลูกถ่ายเฉียบพลัน (acute rejection episode) น้อยกว่า แต่จะมีโอกาสเกิดพิษต่อไตสูงกว่า ผู้ป่วยที่เป็น heterozygous CYP3A5*1/*3 หรือ homozygous CYP3A5*1/*1 สำหรับในการยับยั้ง CYP3A5 และยา Tacrolimus อ้างอิงจาก CPIC guideline แนะนำให้ผู้ที่มีเอนไซม์ CYP3A5 expresser (CYP3A5 normal metabolizer or intermediate metabolizer) ได้รับขนาดเริ่มต้นที่สูงกว่า และผู้ที่เป็น CYP3A5 non-expresser (CYP3A5 poor metabolizer) สามารถได้รับขนาดยาเริ่มต้นตามมาตรฐานได้ อย่างไรก็ดี การพิจารณาเลือกใช้หรือปรับขนาดยาในผู้ป่วยยังจำเป็นต้องอ้างอิงปัจจัยอื่น เช่น อันตรกิริยาระหว่างยา การทำงานของตับและไตร่วมด้วย",
-  "หลักฐานและเอกสารอ้างอิง (Evidence and References)",
+const references = [
+  "The Human Cytochrome P450 (CYP) Allele Nomenclature Committee. CYP3A5 allele nomenclature. [updated 2007 Dec 10]. Available from: http://www.cypalleles.ki.se/cyp3a5.htm",
+  "Yang D, Mary FH, Nina I, Connie L, et al. Effect of CYP3A5 polymorphism on Tacrolimus metabolic clearance in vitro. Drug metabolism and disposition 2006; 34: 836-847.",
+  "Daly AK. Significance of the minor cytochrome P450 3A isoforms. Clin Pharmacokinet 2006; 45: 13-31.",
 ];
 // ------------------------
 // Page 1
@@ -411,37 +436,32 @@ const PageOne = () => (
       ))}
     </View>
 
-    <Text style={styles.tableTitle}>CYP3A5 genotyping (รหัสการทดสอบ: 283)</Text>
-    <Table>
-      <TRow>
-        {genotypeHeader.map((h, i) => (
-          <TH key={`h-${i}`}>{h}</TH>
-        ))}
-      </TRow>
-      {genotypeRows.map((r, ri) => (
-        <TRow key={`r-${ri}`}>
-          {r.map((c, ci) => (
-            <TD key={`c-${ri}-${ci}`}>{c}</TD>
-          ))}
-        </TRow>
-      ))}
-    </Table>
-
-    <View style={styles.highlightBox}>
-      {predictedRows.map((item, i) => (
-        <View key={`pr-${i}`} style={{ marginBottom: 4 }}>
-          <Text style={styles.label}>{item.label}</Text>
-          <Text style={styles.value}>{item.value}</Text>
-        </View>
-      ))}
-      <View style={{ marginTop: 6 }}>
-        <Text style={styles.label}>Therapeutic recommendation††</Text>
-        <View style={styles.recommendationList}>
-          {recommendations.map((rec, i) => (
-            <Text key={`rec-${i}`}>{`${i + 1}. ${rec}`}</Text>
-          ))}
-        </View>
-      </View>
+    <Text style={styles.tableTitle}>CYP3A5 genotyping (รหัสการทดสอบ 400283)</Text>
+    <View style={styles.table}>
+      {genotypeTableData.map((row, idx) => {
+        const isLast = idx === genotypeTableData.length - 1;
+        return (
+          <View key={`gt-${idx}`} style={styles.tRow}>
+            <View 
+              style={[
+                styles.tCellLeft,
+                row.indent && styles.tCellIndent,
+                isLast && { borderBottomWidth: 0 }
+              ]}
+            >
+              <Text style={row.isHeader ? styles.label : null}>{row.label}</Text>
+            </View>
+            <View 
+              style={[
+                styles.tCellRight,
+                isLast && { borderBottomWidth: 0 }
+              ]}
+            >
+              <Text>{row.value}</Text>
+            </View>
+          </View>
+        );
+      })}
     </View>
 
     <View style={styles.noteBox}>
@@ -470,6 +490,7 @@ const PageTwo = () => (
           <Text>HN10A-005870</Text>
         </View>
     </View>
+    <View style={styles.headerBand}>
       <View style={styles.headerContainer}>
         <View style={styles.headerLeft}>
           <Image style={styles.logo} src={ppmLogoPath} />
@@ -490,6 +511,7 @@ const PageTwo = () => (
         <View style={styles.headerRight}>
           <Image style={styles.logo} src={hospitalLogoPath} />
         </View>
+        </View>
     </View>
     <Text style={styles.annotationText}>
       †† Annotation of CPIC guideline for Tacrolimus and CYP3A5{" "}
@@ -500,8 +522,8 @@ const PageTwo = () => (
       กำหนดแนวทางสำหรับการใช้ยา Tacrolimus ในผู้ป่วยที่ได้รับการปลูกถ่ายตับหรือไต และผลลัพธ์ลักษณะที่เกิดขึ้นในเลือด และผู้ป่วยที่ได้รับการปลูกถ่ายทางตับซึ่งมีแนวโน้มป้องกันผู้ป่วยที่ได้รับการปลูกถ่ายอวัยวะ
     </Text>
     <SignatureSection />
-    <Text style={styles.footerCode}>Fo-WI-LPM-03-004 Rev.2 26.11.61</Text>
     <View style={styles.footer}>
+      <Text style={styles.footerCode}>Fo-WI-LPM-03-004 Rev.2 26.11.61</Text>
       <Text>Page 2 of 4</Text>
     </View>
   </Page>
@@ -539,18 +561,21 @@ const PageThree = () => (
       </View>
     </View>
     <Text style={styles.reportTitle}>PHARMACOGENOMICS INTERPRETATION (More Information)</Text>
-    <View style={styles.highlightBox}>
-      <Text>
-        ข้อมูลทางคลินิก: สรุปสาระสำคัญของ CYP3A5 ต่อการใช้ Tacrolimus และพื้นฐานกลไก
-        เอนไซม์เมแทบอลิซึม รวมถึงผลต่อการปรับขนาดยาและการเฝ้าระวังระดับยา
+        
+    {clinicalInfo.map((paragraph, idx) => (
+      <Text key={`para-${idx}`} style={idx === 0 ? styles.contentParagraphFirst : styles.contentParagraph}>
+        {paragraph}
       </Text>
-    </View>
-    <View style={[styles.highlightBox, { marginTop: 12 }]}>
-      <Text style={styles.label}>หลักฐานและเอกสารอ้างอิง (Evidence and References)</Text>
-      {references.map((r, i) => (
-        <Text key={`ref-${i}`}>{`${i + 1}. ${r}`}</Text>
-      ))}
-    </View>
+    ))}
+
+    <Text style={[styles.sectionTitle, { marginTop: 12 }]}>หลักฐานและเอกสารอ้างอิง (Evidence and References)</Text>
+    
+    {references.map((ref, idx) => (
+      <Text key={`ref-${idx}`} style={styles.contentParagraph}>
+        {`${idx + 1}. ${ref}`}
+      </Text>
+    ))}
+
     <SignatureSection />
     <View style={styles.footer}>
       <Text style={styles.footerCode}>Fo-WI-LPM-03-004 Rev.2 26.11.61</Text>
