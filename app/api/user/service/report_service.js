@@ -6,7 +6,7 @@ import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { startOfDay, addDays } from "date-fns";
 const TZ = "Asia/Bangkok";
 
-import { CreateSpecimen } from "./specimen_service";
+import { CreateSpecimen , DeleteSpecimen} from "./specimen_service";
 import { CreateNote } from "./note_service";
 import { UpdateNote } from "@/lib/model/Note";
 import { CreateStorage } from "./storage_service";
@@ -29,6 +29,10 @@ export async function CreateReport(inputReportModel) {
         UpdateNote.method = inputReportModel.note;
         const { data: noteResponse, error: noteErr } = await CreateNote(UpdateNote);
         if (noteErr) {
+            const { data: deletedSpecimen, error: deleteErr } = await DeleteSpecimen(specimenResponse[0].id);
+            if (deleteErr) {
+                console.error("Error deleting specimen after note failure:", deleteErr);
+            }
             console.error("Error inserting note:", noteErr);
             return { data: null, error: noteErr.message }; //for User
         }

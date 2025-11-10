@@ -24,6 +24,7 @@ import { ReportUpdate } from "@/lib/fetch/model/Report";
 
 import { CreateClientPublic } from "@/lib/supabase/client";
 import { isPharmacy } from "@/lib/auth/permission";
+import { set } from "date-fns";
 
 type ReportWithPatient = Report & {
   patient?: Patient;
@@ -141,9 +142,9 @@ export function ResultInterpretation() {
 
   const [isValidated, setIsValidated] = useState(false);
   const [validationResults, setValidationResults] = useState({
-    coverage: { value: 150, threshold: 100, passed: false },
-    alleleBalance: { value: 48, threshold: 40, passed: false },
-    qualityScore: { value: 92, threshold: 90, passed: false }
+    Pass: { value: 150, threshold: 100, passed: false },
+    Warning: { value: 48, threshold: 40, passed: false },
+    Failed: { value: 92, threshold: 90, passed: false }
   });
 
   const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
@@ -1058,17 +1059,17 @@ export function ResultInterpretation() {
 
   const handleValidation = () => {
     const updatedResults = {
-      coverage: {
-        ...validationResults.coverage,
-        passed: validationResults.coverage.value >= validationResults.coverage.threshold
+      Pass: {
+        ...validationResults.Pass,
+        passed: validationResults.Pass.value >= validationResults.Pass.threshold
       },
-      alleleBalance: {
-        ...validationResults.alleleBalance,
-        passed: validationResults.alleleBalance.value >= validationResults.alleleBalance.threshold
+      Warning: {
+        ...validationResults.Warning,
+        passed: validationResults.Warning.value >= validationResults.Warning.threshold
       },
-      qualityScore: {
-        ...validationResults.qualityScore,
-        passed: validationResults.qualityScore.value >= validationResults.qualityScore.threshold
+      Failed: {
+        ...validationResults.Failed,
+        passed: validationResults.Failed.value >= validationResults.Failed.threshold
       }
     };
     
@@ -1084,7 +1085,12 @@ export function ResultInterpretation() {
       alert('Medical technician information is missing. Please ensure you are logged in.');
       return;
     }
-    
+    console.log(selectedPatientData.quality_id);
+    if (selectedPatientData.quality_id != null) {
+      setIsValidating(false);
+      setValidationSuccess(true);
+      return;
+    }
     setIsValidating(true);
     
     try {
@@ -1097,8 +1103,7 @@ export function ResultInterpretation() {
         tester_id: testerType, // UUID from tester_type table
         quality: selectedValidationCriteria.join(', '), // Store selected criteria as text
       };
-
-      const qualityResponse = await fetch('/api/user/quality', {
+      const qualityResponse = await fetch(`/api/user/quality?reportId=${selectedPatientData.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1108,6 +1113,8 @@ export function ResultInterpretation() {
 
       if (!qualityResponse.ok) {
         const errorData = await qualityResponse.json();
+        console.log(selectedPatientData.id);
+        console.log('Sending POST request to /api/user/quality with data:', qualityData);
         throw new Error(`Failed to create quality record: ${errorData.message || qualityResponse.statusText}`);
       }
 
@@ -1168,7 +1175,7 @@ export function ResultInterpretation() {
         index_rule: indexRule,
         more_information: moreInformation,
         medical_technician_id: medtechId,
-        quality_id: createdQualityId, // Use the newly created quality record ID
+        // quality_id: createdQualityId, // Use the newly created quality record ID
       };
 
       console.log('Sending PUT request to /api/user/report with data:', updateData);
