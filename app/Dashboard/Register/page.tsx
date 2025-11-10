@@ -158,17 +158,13 @@ export default function Page() {
 
     const handleGenerateLocal = () => {
     // ⭐️ [แก้ไข] เพิ่มการตรวจสอบ
-    if (!createReport.data) {
+    if (!activePatient?.id) {
         alert("No report data available. Please go back to Step 2.");
         return;
     }
 
-    // ใช้ตรรกะการดึงข้อมูลที่ปลอดภัยเหมือนเดิม
-    const raw = (createReport.data as any)?.data ?? createReport.data;
-    const report = Array.isArray(raw) ? raw[0] : raw;
-
-    if (report && report.id) {
-        const id: string = report.id;
+    if (activePatient && activePatient?.id) {
+        const id: string = activePatient?.id;
         setBarcodeText(id);
         setBarcodeSvg(makeBarcodeSVG(id));
     } else {
@@ -654,7 +650,7 @@ export default function Page() {
                         onClick={() =>
                         alert(
                             `Registered sample for ${
-                            activePatient?.name ?? "(unknown)"
+                            activePatient?.Eng_name ?? "(unknown)"
                             } with ${barcodeText || "(no barcode)"}`
                         )
                         }
