@@ -49,7 +49,9 @@ export async function postReport(data: ReportsDTO) {
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to post Report");
-  return res.json();
+  const body = await res.json();
+  console.log('postReport response body:', body);
+  return body.data;
 }
 
 export async function putReport(id: string, data: any) {

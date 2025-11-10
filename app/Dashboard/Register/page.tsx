@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { createPatientQueryOptions } from "../../../lib/fetch/Patient";
 import { createWardQueryOptions } from "../../../lib/fetch/Ward";
@@ -21,6 +21,7 @@ type PatientWithId = PatientBase & { id: string };
 export default function Page() {
     const router = useRouter();
     const sp = useSearchParams();
+    const qc = useQueryClient();
 
     const currentId = sp.get("id") ?? "";
     const currentStep = sp.get("step") ?? (currentId ? "2" : "1");
@@ -156,10 +157,20 @@ export default function Page() {
     };
 
     const handleGenerateLocal = () => {
-        const id = genId();
+    // ⭐️ [แก้ไข] เพิ่มการตรวจสอบ
+    if (!activePatient?.id) {
+        alert("No report data available. Please go back to Step 2.");
+        return;
+    }
+
+    if (activePatient && activePatient?.id) {
+        const id: string = activePatient?.id;
         setBarcodeText(id);
         setBarcodeSvg(makeBarcodeSVG(id));
-    };
+    } else {
+        alert("Could not find Report ID in mutation data.");
+    }
+  };
 
     const handlePrint = () => {
         const w = window.open("", "_blank");
@@ -179,51 +190,61 @@ export default function Page() {
     // Save Step 2 -> POST report -> Step 3
     // -----------------------------
     const handleSaveSample = async () => {
-        if (!activePatient?.id) return;
+    if (!activePatient?.id) return;
 
-        // ensure barcode
-        let lab = barcodeText;
-        if (!lab) {
-            try {
-                const res = await refetchBarcode();
-                const d: any = res.data;
-                lab = d?.code ?? d?.labNumber ?? (typeof d === "string" ? d : "");
-            } catch {
-                lab = genId();
-            }
-            if (!lab) lab = genId();
-            setBarcodeText(lab);
-            setBarcodeSvg(makeBarcodeSVG(lab));
-        }
+    // ⭐️ [ลบ] เราจะลบส่วน "ensure barcode" ที่สับสนทิ้งไป
+    /* let lab = barcodeText;
+    if (!lab) {
+        // ... (โค้ดที่ถูกลบ) ...
+    }
+    */
 
-
-        const reportDTO: ReportsDTO = {
-            specimens: sampleType || "blood",
-            doctor_id: doctor || "", //doop
-            patient_id: activePatient.id || "",
-            priority: selectedPriority || "Routine",
-            ward_id: ward || "",
-            contact_number: contact || "",
-            collected_at: collectedAt || new Date().toISOString(),
-            fridge_id: fridge, //doop
-            medical_technician_id: "", //user id
-            note: notes,
-        };
-
-        try {
-            await createReport.mutateAsync(reportDTO);
-
-            // success -> go to step 3
-            setDetailsSaved(true);
-            const url = new URL(window.location.href);
-            url.searchParams.set("id", activePatient.id);
-            url.searchParams.set("step", "3");
-            url.searchParams.set("ok2", "1");
-            router.push(`${url.pathname}?${url.searchParams.toString()}`);
-        } catch (e) {
-            alert(`Cannot create report: ${(e as Error).message}`);
-        }
+    const reportDTO: ReportsDTO = {
+      specimens: sampleType || "blood",
+      doctor_id: doctor || "", //doop
+      patient_id: activePatient.id || "",
+      priority: selectedPriority || "Routine",
+      ward_id: ward || "",
+      contact_number: contact || "",
+      collected_at: collectedAt || new Date().toISOString(),
+      fridge_id: fridge, //doop
+      medical_technician_id: "", //user id
+      note: notes,
     };
+
+    try {
+      // ⭐️ [แก้ไข] เราจะรอผลลัพธ์ (newReportResult) จากการสร้าง
+      const newReportResult = await createReport.mutateAsync(reportDTO);
+
+      // --- ⭐️ [เพิ่ม] โค้ดใหม่เพื่อจัดการบาร์โค้ด ---
+      // ดึง ID ที่แท้จริงจาก response ของ backend
+      // (เราเดาโครงสร้าง response จาก createPatientMutation)
+      const raw = (newReportResult as any)?.data ?? newReportResult;
+      const newReport = Array.isArray(raw) ? raw[0] : raw;
+
+      if (!newReport || !newReport.id) {
+        // ถ้า backend ไม่ได้ส่ง id กลับมา
+        throw new Error("Report created, but no ID was returned from server.");
+      }
+
+      const reportId = newReport.id;
+
+      // ตั้งค่า state ของบาร์โค้ด (สำหรับใช้ใน Step 3 ทันที)
+      setBarcodeText(reportId);
+      setBarcodeSvg(makeBarcodeSVG(reportId));
+      // --- สิ้นสุดโค้ดใหม่ ---
+
+      // success -> go to step 3
+      setDetailsSaved(true);
+      const url = new URL(window.location.href);
+      url.searchParams.set("id", activePatient.id);
+      url.searchParams.set("step", "3");
+      url.searchParams.set("ok2", "1");
+      router.push(`${url.pathname}?${url.searchParams.toString()}`);
+    } catch (e) {
+      alert(`Cannot create report: ${(e as Error).message}`);
+    }
+  };
 
     const [openAdd, setOpenAdd] = useState(false);
 
@@ -610,7 +631,7 @@ export default function Page() {
                     </div>
                     <div className="bc-row">
                         <span>Patient</span>
-                        <b>{activePatient?.name ?? "—"}</b>
+                        <b>{activePatient?.Eng_name ?? "—"}</b>
                     </div>
                     <div className="bc-row">
                         <span>Priority</span>
@@ -629,7 +650,7 @@ export default function Page() {
                         onClick={() =>
                         alert(
                             `Registered sample for ${
-                            activePatient?.name ?? "(unknown)"
+                            activePatient?.Eng_name ?? "(unknown)"
                             } with ${barcodeText || "(no barcode)"}`
                         )
                         }
