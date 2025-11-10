@@ -1687,12 +1687,20 @@ export function ResultInterpretation() {
               Preview Report
             </Button>
 
-            <Button
-              className="text-white cursor-pointer"
-              style={{ backgroundColor: '#7864B4' }}
+            <a
+              href={`/api/user/export/${selectedPatientData?.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              Download PDF
-            </Button>
+              {/* ⭐️ ย้ายปุ่มเข้ามาไว้ข้างในลิงก์ ⭐️ */}
+              <Button
+                className="text-white cursor-pointer"
+                style={{ backgroundColor: '#7864B4' }}
+              >
+                Download PDF
+              </Button>
+            </a>
+
 
             <Button
               variant="outline"
