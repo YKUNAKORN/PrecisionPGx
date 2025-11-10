@@ -1210,7 +1210,7 @@ export function ResultInterpretation() {
     if (selectedPatientData.quality_id != null) {
       setIsValidating(false);
       setValidationSuccess(true);
-      return;
+      // return;
     }
     setIsValidating(true);
 
