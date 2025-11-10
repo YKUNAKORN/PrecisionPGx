@@ -151,3 +151,10 @@ export type Ward = {
     number: string;
     created_at: string; // ISO8601 timestamp
 };
+
+
+export type Quality = {
+    id: string,
+    tester_id: string,
+    quality: string,
+}

@@ -58,14 +58,12 @@ export const createRuleQueryOptions = {
     queryOptions({
       queryKey: ["rules"],
       queryFn: getRules,
-      staleTime: 60_000,
     }),
 
   detail: (id: string) =>
     queryOptions({
       queryKey: ["rule", id],
       queryFn: () => getRule(id),
-      staleTime: 60_000,
       enabled: !!id,
     }),
 };

@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { createReportQueryOptions, mutateReportQueryOptions } from "@/lib/fetch/Report";
 import { createPatientQueryOptions } from "@/lib/fetch/Patient";
 import { createRuleQueryOptions } from "@/lib/fetch/Rule";
+import { createQualityQueryOptions } from "@/lib/fetch/Quality";
 import { Report, Patient } from "@/lib/fetch/type";
 import { RuleBased } from "@/lib/fetch/model/Rule";
 import { ReportUpdate } from "@/lib/fetch/model/Report";
@@ -25,6 +26,7 @@ import { ReportUpdate } from "@/lib/fetch/model/Report";
 import { CreateClientPublic } from "@/lib/supabase/client";
 import { isPharmacy } from "@/lib/auth/permission";
 import { set } from "date-fns";
+import { report } from "process";
 
 type ReportWithPatient = Report & {
   patient?: Patient;
@@ -49,7 +51,7 @@ const genotypeData = [
     quality: 92
   },
   {
-    gene: "CYP2D6", 
+    gene: "CYP2D6",
     alleles: "*1 / *4",
     copyNumber: 2,
     coverage: "150x",
@@ -77,7 +79,7 @@ const approvalTestResults = [
   {
     testType: "CYP2D6 Genotyping",
     result: "*1/*4, *3/*2, *6/*9",
-    referenceRange: "*1/*1, *2/*3, *4/*6", 
+    referenceRange: "*1/*1, *2/*3, *4/*6",
     status: "Intermediate Metabolizer",
     statusColor: "bg-secondary text-secondary-foreground"
   },
@@ -85,7 +87,7 @@ const approvalTestResults = [
     testType: "SLCO1B1 Genotyping",
     result: "*1/*5, *6/*3, *9/*2",
     referenceRange: "*1/*1, *2/*3, *4/*6",
-    status: "Normal Function", 
+    status: "Normal Function",
     statusColor: "bg-primary text-primary-foreground"
   }
 ];
@@ -111,7 +113,7 @@ export function ResultInterpretation() {
 
   const [expandedGenePhenotype, setExpandedGenePhenotype] = useState<string | null>(null);
   const [showDetailedRulesPhenotype, setShowDetailedRulesPhenotype] = useState(false);
-  
+
   const [testerType, setTesterType] = useState("7787dd4c-f61b-48a1-845f-da1ea4807391"); // Default to TPMT
   const [selectedValidationCriteria, setSelectedValidationCriteria] = useState<string[]>([]);
   const [isValidating, setIsValidating] = useState(false);
@@ -149,7 +151,7 @@ export function ResultInterpretation() {
 
   const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
   const [selectedRuleRowIndex, setSelectedRuleRowIndex] = useState<number | null>(null);
-  
+
   const [selectedGenotypeData, setSelectedGenotypeData] = useState<{
     ruleBasedName: string;
     alleleName: string;
@@ -191,26 +193,28 @@ export function ResultInterpretation() {
 
   console.log("Selected Rule State:", { selectedRuleId, selectedRuleData, loadingRuleDetail });
 
+
+
   // Fetch User and Role check
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         setIsLoadingUser(true);
         const supabase = CreateClientPublic();
-        
+
         // check session first
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+
         if (sessionError || !session) {
           console.warn("No active session:", sessionError?.message || "User not logged in");
           setIsLoadingUser(false);
           setIsPharmacyUser(false);
           return;
         }
-        
+
         // fectch authenticated user
         const { data: { user }, error: authError } = await supabase.auth.getUser();
-        
+
         if (authError || !user) {
           console.warn("Error fetching user:", authError?.message);
           setIsLoadingUser(false);
@@ -234,14 +238,14 @@ export function ResultInterpretation() {
 
         setCurrentUser(userProfile);
         setUserPosition(userProfile?.position || null);
-        
+
         // pharmacy role check
         if (userProfile?.position) {
           setIsPharmacyUser(isPharmacy(userProfile.position));
         } else {
           setIsPharmacyUser(false);
         }
-        
+
         setIsLoadingUser(false);
       } catch (error) {
         console.error("Error in fetchUserData:", error);
@@ -256,7 +260,7 @@ export function ResultInterpretation() {
   const reportsWithPatients: ReportWithPatient[] = useMemo(() => {
     const reportsRaw = reports as any;
     const patientsRaw = patients as any;
-    
+
     const reportsArray = Array.isArray(reportsRaw) ? reportsRaw : reportsRaw?.data || [];
     const patientsArray = Array.isArray(patientsRaw) ? patientsRaw : patientsRaw?.data || [];
 
@@ -277,7 +281,7 @@ export function ResultInterpretation() {
       const reportId = report.id?.toLowerCase() || "";
       const patientName = report.patient?.Eng_name?.toLowerCase() || report.patient?.name?.toLowerCase() || "";
       const status = report.status?.toLowerCase() || "";
-      
+
       return reportId.includes(query) || patientName.includes(query) || status.includes(query);
     });
   }, [reportsWithPatients, searchQuery]);
@@ -294,15 +298,15 @@ export function ResultInterpretation() {
   const canNavigateToStep = (stepNumber: number) => {
     // User can always go to step 1
     if (stepNumber === 1) return true;
-    
+
     // Can only go to step 2 (Genotype) if a report is selected
     if (stepNumber === 2) return selectedReport !== null;
-    
+
     // For steps 3-6, can navigate if we've reached that step before
     if (stepNumber >= 3 && stepNumber <= 6) {
       return selectedReport !== null && currentStep >= stepNumber - 1;
     }
-    
+
     return false;
   };
 
@@ -312,34 +316,155 @@ export function ResultInterpretation() {
     }
   };
 
+  const {
+    data: qualityData,
+    isLoading: loadingQuality,
+  } = useQuery({
+    ...createQualityQueryOptions.detail(selectedPatientData?.quality_id || ""),
+    enabled: !!selectedPatientData?.quality_id,
+  });
+
+
+  useEffect(() => {
+    if (qualityData) {
+      // qualityData อาจจะมาในรูปแบบ { data: { ... } } หรือ { data: [{...}] }
+      const rawData = (qualityData as any)?.data ?? qualityData;
+      const record = Array.isArray(rawData) ? rawData[0] : rawData;
+
+      if (record) {
+        
+        // --- ⬇️ (FIXED) 3.1 ตั้งค่า Validation Criteria ---
+        if (record.quality && typeof record.quality === 'string') {
+
+          // 1. สร้างตัวแปลค่าจาก DB -> UI
+          // (เราใช้ toLowerCase() เพื่อให้เทียบได้ง่าย)
+          const dbToUiMap: { [key: string]: string } = {
+            'pass': 'Pass',
+            'coverage': 'Pass',       // ค่าเก่า
+            'warning': 'Warning',
+            'allelebalance': 'Warning', // ค่าเก่า (จาก "Allele Balance")
+            'failed': 'Failed',
+            'qualityscore': 'Failed'  // ค่าเก่า (จาก "Quality Score")
+          };
+
+          // 2. ดึงค่าจาก DB (ใช้ค่าแรกที่เจอ ถ้ามีหลายค่า)
+          const dbValue = record.quality.split(',')[0].trim().toLowerCase();
+
+          // 3. แปลงค่า
+          const uiValue = dbToUiMap[dbValue];
+
+          // 4. ตั้งค่า state ด้วยค่าที่ถูกต้องสำหรับ UI
+          if (uiValue) {
+            setSelectedValidationCriteria([uiValue]);
+          } else {
+            // ถ้าไม่ตรงเลย ก็ให้เป็นค่าว่าง
+            setSelectedValidationCriteria([]);
+          }
+        }
+        
+        // --- ⬆️ (FIXED) จบส่วนแก้ไข ---
+
+        // 3.2 ตั้งค่า Tester Type (Dropdown ใน Step 4)
+        if (record.tester_id) {
+          setTesterType(record.tester_id);
+        }
+      }
+    }
+  }, [qualityData]);
+
+  useEffect(() => {
+    // ถ้าข้อมูล rule โหลดเสร็จ และมี index แถวที่ถูกเลือกไว้
+    if (selectedRuleData && selectedRuleRowIndex !== null && selectedRuleRowIndex !== undefined) {
+      
+      // ดึงข้อมูลจาก selectedRuleData โดยใช้ selectedRuleRowIndex
+      const locations = selectedRuleData.location || [];
+      const resultLocations = selectedRuleData.result_location || [];
+      const predictedGenotypes = selectedRuleData.predicted_genotype || [];
+      const predictedPhenotypes = selectedRuleData.predicted_phenotype || [];
+      const recommendations = selectedRuleData.recommend || [];
+      const names = selectedRuleData.Name || [];
+
+      const ruleBasedName = Array.isArray(names) ? names.join('') : (names || 'Unknown');
+      const alleleName = locations[0] || '−';
+      
+      const index = selectedRuleRowIndex;
+      const resultLocation = resultLocations[index] || '−';
+      const predictedGenotype = predictedGenotypes[index] || '−';
+      const predictedPhenotype = predictedPhenotypes[index] || '−';
+      const recommendation = recommendations[index] || '−';
+
+      // 5.1 ตั้งค่า state (selectedGenotypeData) ที่ Step 3 ต้องใช้
+      setSelectedGenotypeData({
+        ruleBasedName: ruleBasedName,
+        alleleName: alleleName,
+        resultLocation: resultLocation,
+        predictedGenotype: predictedGenotype,
+        predictedPhenotype: predictedPhenotype,
+        recommendation: recommendation
+      });
+    }
+  }, [selectedRuleData, selectedRuleRowIndex]);
+
+  const handleSelectReport = (report: ReportWithPatient) => {
+
+    // --- 1. รีเซ็ตค่าเก่า (สำคัญมาก) ---
+    setSelectedValidationCriteria([]); // ล้างค่าเก่า
+    setTesterType("7787dd4c-f61b-48a1-845f-da1ea4807391"); // กลับไปเป็นค่าเริ่มต้น
+    setValidationSuccess(false); // รีเซ็ตสถานะ
+    setIsApproved(false); // รีเซ็ตสถานะ
+    setSelectedGenotypeData(null); // ⭐️ (แนะนำ) ล้างข้อมูล Genotype เก่าด้วย
+
+    // --- 2. ตั้งค่าพื้นฐาน ---
+    setSelectedReport(report.id || null);
+    setSelectedPatientData(report); // 👈 นี่จะไปกระตุ้น useQuery ของ Quality
+
+    // --- 3. ตั้งค่าสำหรับ Step 2 (Genotype) ---
+    setSelectedRuleId(report.rule_id || null); // 👈 นี่จะไปกระตุ้น useQuery ของ Rule
+    const ruleIndex = report.index_rule;
+    setSelectedRuleRowIndex(ruleIndex !== null && ruleIndex !== undefined ? ruleIndex : null);
+    
+    // ⭐️ (ลบsetSelectedValidationCriteria และ setSelectedGenotypeData ที่ผิดออก)
+
+    // --- 4. ตั้งค่าสถานะการอนุมัติ (ถ้ามี) ---
+    if (report.medtech_verify) {
+      setValidationSuccess(true);
+    }
+    if (report.pharm_verify) {
+      setIsApproved(true);
+    }
+
+    // --- 5. ไปยัง Step 2 ---
+    setCurrentStep(2);
+  };
+
   const getStatusBadge = (status?: string) => {
     if (!status) return <Badge variant="outline">Unknown</Badge>;
-    
+
     switch (status.toLowerCase()) {
       case "completed":
         return <Badge className="text-white" style={{ backgroundColor: '#CBB4FF' }}>Completed</Badge>;
-      
+
       case "in progress":
       case "in_progress":
       case "inprogress":
         return <Badge className="text-white" style={{ backgroundColor: '#F1B6D5' }}>In Progress</Badge>;
-      
+
       case "submitted for inspection":
       case "submitted_for_inspection":
         return <Badge className="text-white" style={{ backgroundColor: '#A7A7B4' }}>Submitted for Inspection</Badge>;
-      
+
       case "awaiting inspection":
       case "awaiting_inspection":
         return <Badge className="text-white" style={{ backgroundColor: '#A7A7B4' }}>Awaiting Inspection</Badge>;
-      
+
       case "awaiting report":
       case "awaiting_report":
         return <Badge className="text-white" style={{ backgroundColor: '#A7A7B4' }}>Awaiting Report</Badge>;
-      
+
       case "failed":
       case "rejected":
         return <Badge variant="outline" className="bg-[#FFF0F0]" style={{ borderColor: '#E94D6A', color: '#E94D6A' }}>Failed</Badge>;
-      
+
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -416,8 +541,8 @@ export function ResultInterpretation() {
                 style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
               />
             </div>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
               style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
@@ -425,8 +550,8 @@ export function ResultInterpretation() {
             >
               Clear All ({filteredReports.length} reports)
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
               style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
@@ -439,7 +564,7 @@ export function ResultInterpretation() {
             </Button>
           </div>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="border-b" style={{ backgroundColor: '#EDE9FE', borderColor: '#DCDCE6' }}>
@@ -475,24 +600,22 @@ export function ResultInterpretation() {
                     </td>
                     <td className="p-4">
                       <div className="flex items-center space-x-2">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
                           style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
                           onClick={() => {
-                            setSelectedReport(report.id || null);
-                            setSelectedPatientData(report);
-                            setCurrentStep(2);
+                            handleSelectReport(report);
                           }}
                         >
                           <Edit className="h-3 w-3 mr-1" />
                           EDIT
                         </Button>
-                        
-                        <Button 
+
+                        <Button
                           size="sm"
-                          variant="outline" 
+                          variant="outline"
                           className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
                           onClick={() => {
@@ -506,15 +629,13 @@ export function ResultInterpretation() {
                         >
                           Approval
                         </Button>
-                        
-                        <Button 
+
+                        <Button
                           size="sm"
                           className="text-white cursor-pointer"
                           style={{ backgroundColor: '#7864B4' }}
                           onClick={() => {
-                            setSelectedReport(report.id || null);
-                            setSelectedPatientData(report);
-                            setCurrentStep(2);
+                            handleSelectReport(report);
                           }}
                         >
                           {report.status?.toLowerCase() === "completed" ? "Preview" : "Continue"}
@@ -527,7 +648,7 @@ export function ResultInterpretation() {
             </tbody>
           </table>
         </div>
-        
+
         <div className="p-4 border-t" style={{ backgroundColor: '#EDE9FE', borderColor: '#DCDCE6' }}>
           <p className="text-sm" style={{ color: '#1E1E1E' }}>
             Showing {filteredReports.length} of {reportsWithPatients.length} reports
@@ -580,7 +701,7 @@ export function ResultInterpretation() {
               {rules && rules.length > 0 ? (
                 rules.map((rule: RuleBased) => {
                   console.log("Rule Name:", rule.Name, "Type:", typeof rule.Name, "Is Array:", Array.isArray(rule.Name));
-                  
+
                   let displayName = 'Unknown Rule';
                   if (rule.Name) {
                     if (Array.isArray(rule.Name)) {
@@ -619,7 +740,7 @@ export function ResultInterpretation() {
               )}
             </div>
           </div>
-          
+
           <div className="overflow-hidden rounded-xl elevation-1 bg-white border" style={{ borderColor: '#C8C8D2' }}>
             <table className="w-full">
               <thead>
@@ -647,7 +768,7 @@ export function ResultInterpretation() {
                     const names = selectedRuleData.Name || [];
 
                     const ruleBasedName = Array.isArray(names) ? names.join('') : (names || 'Unknown');
-                    
+
                     const alleleName = locations[0] || '−';
 
                     console.log("Selected Rule Data Debug:", {
@@ -744,7 +865,7 @@ export function ResultInterpretation() {
                               checked={selectedRuleRowIndex === index}
                               onChange={() => {
                                 setSelectedRuleRowIndex(index);
-                                
+
                                 setSelectedGenotypeData({
                                   ruleBasedName: ruleBasedName,
                                   alleleName: alleleName,
@@ -753,7 +874,7 @@ export function ResultInterpretation() {
                                   predictedPhenotype: predictedPhenotype,
                                   recommendation: recommendation
                                 });
-                                
+
                                 console.log(`Selected row ${index} for Phenotype step:`, {
                                   rule: ruleBasedName,
                                   allele: alleleName,
@@ -883,25 +1004,25 @@ export function ResultInterpretation() {
         </div>
 
         <div className="flex items-center justify-between">
-          <Button 
+          <Button
             variant="outline"
             className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors px-6 py-3"
             style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
-          onClick={() => setCurrentStep(1)}
-        >
-          Back
-        </Button>
-        <Button 
-          className="text-white px-6 py-3 cursor-pointer"
-          style={{ backgroundColor: '#7864B4' }}
-          onClick={() => setCurrentStep(3)}
-        >
-          Continue to Phenotype Analysis →
-        </Button>
+            onClick={() => setCurrentStep(1)}
+          >
+            Back
+          </Button>
+          <Button
+            className="text-white px-6 py-3 cursor-pointer"
+            style={{ backgroundColor: '#7864B4' }}
+            onClick={() => setCurrentStep(3)}
+          >
+            Continue to Phenotype Analysis →
+          </Button>
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
   const phenotypeData = {
     overall: {
@@ -986,7 +1107,7 @@ export function ResultInterpretation() {
 
     return (
       <div className="p-6 space-y-6 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
-        
+
         {selectedGenotypeData && (
           <Card className="p-6 bg-white border elevation-1" style={{ borderColor: '#7864B4' }}>
             <div className="space-y-4">
@@ -996,34 +1117,34 @@ export function ResultInterpretation() {
                   From Previous Step
                 </Badge>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <p className="text-sm font-medium" style={{ color: '#505050' }}>Rule-Based</p>
                   <p className="text-lg font-semibold" style={{ color: '#7864B4' }}>{selectedGenotypeData.ruleBasedName}</p>
                 </div>
-                
+
                 <div className="space-y-2">
                   <p className="text-sm font-medium" style={{ color: '#505050' }}>Allele</p>
                   <p className="text-lg font-mono" style={{ color: '#1E1E1E' }}>{selectedGenotypeData.alleleName}</p>
                 </div>
-                
+
                 <div className="space-y-2">
                   <p className="text-sm font-medium" style={{ color: '#505050' }}>Genotype Marker</p>
                   <p className="text-lg font-mono" style={{ color: '#1E1E1E' }}>{selectedGenotypeData.resultLocation}</p>
                 </div>
-                
+
                 <div className="space-y-2">
                   <p className="text-sm font-medium" style={{ color: '#505050' }}>Predicted Genotype</p>
                   <p className="text-lg font-mono" style={{ color: '#1E1E1E' }}>{selectedGenotypeData.predictedGenotype}</p>
                 </div>
-                
+
                 <div className="space-y-2">
                   <p className="text-sm font-medium" style={{ color: '#505050' }}>Predicted Phenotype</p>
                   <p className="text-lg" style={{ color: '#1E1E1E' }}>{selectedGenotypeData.predictedPhenotype}</p>
                 </div>
               </div>
-              
+
               <div className="pt-4 border-t" style={{ borderColor: '#DCDCE6' }}>
                 <p className="text-sm font-medium mb-2" style={{ color: '#505050' }}>Therapeutic Recommendation</p>
                 <div className="p-4 rounded-lg" style={{ backgroundColor: '#F5F3FF' }}>
@@ -1035,7 +1156,7 @@ export function ResultInterpretation() {
             </div>
           </Card>
         )}
-        
+
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
@@ -1072,14 +1193,14 @@ export function ResultInterpretation() {
         passed: validationResults.Failed.value >= validationResults.Failed.threshold
       }
     };
-    
+
     setValidationResults(updatedResults);
     setIsValidated(true);
   };
 
   const handleValidateReport = async () => {
     if (!selectedPatientData) return;
-    
+
     // Validate required fields before sending
     if (!selectedPatientData.medical_technician_id && !currentUser?.id) {
       alert('Medical technician information is missing. Please ensure you are logged in.');
@@ -1089,15 +1210,15 @@ export function ResultInterpretation() {
     if (selectedPatientData.quality_id != null) {
       setIsValidating(false);
       setValidationSuccess(true);
-      return;
+      // return;
     }
     setIsValidating(true);
-    
+
     try {
       console.log('Step 1: Creating quality record...');
       console.log('Tester type (tester_id):', testerType);
       console.log('Validation criteria:', selectedValidationCriteria);
-      
+
       // Step 1: Create quality record first
       const qualityData = {
         tester_id: testerType, // UUID from tester_type table
@@ -1124,12 +1245,12 @@ export function ResultInterpretation() {
       // Extract quality_id from ResponseModel structure
       // Response structure: { status: "201", message: "...", data: {...} }
       let createdQualityId = null;
-      
+
       if (qualityResult.data) {
         // Check if data has id directly (array response)
         if (Array.isArray(qualityResult.data) && qualityResult.data.length > 0) {
           createdQualityId = qualityResult.data[0].id;
-        } 
+        }
         // Check if data is object with id
         else if (qualityResult.data.id) {
           createdQualityId = qualityResult.data.id;
@@ -1148,8 +1269,8 @@ export function ResultInterpretation() {
       // Step 2: Calculate required fields for report update
       const ruleId = selectedRuleId || selectedPatientData.rule_id || "pending-rule-selection";
       const indexRule = (() => {
-        const value = selectedRuleRowIndex !== null && selectedRuleRowIndex !== undefined 
-          ? selectedRuleRowIndex 
+        const value = selectedRuleRowIndex !== null && selectedRuleRowIndex !== undefined
+          ? selectedRuleRowIndex
           : selectedPatientData.index_rule;
         return (!value || value === 0) ? 1 : value;
       })();
@@ -1158,8 +1279,8 @@ export function ResultInterpretation() {
         if (Array.isArray(existing) && existing.length > 0) {
           return existing;
         }
-        return [{ 
-          validated: true, 
+        return [{
+          validated: true,
           validation_criteria: selectedValidationCriteria.join(', '),
           tester_type: testerType,
           quality_id: createdQualityId,
@@ -1180,20 +1301,20 @@ export function ResultInterpretation() {
 
       console.log('Sending PUT request to /api/user/report with data:', updateData);
 
-      await updateReportMutation.mutateAsync({ 
+      await updateReportMutation.mutateAsync({
         id: selectedPatientData.id,
-        data: updateData 
+        data: updateData
       });
 
       console.log('Report validated and updated successfully');
-      
+
       // Store the quality_id in state
       setQualityId(createdQualityId);
 
       setValidationSuccess(true);
       qc.invalidateQueries({ queryKey: ['reports', 'quality'] });
       alert('Report validated successfully!');
-      
+
     } catch (error) {
       console.error('Failed to validate report:', error);
       alert('Failed to validate report: ' + (error as Error).message);
@@ -1213,17 +1334,17 @@ export function ResultInterpretation() {
       alert('Please validate the report first before approving.');
       return;
     }
-    
+
     try {
       console.log('selectedPatientData:', selectedPatientData);
       console.log('selectedRuleId:', selectedRuleId);
       console.log('selectedRuleRowIndex:', selectedRuleRowIndex);
 
-      const moreInfo = Array.isArray(selectedPatientData.more_information) 
-        ? [...selectedPatientData.more_information] 
+      const moreInfo = Array.isArray(selectedPatientData.more_information)
+        ? [...selectedPatientData.more_information]
         : [];
-      
-      moreInfo.push({ 
+
+      moreInfo.push({
         tester_type: testerType,
         validation_criteria: selectedValidationCriteria,
         approved_at: new Date().toISOString()
@@ -1236,8 +1357,8 @@ export function ResultInterpretation() {
         note_id: selectedPatientData.note_id || "",
         rule_id: selectedRuleId || selectedPatientData.rule_id || "pending-rule-selection",
         index_rule: (() => {
-          const value = selectedRuleRowIndex !== null && selectedRuleRowIndex !== undefined 
-            ? selectedRuleRowIndex 
+          const value = selectedRuleRowIndex !== null && selectedRuleRowIndex !== undefined
+            ? selectedRuleRowIndex
             : selectedPatientData.index_rule;
           return value === 0 || value === null || value === undefined ? 1 : value;
         })(),
@@ -1251,14 +1372,14 @@ export function ResultInterpretation() {
 
       console.log('Updating report with data:', updateData);
 
-      await updateReportMutation.mutateAsync({ 
+      await updateReportMutation.mutateAsync({
         id: selectedPatientData.id,
-        data: updateData 
+        data: updateData
       });
 
       setIsApproved(true);
       alert('Report approved successfully!');
-      
+
     } catch (error) {
       console.error('Failed to approve report:', error);
       alert('Failed to approve report: ' + (error as Error).message);
@@ -1275,7 +1396,7 @@ export function ResultInterpretation() {
       });
 
       alert('Report completed successfully!');
-      
+
       setSelectedReport(null);
       setSelectedPatientData(null);
       setCurrentStep(1);
@@ -1313,17 +1434,25 @@ export function ResultInterpretation() {
 
           <div className="space-y-4">
             <h4 style={{ color: '#1E1E1E' }}>Validation Criteria</h4>
-            
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors" 
-                 style={{ borderColor: selectedValidationCriteria.includes('coverage') ? '#7864B4' : '#C8C8D2' }}
-                 onClick={() => {
-                   setSelectedValidationCriteria(['Pass']);
-                 }}>
+
+            {/* ----- 1. Coverage (Pass) ----- */}
+            <div
+              className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors"
+              style={{ borderColor: selectedValidationCriteria.includes('Pass') ? '#7864B4' : '#C8C8D2' }}
+            // ⭐️ [ลบ] onClick={...} ออกจาก div นี้
+            >
               <div className="flex items-center gap-3">
                 <input
                   type="radio"
+                  value={'Pass'} // ⭐️ [แก้ไข] ค่าที่แท้จริงคือ 'Pass'
+
+                  // ⭐️ [แก้ไข] checked ให้ตรงกับ value
                   checked={selectedValidationCriteria.includes('Pass')}
-                  onChange={() => {}}
+
+                  // ⭐️ onChange จะอัปเดต state เป็น ['Pass']
+                  onChange={(e) => {
+                    setSelectedValidationCriteria([e.target.value]);
+                  }}
                   className="w-4 h-4"
                   style={{ accentColor: '#7864B4' }}
                   name="validationCriteria"
@@ -1338,16 +1467,24 @@ export function ResultInterpretation() {
               </Badge>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors" 
-                 style={{ borderColor: selectedValidationCriteria.includes('alleleBalance') ? '#7864B4' : '#C8C8D2' }}
-                 onClick={() => {
-                   setSelectedValidationCriteria(['Warning']);
-                 }}>
+            {/* ----- 2. Allele Balance (Warning) ----- */}
+            <div
+              className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors"
+              style={{ borderColor: selectedValidationCriteria.includes('Warning') ? '#7864B4' : '#C8C8D2' }}
+            // ⭐️ [ลบ] onClick={...} ออกจาก div นี้
+            >
               <div className="flex items-center gap-3">
-                <input 
-                  type="radio" 
+                <input
+                  type="radio"
+                  value={'Warning'} // ⭐️ [แก้ไข] ค่าที่แท้จริง
+
+                  // ⭐️ [แก้ไข] checked ให้ตรงกับ value
                   checked={selectedValidationCriteria.includes('Warning')}
-                  onChange={() => {}}
+
+                  // ⭐️ onChange จะอัปเดต state เป็น ['Warning']
+                  onChange={(e) => {
+                    setSelectedValidationCriteria([e.target.value]);
+                  }}
                   className="w-4 h-4"
                   style={{ accentColor: '#7864B4' }}
                   name="validationCriteria"
@@ -1362,16 +1499,24 @@ export function ResultInterpretation() {
               </Badge>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors" 
-                 style={{ borderColor: selectedValidationCriteria.includes('qualityScore') ? '#7864B4' : '#C8C8D2' }}
-                 onClick={() => {
-                   setSelectedValidationCriteria(['Failed']);
-                 }}>
+            {/* ----- 3. Quality Score (Failed) ----- */}
+            <div
+              className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors"
+              style={{ borderColor: selectedValidationCriteria.includes('Failed') ? '#7864B4' : '#C8C8D2' }}
+            // ⭐️ [ลบ] onClick={...} ออกจาก div นี้
+            >
               <div className="flex items-center gap-3">
                 <input
                   type="radio"
+                  value={'Failed'} // ⭐️ [แก้ไข] ค่าที่แท้จริง
+
+                  // ⭐️ [แก้ไข] checked ให้ตรงกับ value
                   checked={selectedValidationCriteria.includes('Failed')}
-                  onChange={() => {}}
+
+                  // ⭐️ onChange จะอัปเดต state เป็น ['Failed']
+                  onChange={(e) => {
+                    setSelectedValidationCriteria([e.target.value]);
+                  }}
                   className="w-4 h-4"
                   style={{ accentColor: '#7864B4' }}
                   name="validationCriteria"
@@ -1398,7 +1543,7 @@ export function ResultInterpretation() {
       </Card>
 
       <div className="flex justify-between items-center">
-        <Button 
+        <Button
           variant="outline"
           className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
           style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
@@ -1407,7 +1552,7 @@ export function ResultInterpretation() {
           Back
         </Button>
         <div className="flex space-x-3">
-          <Button 
+          <Button
             className="text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: validationSuccess ? '#C8C8D2' : '#7864B4' }}
             onClick={handleValidateReport}
@@ -1415,7 +1560,7 @@ export function ResultInterpretation() {
           >
             {isValidating ? 'Validating...' : validationSuccess ? 'Validated' : 'Validate Report'}
           </Button>
-          <Button 
+          <Button
             className="text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: validationSuccess ? '#7864B4' : '#C8C8D2' }}
             onClick={() => setCurrentStep(5)}
@@ -1433,7 +1578,7 @@ export function ResultInterpretation() {
     <div className="p-6 space-y-8 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
       <Card className="p-6 border elevation-1 bg-white" style={{ borderColor: '#C8C8D2' }}>
         <h3 className="font-medium mb-4" style={{ color: '#1E1E1E' }}>Interpretation Summary</h3>
-        
+
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4 pb-4 border-b" style={{ borderColor: '#C8C8D2' }}>
             <div>
@@ -1457,12 +1602,12 @@ export function ResultInterpretation() {
             <div>
               <p className="text-sm mb-1" style={{ color: '#505050' }}>Date of Birth</p>
               <p className="font-medium" style={{ color: '#1E1E1E' }}>
-                {selectedPatientData?.patient?.dob 
+                {selectedPatientData?.patient?.dob
                   ? new Date(selectedPatientData.patient.dob).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    })
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  })
                   : 'N/A'}
               </p>
             </div>
@@ -1506,7 +1651,7 @@ export function ResultInterpretation() {
               <div>
                 <p style={{ color: '#505050' }}>Validation Criteria</p>
                 <p style={{ color: '#1E1E1E' }}>
-                  {selectedValidationCriteria.length > 0 
+                  {selectedValidationCriteria.length > 0
                     ? selectedValidationCriteria.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')
                     : 'None selected'}
                 </p>
@@ -1541,9 +1686,9 @@ export function ResultInterpretation() {
       <div>
         <h3 className="font-medium mb-2" style={{ color: '#1E1E1E' }}>Report Confirmation</h3>
         <p className="mb-6" style={{ color: '#505050' }}>Review the complete report details before exporting.</p>
-        
+
         <div className="flex items-center justify-between">
-          <Button 
+          <Button
             variant="outline"
             className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
             style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
@@ -1552,7 +1697,7 @@ export function ResultInterpretation() {
             Back
           </Button>
           <div className="flex space-x-3">
-            <Button 
+            <Button
               className="text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ backgroundColor: isApproved ? '#C8C8D2' : (validationSuccess ? '#7864B4' : '#C8C8D2') }}
               onClick={handleApproveReport}
@@ -1561,7 +1706,7 @@ export function ResultInterpretation() {
             >
               {isApproved ? 'Approved' : 'Approve Interpret Summary'}
             </Button>
-            <Button 
+            <Button
               className="text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ backgroundColor: isApproved ? '#7864B4' : '#C8C8D2' }}
               onClick={() => setCurrentStep(6)}
@@ -1580,16 +1725,16 @@ export function ResultInterpretation() {
     <div className="p-6 space-y-6 rounded-[20px] w-full max-w-full box-border" style={{ backgroundColor: '#F5F3FF' }}>
       <div>
         <h3 className="font-medium mb-6" style={{ color: '#1E1E1E' }}>Export PDF Report</h3>
-        
+
         <div className="bg-white border p-4 rounded-lg mb-6" style={{ borderColor: '#C8C8D2' }}>
           <h4 className="font-medium mb-4" style={{ color: '#1E1E1E' }}>Report Summary</h4>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p style={{ color: '#505050' }}>Patient:</p>
               <p style={{ color: '#1E1E1E' }}>
-                {selectedPatientData?.patient?.Eng_name || 
-                 selectedPatientData?.patient?.name || 
-                 'N/A'}
+                {selectedPatientData?.patient?.Eng_name ||
+                  selectedPatientData?.patient?.name ||
+                  'N/A'}
               </p>
             </div>
             <div>
@@ -1611,33 +1756,33 @@ export function ResultInterpretation() {
 
         <div className="space-y-4">
           <h4 className="font-medium" style={{ color: '#1E1E1E' }}>Export Options</h4>
-          
+
           <div className="space-y-2">
             <label className="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" defaultChecked className="rounded cursor-pointer" style={{ accentColor: '#7864B4' }} />
               <span style={{ color: '#1E1E1E' }}>Include patient demographics</span>
             </label>
-            
+
             <label className="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" defaultChecked className="rounded cursor-pointer" style={{ accentColor: '#7864B4' }} />
               <span style={{ color: '#1E1E1E' }}>Include raw data summary</span>
             </label>
-            
+
             <label className="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" defaultChecked className="rounded cursor-pointer" style={{ accentColor: '#7864B4' }} />
               <span style={{ color: '#1E1E1E' }}>Include genotype results</span>
             </label>
-            
+
             <label className="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" defaultChecked className="rounded cursor-pointer" style={{ accentColor: '#7864B4' }} />
               <span style={{ color: '#1E1E1E' }}>Include phenotype classification</span>
             </label>
-            
+
             <label className="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" defaultChecked className="rounded cursor-pointer" style={{ accentColor: '#7864B4' }} />
               <span style={{ color: '#1E1E1E' }}>Include drug recommendations</span>
             </label>
-            
+
             <label className="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" defaultChecked className="rounded cursor-pointer" style={{ accentColor: '#7864B4' }} />
               <span style={{ color: '#1E1E1E' }}>Include quality metrics</span>
@@ -1646,7 +1791,7 @@ export function ResultInterpretation() {
         </div>
 
         <div className="flex items-center justify-between pt-4">
-          <Button 
+          <Button
             variant="outline"
             className="bg-white cursor-pointer hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors"
             style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
@@ -1655,22 +1800,23 @@ export function ResultInterpretation() {
             Back
           </Button>
           <div className="flex space-x-3">
-            <Button 
-              variant="outline"
-              className="bg-white hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors cursor-pointer"
-              style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
+
+            <a
+              href={`/api/user/export/${selectedPatientData?.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              Preview Report
-            </Button>
-            
-            <Button 
-              className="text-white cursor-pointer"
-              style={{ backgroundColor: '#7864B4' }}
-            >
-              Download PDF
-            </Button>
-            
-            <Button 
+              {/* ⭐️ ย้ายปุ่มเข้ามาไว้ข้างในลิงก์ ⭐️ */}
+              <Button
+                className="text-white cursor-pointer"
+                style={{ backgroundColor: '#7864B4' }}
+              >
+                Download PDF
+              </Button>
+            </a>
+
+
+            <Button
               variant="outline"
               className="bg-white hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors cursor-pointer"
               style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
@@ -1692,11 +1838,11 @@ export function ResultInterpretation() {
       const birthDate = new Date(dateOfBirth);
       let age = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
-      
+
       if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
         age--;
       }
-      
+
       return age;
     };
 
@@ -1709,10 +1855,10 @@ export function ResultInterpretation() {
       });
     };
 
-    const patientName = selectedPatientData.patient?.Eng_name || 
-                       selectedPatientData.patient?.name || 
-                       'Unknown Patient';
-    
+    const patientName = selectedPatientData.patient?.Eng_name ||
+      selectedPatientData.patient?.name ||
+      'Unknown Patient';
+
     const patientGender = selectedPatientData.patient?.gender || 'N/A';
     const patientDOB = selectedPatientData.patient?.dob || '';
     const patientAge = patientDOB ? calculateAge(patientDOB) : 'N/A';
@@ -1735,7 +1881,7 @@ export function ResultInterpretation() {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-2">
               {getStatusBadge(selectedPatientData.status)}
               <Button
@@ -1821,19 +1967,19 @@ export function ResultInterpretation() {
 
   const renderStepNavigation = () => {
     const activeSteps = getActiveSteps();
-    
+
     return (
       <div className="flex items-center justify-start space-x-3 py-4 pl-6 pr-6 border-b" style={{ backgroundColor: '#F5F3FF', borderColor: '#DCDCE6' }}>
         {activeSteps.map((step, index) => (
           <div key={step.number} className="flex items-center">
-            <div 
+            <div
               className={`
                 flex flex-col items-center justify-center transition-colors duration-200
                 ${canNavigateToStep(step.number) ? 'cursor-pointer' : 'cursor-not-allowed'}
               `}
               onClick={() => handleStepClick(step.number)}
             >
-              <div 
+              <div
                 className="flex items-center justify-center w-7 h-7 rounded-full border-2 mb-1"
                 style={
                   step.active && canNavigateToStep(step.number)
@@ -1843,15 +1989,15 @@ export function ResultInterpretation() {
               >
                 <span className="text-xs font-medium">{step.number}</span>
               </div>
-              
-              <p 
+
+              <p
                 className="text-xs font-medium whitespace-nowrap"
                 style={{ color: step.active && canNavigateToStep(step.number) ? '#7864B4' : '#1E1E1E' }}
               >
                 {step.label}
               </p>
             </div>
-            
+
             {index < activeSteps.length - 1 && (
               <div className="w-6 h-px mx-2" style={{ backgroundColor: '#C8C8D2' }}></div>
             )}
@@ -1946,7 +2092,7 @@ export function ResultInterpretation() {
           <DialogHeader className="space-y-3 pb-4 border-b" style={{ borderColor: '#DCDCE6' }}>
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-semibold" style={{ color: '#1E1E1E' }}>Report Approval</DialogTitle>
-              <button 
+              <button
                 onClick={() => setIsApprovalDialogOpen(false)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
@@ -2023,9 +2169,9 @@ export function ResultInterpretation() {
                             ))}
                           </td>
                           <td className="p-4">
-                            <Badge 
+                            <Badge
                               className="text-white font-medium"
-                              style={{ 
+                              style={{
                                 backgroundColor: result.status.includes('Intermediate') ? '#9682C8' : '#7864B4'
                               }}
                             >
