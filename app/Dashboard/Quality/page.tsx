@@ -37,7 +37,7 @@ const {
 
 
   return (
-    <div className="p-8 bg-[#F6F2FA] min-h-screen text-[#4A4458]">
+    <div >
       {/* Header */}
       <h1 className="text-2xl font-bold text-[#000000] mb-1">Quality Control</h1>
       <h3 className="text-[#000000] text-base mb-6">
