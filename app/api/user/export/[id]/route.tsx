@@ -360,13 +360,14 @@ async function fetchReportData(id: string) {
   return {
     patientName: patientRecord.Eng_name || patientRecord.Thai_name,
     patientHN: report.patient_id,
-    testCode: `(รหัสการทดสอบ ${report.rule_name || 'N/A'})`,
+    testCode: `(รหัสการทดสอบ ${report.id || 'N/A'})`,
     patientInfo,
     genotypeTableData,
     notes,
     signatureBlocks,
     clinicalInfo,
     references,
+    rule: report.rule_name || "N/A",
   };
 }
 
@@ -511,7 +512,7 @@ const MyDocument = ({ data }) => (
         {/* --- ส่วนที่ 1: ผลแล็บหลัก --- */}
         <Text style={styles.reportTitle}>PHARMACOGENOMICS AND PERSONALIZED MEDICINE REPORT</Text>
         <PatientInfoTable data={data} />
-        <Text style={styles.tableTitle}>CYP3A5 genotyping {data.testCode}</Text>
+        <Text style={styles.tableTitle}>{data.rule} genotyping {data.testCode}</Text>
         <GenotypeTable data={data} />
         <NoteBox data={data} />
         
@@ -519,7 +520,7 @@ const MyDocument = ({ data }) => (
         
         {/* --- ส่วนที่ 2: ข้อมูลเพิ่มเติม (บังคับขึ้นหน้าใหม่) --- */}
         <View break>
-          <Text style={styles.reportTitle}>PHARMACOGENOMICS INTERPRETATION (More Information)</Text>
+          <Text style={styles.reportTitle}>PHARMACOGENOMICS INTERPRETATION(More Information)</Text>
           <Text style={styles.annotationText}>
             †† Annotation of CPIC guideline for Tacrolimus and CYP3A5{" "}
             <Link src="https://www.pharmgkb.org/guideline/PA166124619">

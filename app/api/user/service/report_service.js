@@ -258,6 +258,11 @@ export async function GetAllReports() {
             } else {
                 ReportResult[i].updated_at = data[i].updated_at;
             }
+            if( data[i].quality_id == null || data[i].quality_id == undefined){
+                ReportResult[i].quality_id = "";
+            } else {
+                ReportResult[i].quality_id = data[i].quality_id;
+            }
         }
     } catch (err) {
         console.error("Failed to parse data" + err); //for Debug
@@ -491,6 +496,11 @@ export async function GetReportById(id) {
         } else {
             ReportResult[0].updated_at = data[0].updated_at;
         }
+        if( data[0].quality_id == null || data[0].quality_id == undefined){
+                ReportResult[0].quality_id = "";
+            } else {
+                ReportResult[0].quality_id = data[0].quality_id;
+            }
     } catch (err) {
         console.error("Failed to parse data" + err); //for Debug
         return { data: null, error: "Failed to parse data" + err, status: 500 };

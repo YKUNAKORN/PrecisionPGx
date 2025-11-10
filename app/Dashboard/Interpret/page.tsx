@@ -317,36 +317,125 @@ export function ResultInterpretation() {
   };
 
   const {
-    data: quality,
-    isLoading: loadingquality,
-    error: errorquality,
-  } = useQuery(createQualityQueryOptions.detail(report.id || ""));
+    data: qualityData,
+    isLoading: loadingQuality,
+  } = useQuery({
+    ...createQualityQueryOptions.detail(selectedPatientData?.quality_id || ""),
+    enabled: !!selectedPatientData?.quality_id,
+  });
+
+
+  useEffect(() => {
+    if (qualityData) {
+      // qualityData อาจจะมาในรูปแบบ { data: { ... } } หรือ { data: [{...}] }
+      const rawData = (qualityData as any)?.data ?? qualityData;
+      const record = Array.isArray(rawData) ? rawData[0] : rawData;
+
+      if (record) {
+        
+        // --- ⬇️ (FIXED) 3.1 ตั้งค่า Validation Criteria ---
+        if (record.quality && typeof record.quality === 'string') {
+
+          // 1. สร้างตัวแปลค่าจาก DB -> UI
+          // (เราใช้ toLowerCase() เพื่อให้เทียบได้ง่าย)
+          const dbToUiMap: { [key: string]: string } = {
+            'pass': 'Pass',
+            'coverage': 'Pass',       // ค่าเก่า
+            'warning': 'Warning',
+            'allelebalance': 'Warning', // ค่าเก่า (จาก "Allele Balance")
+            'failed': 'Failed',
+            'qualityscore': 'Failed'  // ค่าเก่า (จาก "Quality Score")
+          };
+
+          // 2. ดึงค่าจาก DB (ใช้ค่าแรกที่เจอ ถ้ามีหลายค่า)
+          const dbValue = record.quality.split(',')[0].trim().toLowerCase();
+
+          // 3. แปลงค่า
+          const uiValue = dbToUiMap[dbValue];
+
+          // 4. ตั้งค่า state ด้วยค่าที่ถูกต้องสำหรับ UI
+          if (uiValue) {
+            setSelectedValidationCriteria([uiValue]);
+          } else {
+            // ถ้าไม่ตรงเลย ก็ให้เป็นค่าว่าง
+            setSelectedValidationCriteria([]);
+          }
+        }
+        
+        // --- ⬆️ (FIXED) จบส่วนแก้ไข ---
+
+        // 3.2 ตั้งค่า Tester Type (Dropdown ใน Step 4)
+        if (record.tester_id) {
+          setTesterType(record.tester_id);
+        }
+      }
+    }
+  }, [qualityData]);
+
+  useEffect(() => {
+    // ถ้าข้อมูล rule โหลดเสร็จ และมี index แถวที่ถูกเลือกไว้
+    if (selectedRuleData && selectedRuleRowIndex !== null && selectedRuleRowIndex !== undefined) {
+      
+      // ดึงข้อมูลจาก selectedRuleData โดยใช้ selectedRuleRowIndex
+      const locations = selectedRuleData.location || [];
+      const resultLocations = selectedRuleData.result_location || [];
+      const predictedGenotypes = selectedRuleData.predicted_genotype || [];
+      const predictedPhenotypes = selectedRuleData.predicted_phenotype || [];
+      const recommendations = selectedRuleData.recommend || [];
+      const names = selectedRuleData.Name || [];
+
+      const ruleBasedName = Array.isArray(names) ? names.join('') : (names || 'Unknown');
+      const alleleName = locations[0] || '−';
+      
+      const index = selectedRuleRowIndex;
+      const resultLocation = resultLocations[index] || '−';
+      const predictedGenotype = predictedGenotypes[index] || '−';
+      const predictedPhenotype = predictedPhenotypes[index] || '−';
+      const recommendation = recommendations[index] || '−';
+
+      // 5.1 ตั้งค่า state (selectedGenotypeData) ที่ Step 3 ต้องใช้
+      setSelectedGenotypeData({
+        ruleBasedName: ruleBasedName,
+        alleleName: alleleName,
+        resultLocation: resultLocation,
+        predictedGenotype: predictedGenotype,
+        predictedPhenotype: predictedPhenotype,
+        recommendation: recommendation
+      });
+    }
+  }, [selectedRuleData, selectedRuleRowIndex]);
 
   const handleSelectReport = (report: ReportWithPatient) => {
 
-    // --- 1. ตั้งค่าพื้นฐาน ---
+    // --- 1. รีเซ็ตค่าเก่า (สำคัญมาก) ---
+    setSelectedValidationCriteria([]); // ล้างค่าเก่า
+    setTesterType("7787dd4c-f61b-48a1-845f-da1ea4807391"); // กลับไปเป็นค่าเริ่มต้น
+    setValidationSuccess(false); // รีเซ็ตสถานะ
+    setIsApproved(false); // รีเซ็ตสถานะ
+    setSelectedGenotypeData(null); // ⭐️ (แนะนำ) ล้างข้อมูล Genotype เก่าด้วย
 
+    // --- 2. ตั้งค่าพื้นฐาน ---
     setSelectedReport(report.id || null);
+    setSelectedPatientData(report); // 👈 นี่จะไปกระตุ้น useQuery ของ Quality
 
-    setSelectedPatientData(report);
-
-
-    // --- 2. ตั้งค่าสำหรับ Step 2 (Genotype) ---
-
-    // ตั้งค่า Rule ID ที่เลือก (สำหรับ radio group แรก)
-
-    setSelectedRuleId(report.rule_id || null);
-
-
-    // ตั้งค่าแถวที่เลือก (สำหรับ radio group ในตาราง)
-
+    // --- 3. ตั้งค่าสำหรับ Step 2 (Genotype) ---
+    setSelectedRuleId(report.rule_id || null); // 👈 นี่จะไปกระตุ้น useQuery ของ Rule
     const ruleIndex = report.index_rule;
-
     setSelectedRuleRowIndex(ruleIndex !== null && ruleIndex !== undefined ? ruleIndex : null);
+    
+    // ⭐️ (ลบsetSelectedValidationCriteria และ setSelectedGenotypeData ที่ผิดออก)
 
-    setSelectedValidationCriteria([quality?.quality || ""]);
+    // --- 4. ตั้งค่าสถานะการอนุมัติ (ถ้ามี) ---
+    if (report.medtech_verify) {
+      setValidationSuccess(true);
+    }
+    if (report.pharm_verify) {
+      setIsApproved(true);
+    }
 
-  }
+    // --- 5. ไปยัง Step 2 ---
+    setCurrentStep(2);
+  };
 
   const getStatusBadge = (status?: string) => {
     if (!status) return <Badge variant="outline">Unknown</Badge>;
@@ -518,7 +607,6 @@ export function ResultInterpretation() {
                           style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
                           onClick={() => {
                             handleSelectReport(report);
-                            setCurrentStep(2);
                           }}
                         >
                           <Edit className="h-3 w-3 mr-1" />
@@ -548,7 +636,6 @@ export function ResultInterpretation() {
                           style={{ backgroundColor: '#7864B4' }}
                           onClick={() => {
                             handleSelectReport(report);
-                            setCurrentStep(2);
                           }}
                         >
                           {report.status?.toLowerCase() === "completed" ? "Preview" : "Continue"}
@@ -1348,16 +1435,24 @@ export function ResultInterpretation() {
           <div className="space-y-4">
             <h4 style={{ color: '#1E1E1E' }}>Validation Criteria</h4>
 
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors"
-              style={{ borderColor: selectedValidationCriteria.includes('coverage') ? '#7864B4' : '#C8C8D2' }}
-              onClick={() => {
-                setSelectedValidationCriteria(['coverage']);
-              }}>
+            {/* ----- 1. Coverage (Pass) ----- */}
+            <div
+              className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors"
+              style={{ borderColor: selectedValidationCriteria.includes('Pass') ? '#7864B4' : '#C8C8D2' }}
+            // ⭐️ [ลบ] onClick={...} ออกจาก div นี้
+            >
               <div className="flex items-center gap-3">
                 <input
                   type="radio"
-                  checked={selectedValidationCriteria.includes('coverage')}
-                  onChange={() => { }}
+                  value={'Pass'} // ⭐️ [แก้ไข] ค่าที่แท้จริงคือ 'Pass'
+
+                  // ⭐️ [แก้ไข] checked ให้ตรงกับ value
+                  checked={selectedValidationCriteria.includes('Pass')}
+
+                  // ⭐️ onChange จะอัปเดต state เป็น ['Pass']
+                  onChange={(e) => {
+                    setSelectedValidationCriteria([e.target.value]);
+                  }}
                   className="w-4 h-4"
                   style={{ accentColor: '#7864B4' }}
                   name="validationCriteria"
@@ -1372,16 +1467,24 @@ export function ResultInterpretation() {
               </Badge>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors"
-              style={{ borderColor: selectedValidationCriteria.includes('alleleBalance') ? '#7864B4' : '#C8C8D2' }}
-              onClick={() => {
-                setSelectedValidationCriteria(['alleleBalance']);
-              }}>
+            {/* ----- 2. Allele Balance (Warning) ----- */}
+            <div
+              className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors"
+              style={{ borderColor: selectedValidationCriteria.includes('Warning') ? '#7864B4' : '#C8C8D2' }}
+            // ⭐️ [ลบ] onClick={...} ออกจาก div นี้
+            >
               <div className="flex items-center gap-3">
                 <input
                   type="radio"
-                  checked={selectedValidationCriteria.includes('alleleBalance')}
-                  onChange={() => { }}
+                  value={'Warning'} // ⭐️ [แก้ไข] ค่าที่แท้จริง
+
+                  // ⭐️ [แก้ไข] checked ให้ตรงกับ value
+                  checked={selectedValidationCriteria.includes('Warning')}
+
+                  // ⭐️ onChange จะอัปเดต state เป็น ['Warning']
+                  onChange={(e) => {
+                    setSelectedValidationCriteria([e.target.value]);
+                  }}
                   className="w-4 h-4"
                   style={{ accentColor: '#7864B4' }}
                   name="validationCriteria"
@@ -1396,16 +1499,24 @@ export function ResultInterpretation() {
               </Badge>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors"
-              style={{ borderColor: selectedValidationCriteria.includes('qualityScore') ? '#7864B4' : '#C8C8D2' }}
-              onClick={() => {
-                setSelectedValidationCriteria(['qualityScore']);
-              }}>
+            {/* ----- 3. Quality Score (Failed) ----- */}
+            <div
+              className="flex items-center justify-between p-3 rounded-lg bg-white border cursor-pointer hover:bg-[#F5F3FF] transition-colors"
+              style={{ borderColor: selectedValidationCriteria.includes('Failed') ? '#7864B4' : '#C8C8D2' }}
+            // ⭐️ [ลบ] onClick={...} ออกจาก div นี้
+            >
               <div className="flex items-center gap-3">
                 <input
                   type="radio"
-                  checked={selectedValidationCriteria.includes('qualityScore')}
-                  onChange={() => { }}
+                  value={'Failed'} // ⭐️ [แก้ไข] ค่าที่แท้จริง
+
+                  // ⭐️ [แก้ไข] checked ให้ตรงกับ value
+                  checked={selectedValidationCriteria.includes('Failed')}
+
+                  // ⭐️ onChange จะอัปเดต state เป็น ['Failed']
+                  onChange={(e) => {
+                    setSelectedValidationCriteria([e.target.value]);
+                  }}
                   className="w-4 h-4"
                   style={{ accentColor: '#7864B4' }}
                   name="validationCriteria"
@@ -1689,13 +1800,6 @@ export function ResultInterpretation() {
             Back
           </Button>
           <div className="flex space-x-3">
-            <Button
-              variant="outline"
-              className="bg-white hover:bg-[#D9C0FB] hover:border-[#D9C0FB] transition-colors cursor-pointer"
-              style={{ borderColor: '#C8C8D2', color: '#1E1E1E' }}
-            >
-              Preview Report
-            </Button>
 
             <a
               href={`/api/user/export/${selectedPatientData?.id}`}

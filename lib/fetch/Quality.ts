@@ -25,7 +25,6 @@ export const createQualityQueryOptions = {
       queryOptions({
         queryKey: ["patient", id],
         queryFn: () => getQuality(id),
-        staleTime: 60_000,
       }),
 };
 

@@ -121,14 +121,12 @@ export const createReportQueryOptions = {
     queryOptions({
       queryKey: ["Reports"],
       queryFn: getReports,
-      staleTime: 60_000,
     }),
 
   detail: (id: string) =>
     queryOptions({
       queryKey: ["Report", id],
       queryFn: () => getReport(id),
-      staleTime: 60_000,
       enabled: !!id,
     }),
 };
