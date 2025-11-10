@@ -1,17 +1,26 @@
 "use client";
 
 import * as React from "react";
-
+import Image from "next/image";
+const logoSrc = "/LOGO-login-kongjing.png";
 type TabKey = "signin" | "signup";
 
 export default function AuthPage() {
   const [tab, setTab] = React.useState<TabKey>("signin");
 
   return (
-    <section className="min-h-dvh grid place-items-center px-4">
+    <section className="mt-6 grid place-items-center px-4">
       <div className="w-full max-w-md">
         {/* Brand / Title */}
         <div className="mb-6 text-center">
+          <Image
+            src={logoSrc}
+            alt="Logo"
+            width={220}
+            height={220}
+            className="mx-auto mb-10"
+            priority
+          />
           <h1 className="text-xl font-semibold">Welcome</h1>
           <p className="mt-1 text-sm text-neutral-500">
             Sign in to your account or create a new one to get started
@@ -31,8 +40,9 @@ export default function AuthPage() {
             className={[
               "h-9 rounded-full text-sm font-medium transition-colors",
               "dark:bg-neutral",
-              "hover:bg-gray-100 dark:hover:bg-neutral-800",
-              "data-[active=true]:shadow data-[active=true]:bg-[var(--color-primary)]  dark:data-[active=true]:bg-[var(--color-primary-dark)]",
+              "hover:bg-purple-300 dark:hover:bg-purple-300",
+              "data-[active=true]:shadow data-[active=true]:bg-purple-500 data-[active=true]:text-white",
+              "dark:data-[active=true]:bg-purple-500"
             ].join(" ")}
             data-active={tab === "signin"}
           >
@@ -46,8 +56,9 @@ export default function AuthPage() {
             className={[
               "h-9 rounded-full text-sm font-medium transition-colors",
               "dark:bg-neutral",
-              "hover:bg-gray-100 dark:hover:bg-neutral-800",
-              "data-[active=true]:shadow data-[active=true]:bg-[var(--color-primary)]  dark:data-[active=true]:bg-[var(--color-primary-dark)]",
+              "hover:bg-purple-300 dark:hover:bg-purple-300",
+              "data-[active=true]:shadow data-[active=true]:bg-purple-500 data-[active=true]:text-white",
+              "dark:data-[active=true]:bg-purple-500"
             ].join(" ")}
             data-active={tab === "signup"}
           >
@@ -132,11 +143,18 @@ function SignInForm() {
       />
 
       {error ? <p className="text-sm text-red-500">{error}</p> : null}
-
+      <div
+        onClick={() => router.push("/forgotpassword")} 
+        className= "mr-2 text-xs text-right text-neutral-500 hover:text-purple-500 cursor-pointer">
+          forgot password?
+      </div>
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-lg border border-neutral-300 py-2 font-medium shadow-sm dark:border-neutral-700 disabled:opacity-70"
+        className="w-full rounded-lg border border-purple-500 bg-purple-500 py-2 
+                    font-medium text-white shadow-sm transition-colors 
+                    hover:bg-purple-400 hover:border-purple-400 
+                    active:scale-[0.99] disabled:opacity-70"
       >
         {loading ? "Signing in..." : "Sign In"}
       </button>
@@ -147,7 +165,7 @@ function SignInForm() {
 function SignUpForm() {
   const [fullName, setFullName] = React.useState("");
   const [email, setEmail] = React.useState("");
-  const [position, setPosition] = React.useState("");
+  const [position, setPosition] = React.useState("doctor");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [error, setError] = React.useState("");
@@ -208,7 +226,7 @@ function SignUpForm() {
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <header className="space-y-1">
-        <h2 className="text-lg font-semibold">Create account</h2>
+        <h2 className="text-lg font-semibold ">Create account</h2>
         <p className="text-sm text-neutral-500">
           Fill in your information to get started
         </p>
@@ -233,15 +251,30 @@ function SignUpForm() {
           setEmail(e.target.value)
         }
       />
-      <TextField
-        id="position"
-        label="Position"
-        placeholder="Select your position"
-        value={position}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          setPosition(e.target.value)
-        }
-      />
+      
+      <label htmlFor="position" className="block space-y-1.5">
+        <span className="text-sm font-medium">Position</span>
+        <select
+          id="position"
+          name="position"
+          value={position}
+          onChange={(e) => setPosition(e.target.value)}
+          className="
+                      w-full rounded-lg border border-black-300 px-3 pr-10 py-2 outline-none
+                      ring-0 cursor-pointer transition-colors
+                      hover:border-grey-400 focus:border-neutral-400 dark:border-neutral-700
+                      appearance-none
+                      [background-image:linear-gradient(45deg,transparent_50%,#b0b0b0_50%),linear-gradient(-45deg,transparent_50%,#b0b0b0_50%)]
+                      [background-position:right_1.5rem_center,right_1.1rem_center]
+                      [background-size:6px_6px,6px_6px]
+                      bg-no-repeat
+                    "
+        >
+          <option value="doctor">Doctor</option>
+          <option value="medtech">Medtech</option>
+          <option value="pharmacy">Pharmacy</option>
+        </select>
+      </label>
 
       <PasswordField
         id="password2"
@@ -268,7 +301,10 @@ function SignUpForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-lg border border-neutral-300 py-2 font-medium shadow-sm active:scale-[0.99] dark:border-neutral-700 disabled:opacity-70"
+        className="mt-3 w-full rounded-lg border border-purple-500 bg-purple-500 py-2 
+                   font-medium text-white shadow-sm transition-colors 
+                   hover:bg-purple-400 hover:border-purple-400 
+                   active:scale-[0.99] disabled:opacity-70"
       >
         {loading ? "Creating..." : "Create Account"}
       </button>
