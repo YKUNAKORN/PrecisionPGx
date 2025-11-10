@@ -9,7 +9,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const pathname = usePathname();
   
   // ✅ หน้าเหล่านี้จะซ่อน Navbar
-  const hideNavbar = ["/", "/register", "/api-doc", "/reset-password"].includes(pathname);
+  const hideNavbar = ["/", "/register", "/api-doc", "/reset-password", "/forgotpassword"].includes(pathname);
 
   return (
     <div className="flex min-h-dvh">

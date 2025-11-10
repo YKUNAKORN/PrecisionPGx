@@ -144,7 +144,7 @@ function SignInForm() {
 
       {error ? <p className="text-sm text-red-500">{error}</p> : null}
       <div
-        onClick={() => router.push("/reset-password")} 
+        onClick={() => router.push("/forgotpassword")} 
         className= "mr-2 text-xs text-right text-neutral-500 hover:text-purple-500 cursor-pointer">
           forgot password?
       </div>
