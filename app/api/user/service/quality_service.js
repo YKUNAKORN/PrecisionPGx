@@ -147,7 +147,7 @@ export async function GetAllQualityMetricsPercent() {
 
             if (q === "pass") {
                 pass++;
-            } else if (q === "fail") {
+            } else if (q === "failed") {
                 fail++;
             } else if (q === "warning") {
                 warning++;
@@ -161,11 +161,17 @@ export async function GetAllQualityMetricsPercent() {
     }
     const total = pass + fail + warning;
     if (total === 0) {
-        return { data: { pass: 0, fail: 0, warning: 0, total: 0 }, error: null };
+        return { data: { pass: 0, failed: 0, warning: 0, total: 0 }, error: null };
     }
-    QualityCount.pass = (pass * 100) / total;
-    QualityCount.warning = (warning * 100) / total;
-    QualityCount.fail = (fail * 100) / total;
+    let percentpass = 0.0;
+    let percentfailed = 0.0;
+    let percentwarning = 0.0;
+    percentpass = (pass * 100) / total;
+    QualityCount.pass = percentpass.toFixed(2);
+    percentwarning = (warning * 100) / total;
+    QualityCount.warning = percentwarning.toFixed(2);
+    percentfailed = (fail * 100) / total;
+    QualityCount.failed = percentfailed.toFixed(2);
     QualityCount.total = total;
     return { data: QualityCount, error: null };
 }

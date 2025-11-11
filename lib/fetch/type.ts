@@ -106,7 +106,7 @@ export type HLA_B = {
 
 export type Qualityper = {
     pass: number,
-    fail: number,
+    failed: number,
     warning: number,
     total: number
 }
