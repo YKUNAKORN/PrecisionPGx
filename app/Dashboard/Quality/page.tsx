@@ -29,7 +29,7 @@ const {
   // Defensive defaults if backend shape differs
   const q: Qualityper = {
     pass: (qualityper as any)?.pass ?? 0,
-    fail: (qualityper as any)?.fail ?? 0,
+    failed: (qualityper as any)?.failed ?? 0,
     warning: (qualityper as any)?.warning ?? 0,
     total: (qualityper as any)?.total ?? 0,
     ...(qualityper as object),
@@ -47,8 +47,8 @@ const {
       {/* Cards */}
       <div className="flex flex-wrap justify-center gap-6 mb-8">
         <Card title="Pass Rate" value={`${q.pass}%`} />
-        <Card title="Warnings (24h)" value={`${q.fail}%`} />
-        <Card title="Failures (24h)" value={`${q.warning}%`} />
+        <Card title="Warnings (24h)" value={`${q.warning}%`} />
+        <Card title="Failures (24h)" value={`${q.failed}%`} />
         <Card title="Total" value={`${q.total}`} />
       </div>
 
