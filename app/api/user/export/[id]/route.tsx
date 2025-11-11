@@ -1,11 +1,9 @@
 import { Page, Text, View, Document, StyleSheet, renderToStream, Link, Font, Image } from "@react-pdf/renderer";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import path from "path";
-// ⭐️ [แก้ไข] 1. Import service ทั้งสองตัว
 import { GetReportById } from '../../service/report_service';
 import { GetPatientById } from '../../service/patient_service';
 
-// --- (Font.register และ const path ของโลโก้... ใช้เหมือนเดิม) ---
 Font.register({
   family: "THSarabunNew",
   src: path.join(process.cwd(), "public", "fonts", "THSarabunNew.ttf"),
@@ -253,50 +251,33 @@ const styles = StyleSheet.create({
 });
 
 
-// ------------------------
-// 3. Table Primitives (ไม่ได้ใช้)
-// ------------------------
-// (ลบ const Table, TRow, TH, TD ที่ไม่ได้ใช้ออก)
-
-// ------------------------
-// ⭐️ [แก้ไข] 4. ฟังก์ชันแปลงข้อมูล (แก้บั๊ก Data Access ทั้งหมด)
-// ------------------------
 async function fetchReportData(id: string) {
   
-  // 1. ดึง Report
   const { data: reportData, error: reportError } = await GetReportById(id);
   if (reportError || !reportData || reportData.length === 0) {
     console.error("Report Error:", reportError?.message || `Report Not Found: ${id}`);
     return null;
   }
-  // ⭐️ [แก้ไข] บั๊ก data.length: ดึง Object แรกออกจาก Array
   const report = reportData; 
 
-  // 2. ดึง Patient
   const { data: Patientdata, error: erorPatient } = await GetPatientById(report.patient_id);
   if (erorPatient || !Patientdata || Patientdata.length === 0) {
     console.error("Patient Error:", erorPatient?.message || `Patient Not Found: ${report.patient_id}`);
     return null;
   }
-  // ⭐️ [แก้ไข] บั๊ก data.length: ดึง Object แรกออกจาก Array
   const patientRecord = Patientdata[0]; 
 
-  // 3. ฟังก์ชันช่วย
-  const formatReportDate = (dateString) => {
+  const formatReportDate = (dateString: any) => {
     if (!dateString) return "N/A";
     try {
       return new Date(dateString).toLocaleDateString("th-TH", {
         year: 'numeric', month: 'long', day: 'numeric',
       });
-    } catch (e) { return dateString; }
+    } catch (e: any) { return dateString; }
   };
 
-  // 4. "แปลงร่าง" ข้อมูล
-  
-  // 4.1 patientInfo
   const patientInfo = [
     [
-      // ⭐️ [แก้ไข] บั๊ก Eng_name: ดึงข้อมูลจาก patientRecord
       { label: "ชื่อ-สกุล (Name)", value: patientRecord.Eng_name || patientRecord.Thai_name, flex: 1 },
       { label: "อายุ (Age)", value: patientRecord.age, flex: 0.4 },
       { label: "ปี (years)", value: formatReportDate(report.DOB), flex: 0.4 },
@@ -308,10 +289,10 @@ async function fetchReportData(id: string) {
     ],
     [
       { label: "สิ่งส่งตรวจ (Specimen)", value: "EDTA Blood", flex: 1 },
-      { label: "เบอร์ติดต่อ (Phone/Fax)", value: patientRecord.phone, flex: 1 }, // ⭐️ [แก้ไข]
+      { label: "เบอร์ติดต่อ (Phone/Fax)", value: patientRecord.phone, flex: 1 },
     ],
     [
-      { label: "เชื้อชาติ (Ethnicity)", value: patientRecord.Ethnicity, flex: 1 }, // ⭐️ [แก้ไข]
+      { label: "เชื้อชาติ (Ethnicity)", value: patientRecord.Ethnicity, flex: 1 },
       { label: "วันที่ส่งตรวจ (Requested date)", value: formatReportDate(report.request_date), flex: 1 },
     ],
     [
@@ -320,7 +301,6 @@ async function fetchReportData(id: string) {
     ],
   ];
 
-  // 4.2 genotypeTableData
   const genotypeTableData = [
     { label: `${report.rule_name || "N/A"} gene`, value: "", isHeader: true },
     { label: `Genotype Result`, value: report.rule_result_location || "N/A" },
@@ -337,10 +317,8 @@ async function fetchReportData(id: string) {
     },
   ];
 
-  // 4.3 notes
   const notes = [ report.note_method || "การทดสอบนี้ตรวจวิเคราะห์พันธุกรรมด้วยเทคนิค..." ];
 
-  // 4.4 signatureBlocks
   const signatureBlocks = [
     {
       heading: "วิเคราะห์และแปลผลโดย",
@@ -352,11 +330,9 @@ async function fetchReportData(id: string) {
     },
   ];
 
-  // 4.5 clinicalInfo & references (หน้า 2+)
   const clinicalInfo = [ "N/A" ];
   const references = [ "N/A" ];
 
-  // 5. คืนค่าข้อมูลทั้งหมด
   return {
     patientName: patientRecord.Eng_name || patientRecord.Thai_name,
     patientHN: report.patient_id,
@@ -371,12 +347,7 @@ async function fetchReportData(id: string) {
   };
 }
 
-// ------------------------
-// ⭐️ [ใหม่] 5. สร้าง Reusable Components (Header, Footer, Content)
-// ------------------------
-
-// --- ส่วนหัว (Fixed) ---
-const Header = ({ data }) => (
+const Header = ({ data }: { data: any }) => (
   <View style={styles.headerView} fixed>
     <View style={styles.headerBottomRow}>
       <Text>{data.patientName}</Text>
@@ -400,9 +371,7 @@ const Header = ({ data }) => (
   </View>
 );
 
-// --- ส่วนท้าย (Fixed) ---
-// (รวมลายเซ็นและเลขหน้าไว้ด้วยกัน)
-const Footer = ({ data }) => (
+const Footer = ({ data }: { data: any }) => (
   <View style={styles.footerView} fixed>
     <SignatureSection signatureBlocks={data.signatureBlocks} />
     <View style={styles.footer}>
@@ -416,8 +385,7 @@ const Footer = ({ data }) => (
   </View>
 );
 
-// --- ตารางข้อมูลผู้ป่วย ---
-const PatientInfoTable = ({ data }) => (
+const PatientInfoTable = ({ data }: { data: any }) => (
   <View style={styles.infoTable}>
     {data.patientInfo.map((row, idx) => (
       <View key={`pi-${idx}`} style={[ styles.infoRow, idx === data.patientInfo.length - 1 ? { borderBottomWidth: 0 } : null ]}>
@@ -439,8 +407,7 @@ const PatientInfoTable = ({ data }) => (
   </View>
 );
 
-// --- ตาราง Genotype ---
-const GenotypeTable = ({ data }) => (
+const GenotypeTable = ({ data }: { data: any }) => (
   <View style={styles.table}>
     {data.genotypeTableData.map((row, idx) => {
       const isLast = idx === data.genotypeTableData.length - 1;
@@ -450,7 +417,6 @@ const GenotypeTable = ({ data }) => (
             <Text style={row.isHeader ? styles.label : null}>{row.label}</Text>
           </View>
           <View style={[ styles.tCellRight, isLast && { borderBottomWidth: 0 } ]}>
-            {/* ⭐️ [ใหม่] ถ้าเป็น LongText (recommendation) ให้ split \n */}
             {row.isLongText ? (
               (row.value || "").split('\n').map((line, lineIdx) => (
                 <Text key={lineIdx}>{line}</Text>
@@ -465,8 +431,7 @@ const GenotypeTable = ({ data }) => (
   </View>
 );
 
-// --- หมายเหตุ ---
-const NoteBox = ({ data }) => (
+const NoteBox = ({ data }: { data: any }) => (
   <View style={styles.noteBox}>
     {data.notes.map((n, i) => (
       <Text key={`note-${i}`}>หมายเหตุ: {n}</Text>
@@ -474,8 +439,7 @@ const NoteBox = ({ data }) => (
   </View>
 );
 
-// --- ส่วนลายเซ็น (สำหรับใน Footer) ---
-const SignatureSection = ({ signatureBlocks }) => (
+const SignatureSection = ({ signatureBlocks }: { signatureBlocks: any }) => (
   <View style={styles.signatureSection}>
     <View style={styles.signatureRow}>
       {signatureBlocks.map((block, idx) => {
@@ -493,32 +457,18 @@ const SignatureSection = ({ signatureBlocks }) => (
   </View>
 );
 
-// ------------------------
-// ⭐️ [ใหม่] 6. Document หลัก (ใช้ Layout ใหม่)
-// ------------------------
-const MyDocument = ({ data }) => (
+const MyDocument = ({ data }: { data: any }) => (
   <Document>
     <Page size="A4" style={styles.page}>
-      
-      {/* 6.1 ใส่ Header (fixed) และ Footer (fixed) */}
       <Header data={data} />
-      
 
-      {/* 6.2 ใส่ "เนื้อหา" ทั้งหมด (Content) 
-          (เนื้อหาจะล้นและสร้างหน้าใหม่เองอัตโนมัติ)
-      */}
       <View style={styles.contentWrapper}>
-        
-        {/* --- ส่วนที่ 1: ผลแล็บหลัก --- */}
         <Text style={styles.reportTitle}>PHARMACOGENOMICS AND PERSONALIZED MEDICINE REPORT</Text>
         <PatientInfoTable data={data} />
         <Text style={styles.tableTitle}>{data.rule} genotyping {data.testCode}</Text>
         <GenotypeTable data={data} />
         <NoteBox data={data} />
-        
-        {/* [หมายเหตุ] ลายเซ็นถูกย้ายไปอยู่ใน <Footer /> แล้ว */}
-        
-        {/* --- ส่วนที่ 2: ข้อมูลเพิ่มเติม (บังคับขึ้นหน้าใหม่) --- */}
+
         <View break>
           <Text style={styles.reportTitle}>PHARMACOGENOMICS INTERPRETATION(More Information)</Text>
           <Text style={styles.annotationText}>
@@ -543,7 +493,6 @@ const MyDocument = ({ data }) => (
           ))}
         </View>
 
-        {/* --- ส่วนที่ 3: หมายเหตุสุดท้าย (บังคับขึ้นหน้าใหม่) --- */}
         <View break>
           <View style={styles.highlightBox}>
             <Text>หมายเหตุ:</Text>
@@ -558,22 +507,15 @@ const MyDocument = ({ data }) => (
   </Document>
 );
 
-// ------------------------
-// ⭐️ [แก้ไข] 7. GET Function (แก้บั๊ก params.id)
-// ------------------------
-export async function GET(req, { params }) {
-  
-  // 1. ⭐️ [แก้ไข] ดึง ID (ลบ await ออก)
+export async function GET(req: NextRequest, { params }: { params: any }): Promise<NextResponse> {
   const id = await params.id; 
 
   if (!id) {
     return new NextResponse("Missing ID from URL params", { status: 400 });
   }
 
-  // 2. ดึงข้อมูลจริง (ที่แปลงร่างแล้ว)
   const reportData = await fetchReportData(id);
 
-  // 3. ⭐️ [เพิ่ม] ตรวจสอบว่า fetch ข้อมูลสำเร็จหรือไม่
   if (!reportData) {
     return new NextResponse(
       `Failed to fetch or find report data for ID: ${id}. Check server logs for details. (Possible UUID mismatch or Not Found)`, 
@@ -581,10 +523,8 @@ export async function GET(req, { params }) {
     );
   }
 
-  // 4. Render PDF โดยส่ง 'reportData' เข้าไป
   const stream = await renderToStream(<MyDocument data={reportData} />);
 
-  // 5. ส่ง PDF stream กลับไป
   return new NextResponse(stream, {
     headers: {
       "Content-Type": "application/pdf",

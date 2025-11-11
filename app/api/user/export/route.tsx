@@ -1,5 +1,5 @@
 import { Page, Text, View, Document, StyleSheet, renderToStream, Link, Font, Image } from "@react-pdf/renderer";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 
 Font.register({
@@ -251,12 +251,12 @@ const styles = StyleSheet.create({
 // ------------------------
 // Reusable table primitives
 // ------------------------
-const Table = ({ children }) => <View style={styles.table}>{children}</View>;
-const TRow = ({ children }) => <View style={styles.tRow}>{children}</View>;
-const TH = ({ children, flex = 1 }) => (
+const Table = ({ children }: { children: React.ReactNode }) => <View style={styles.table}>{children}</View>;
+const TRow = ({ children }: { children: React.ReactNode }) => <View style={styles.tRow}>{children}</View>;
+const TH = ({ children, flex = 1 }: { children: React.ReactNode; flex?: number }) => (
   <View style={[styles.tHeaderCell, { flex }]}><Text>{children}</Text></View>
 );
-const TD = ({ children, flex = 1 }) => (
+const TD = ({ children, flex = 1 }: { children: React.ReactNode; flex?: number }) => (
   <View style={[styles.tCell, { flex }]}><Text>{children}</Text></View>
 );
 
@@ -638,7 +638,7 @@ const MyDocument = () => (
   </Document>
 );
 
-export async function GET(req, { params }) {
+export async function GET(req: NextRequest, { params }: { params: any }): Promise<NextResponse> {
   // id is available if needed in the future
   void params;
   const stream = await renderToStream(<MyDocument />);
