@@ -177,11 +177,7 @@ function ProfilePanel() {
     try {
       setSaving(true);
 
-      // validate email เบา ๆ
-      if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-        throw new Error("Email format is invalid");
-      }
-
+      
       // ส่งเฉพาะฟิลด์ที่เปลี่ยนจริง ๆ
       const payload: Record<string, string> = {};
       if (form.fullname !== (data.fullname ?? "")) payload.fullname = form.fullname;
@@ -191,7 +187,7 @@ function ProfilePanel() {
       // ถ้าไม่มีอะไรเปลี่ยนเลย
       if (Object.keys(payload).length === 0) {
         setEditing(false);
-        return;
+        return; 
       }
 
       // 🔧 เรียกอัปเดต (เดิมคุณไม่ได้ส่ง payload ทำให้ server ได้ body ว่าง → 500 ง่ายมาก)
@@ -200,6 +196,8 @@ function ProfilePanel() {
       if (updated) {
         setData(updated); // useEffect(data) จะ sync form ให้อัตโนมัติ
         alert("Profile updated successfully!");
+        window.location.reload();
+        
       } else {
         alert("Failed to update profile.");
       }
@@ -209,6 +207,7 @@ function ProfilePanel() {
     } finally {
       setSaving(false);
       setEditing(false);
+
     }
   };
 
