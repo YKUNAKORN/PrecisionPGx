@@ -1809,7 +1809,6 @@ export function ResultInterpretation() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              {/* ⭐️ ย้ายปุ่มเข้ามาไว้ข้างในลิงก์ ⭐️ */}
               <Button
                 className="text-white cursor-pointer"
                 style={{ backgroundColor: '#7864B4' }}

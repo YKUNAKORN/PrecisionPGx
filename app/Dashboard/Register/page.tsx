@@ -8,7 +8,7 @@ import { createPatientQueryOptions } from "../../../lib/fetch/Patient";
 import { createWardQueryOptions } from "../../../lib/fetch/Ward";
 import { createDoctorQueryOptions } from "../../../lib/fetch/Position";
 import { createFridgeQueryOptions } from "../../../lib/fetch/Fridge";
-import { mutateReportQueryOptions, ReportsDTO } from "../../../lib/fetch/Report";
+import { mutateReportQueryOptions, ReportsDTO , createReportQueryOptions } from "../../../lib/fetch/Report";
 import createBarcodeQueryOptions from "../../../lib/fetch/Barcode"; // ถ้ามี
 import type { Fridge, Patient as PatientBase } from "../../../lib/fetch/type";
 
@@ -56,6 +56,8 @@ export default function Page() {
         enabled: !!currentId,
     });
 
+    
+
     const patientDetailEntity = useMemo(() => {
         const raw = patientDetail as any;
         return raw && typeof raw === "object" && "data" in raw
@@ -63,9 +65,9 @@ export default function Page() {
             : (raw as PatientWithId | null);
     }, [patientDetail]);
 
-    // local states
     const [q, setQ] = useState("");
     const [selected, setSelected] = useState<PatientWithId | null>(null);
+    const [currentReport, setcurrentReport] = useState<PatientWithId | null>(null);
 
     const [barcodeText, setBarcodeText] = useState<string>("");
     const [barcodeSvg, setBarcodeSvg] = useState<string>("");
@@ -89,7 +91,7 @@ export default function Page() {
     const [contact, setContact] = useState("");
     const [fridge, setFridge] = useState("");
     const [generatedReportId, setGeneratedReportId] = useState<string>("");
-    
+
 
 
     const activePatient = (selected ?? patientDetailEntity) || null;
@@ -102,6 +104,13 @@ export default function Page() {
         ...createBarcodeQueryOptions(activePatient?.id || ""),
         enabled: !!activePatient?.id && currentStep === "4",
     });
+
+    const {
+    data: report,
+    isLoading: loadingReport,
+    error: errorReport,
+  } = useQuery({...createReportQueryOptions.detail(currentReport ?? ""),
+        enabled: !!currentReport,})
 
     const patientList: PatientWithId[] = useMemo(() => {
         const raw = patients as any;
@@ -174,14 +183,14 @@ export default function Page() {
 
     const handleContinue = () => {
         if (!selected) return;
-        setFridge(""); 
-        setNotes(""); 
+        setFridge("");
+        setNotes("");
         setContact("");
-        setSelectedPriority("Routine"); 
-        setSampleType("blood"); 
-        setCollectedAt(toDatetimeLocal()); 
-        setDoctor(""); 
-        setWard(""); 
+        setSelectedPriority("Routine");
+        setSampleType("blood");
+        setCollectedAt(toDatetimeLocal());
+        setDoctor("");
+        setWard("");
 
         const url = new URL(window.location.href);
         url.searchParams.set("id", selected.id);
@@ -271,6 +280,7 @@ export default function Page() {
 
             // --- สิ้นสุดโค้ดใหม่ ---
 
+            setcurrentReport(newReport.id);
             alert("Sample details saved successfully.");
             // success -> go to step 3
             setDetailsSaved(true);
@@ -430,7 +440,7 @@ export default function Page() {
                 <button
                     className={`step ${currentStep === "3" ? "active" : ""}`}
                     onClick={() => goTab(3)}
-                    disabled={!canGoStep3} 
+                    disabled={!canGoStep3}
                 >
                     <span className="dot">3</span>
                     <span className="label">Patient data</span>
@@ -441,7 +451,7 @@ export default function Page() {
                 <button
                     className={`step ${currentStep === "4" ? "active" : ""}`}
                     onClick={() => goTab(4)}
-                    disabled={!canGoStep4} 
+                    disabled={!canGoStep4}
                 >
                     <span className="dot">4</span>
                     <span className="label">Barcode &amp; Label</span>
@@ -652,43 +662,57 @@ export default function Page() {
                 {/* STEP 3 */}
                 {currentStep === "3" && (
                     <div className="p-6 border elevation-1 bg-white" style={{ borderColor: '#C8C8D2' }}>
-                    <div className="grid grid-cols-2 gap-4 pb-4 border-b" style={{ borderColor: '#C8C8D2' }}>
-                        <div>
-                            <p className="text-sm mb-1" style={{ color: '#505050' }}>Patient Name</p>
-                            <p className="font-medium" style={{ color: '#1E1E1E' }}>
-                                {activePatient.Eng_name || activePatient.name || 'N/A'}
-                            </p>
+                        <div className="grid grid-cols-2 gap-4 pb-4 border-b" style={{ borderColor: '#C8C8D2' }}>
+                            <div>
+                                <p className="text-sm mb-1" style={{ color: '#505050' }}>Patient Name</p>
+                                <p className="font-medium" style={{ color: '#1E1E1E' }}>
+                                    {activePatient.Eng_name || activePatient.name || 'N/A'}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm mb-1" style={{ color: '#505050' }}>Report ID</p>
+                                <p className="font-medium" style={{ color: '#1E1E1E' }}>
+                                    {generatedReportId || 'N/A'}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm mb-1" style={{ color: '#505050' }}>Patient ID</p>
+                                <p className="font-medium" style={{ color: '#1E1E1E' }}>
+                                    {activePatient.id || 'N/A'}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm mb-1" style={{ color: '#505050' }}>Date of Birth</p>
+                                <p className="font-medium" style={{ color: '#1E1E1E' }}>
+                                    {activePatient.dob
+                                        ? new Date(activePatient.dob).toLocaleDateString('en-US', {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric'
+                                        })
+                                        : 'N/A'}
+                                </p>
+                            </div>
+                            <div className="sample-submit">
+                                {activePatient?.id && (
+                                    <a
+                                        href={`/api/user/export/${currentReport}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <button
+                                            className="text-white cursor-pointer"
+                                            style={{ backgroundColor: '#7864B4' }}
+                                        >
+                                            Download PDF
+                                        </button>
+                                    </a>
+                                )}
+                                <button onClick={() => goTab(4)}>
+                                    Continue to Barcode
+                                </button>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm mb-1" style={{ color: '#505050' }}>Report ID</p>
-                            <p className="font-medium" style={{ color: '#1E1E1E' }}>
-                                {generatedReportId || 'N/A'}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-sm mb-1" style={{ color: '#505050' }}>Patient ID</p>
-                            <p className="font-medium" style={{ color: '#1E1E1E' }}>
-                                {activePatient.id || 'N/A'}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-sm mb-1" style={{ color: '#505050' }}>Date of Birth</p>
-                            <p className="font-medium" style={{ color: '#1E1E1E' }}>
-                                {activePatient.dob
-                                    ? new Date(activePatient.dob).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric'
-                                    })
-                                    : 'N/A'}
-                            </p>
-                        </div>
-                        <div className="sample-submit">
-                            <button onClick={() => goTab(4)}>
-                                Continue to Barcode
-                            </button>
-                        </div>
-                    </div>
                     </div>
                 )}
             </div>
