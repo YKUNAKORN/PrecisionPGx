@@ -151,5 +151,11 @@
   }
 }
 
-
-
+.recharts-wrapper:focus,
+.recharts-surface:focus,
+.recharts-layer:focus,
+svg:focus,
+path:focus,
+g:focus {
+  outline: none !important;
+}

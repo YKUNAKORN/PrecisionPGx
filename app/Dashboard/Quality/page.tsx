@@ -1,7 +1,7 @@
 'use client';
 
 import React from "react";
-
+import { PieChart, Pie, Cell, Tooltip } from "recharts";
 import { AlertTriangle, Info } from "lucide-react";
 import type { Qualityper } from "../../../lib/fetch/type";
 import { createQualityQueryOptions } from "../../../lib/fetch/Quality";
@@ -59,6 +59,7 @@ const {
           <Chart
             title="Levey–Jennings Control Chart"
             value="Westgard checks: 1-3s (Warn), 2-2s (Warn), R-4s (Warn), 1-4s (Warn), 10x (Warn)"
+            q={q}
           />
         </div>
 
@@ -88,17 +89,114 @@ function Card({ title, value }) {
 }
 
 // ✅ Chart
-function Chart({ title, value }) {
+function Chart({ title, value, q }) {
+  const toNum = (v: any) => {
+    if (typeof v === "string") return parseFloat(v.replace("%", "").trim()) || 0;
+    return Number(v) || 0;
+  };
+
+  const pass = toNum(q.pass);
+  const warning = toNum(q.warning);
+  const failed = toNum(q.failed);
+  const totalCount = toNum(q.total);
+
+  const data = [
+    { name: "Pass", value: pass, color: "#4CAF50" },
+    { name: "Warning", value: warning, color: "#FFA500" },
+    { name: "Failure", value: failed, color: "#F44336" },
+  ];
+
+  const sum = pass + warning + failed;
+
+  // ถ้าเป็น % (รวมใกล้ 100) -> แปลงเป็นจำนวนจาก total ด้วย largest remainder
+  const toCounts = (vals: number[], total: number) => {
+    if (total <= 0 || vals.reduce((a, b) => a + b, 0) === 0) return vals.map(() => 0);
+    const s = vals.reduce((a, b) => a + b, 0);
+    const raw = vals.map((v) => (v / s) * total);
+    const floored = raw.map(Math.floor);
+    let rest = total - floored.reduce((a, b) => a + b, 0);
+    const order = raw
+      .map((r, i) => ({ i, frac: r - Math.floor(r) }))
+      .sort((a, b) => b.frac - a.frac);
+    const final = [...floored];
+    for (let k = 0; k < final.length && rest > 0; k++) {
+      final[order[k].i]++;
+      rest--;
+    }
+    return final;
+  };
+
+  let countByName: Record<string, number>;
+  if (Math.abs(sum - 100) < 0.5 && totalCount > 0) {
+    // เป็นเปอร์เซ็นต์ -> แปลงเป็นจำนวนจาก total
+    const [pC, wC, fC] = toCounts([pass, warning, failed], totalCount);
+    countByName = { Pass: pC, Warning: wC, Failure: fC };
+  } else {
+    // ไม่ใช่เปอร์เซ็นต์ -> ถือว่าเป็นจำนวนอยู่แล้ว
+    countByName = { Pass: pass, Warning: warning, Failure: failed };
+  }
+
+  const total = totalCount || sum; // ไว้ใช้เช็ค empty-state เดิม
+
+  const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => {
+    if (percent <= 0) return null;
+    const RAD = Math.PI / 180;
+    const r = innerRadius + (outerRadius - innerRadius) * 1.3;
+    const x = cx + r * Math.cos(-midAngle * RAD);
+    const y = cy + r * Math.sin(-midAngle * RAD);
+    const color = name === "Pass" ? "#4CAF50" : name === "Warning" ? "#FFA500" : "#F44336";
+    return (
+      <text x={x} y={y} fill={color} textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize={13} fontWeight={600}>
+        {`${name}: ${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
+
   return (
     <div className="bg-[#F9F6FF] border border-[#000000] rounded-xl p-6 shadow-md w-full">
       <h3 className="text-base font-bold text-[#000000]">{title}</h3>
       {value && <p className="text-sm text-[#938F99] mt-3 leading-relaxed">{value}</p>}
-      <div className="h-64 bg-[#D0BCFF1A] mt-5 rounded-lg flex items-center justify-center text-[#938F99] text-sm border border-[#CCC2DC]">
-        Chart Area
-      </div>
+
+      {total <= 0 ? (
+        <div className="h-64 mt-5 rounded-lg flex items-center justify-center text-[#938F99] text-sm border border-[#CCC2DC]">
+          No data
+        </div>
+      ) : (
+        <div className="h-64 mt-5 flex items-center justify-center">
+          <PieChart width={550} height={280} margin={{ top: 12 }}>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={55}
+              outerRadius={100}
+              paddingAngle={2}
+              dataKey="value"
+              label={renderCustomLabel}
+              labelLine={false}
+              minAngle={3}
+            >
+              {data.map((entry, i) => (
+                <Cell key={i} fill={entry.color} />
+              ))}
+            </Pie>
+
+            {/* ตรงนี้คือ controller tooltip; เปลี่ยนเป็นโชว์ "จำนวน" ตาม total */}
+            <Tooltip
+              formatter={(_, name: string) => [`${countByName[name!]}`, `${name}`]}
+              contentStyle={{
+                backgroundColor: "#F9F6FF",
+                border: "1px solid #CCC2DC",
+                borderRadius: "8px",
+              }}
+            />
+          </PieChart>
+        </div>
+      )}
     </div>
   );
 }
+
 
 function Alerts() {
   const alertsData = [
