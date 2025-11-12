@@ -1,13 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState} from "react";
 import { useQuery } from "@tanstack/react-query";
 
 // ✅ ปรับ path ให้ตรงโปรเจ็กต์คุณ
 import { createStorageQueryOptions } from "../../../lib/fetch/Storage";
 import type { Storage } from "../../../lib/fetch/type";
+import { StorageCapacity } from "@/lib/fetch/model/Storage";
+import { getStorageCapacity } from "@/lib/fetch/Storage";
 
 export default function Page() {
+  const [capacity, setCapacity] = useState<StorageCapacity | null>(null);
   const [activeTab, setActiveTab] = useState<"Inventory" | "Storage" | "Clinical Controls" | "Historical">("Inventory");
   const [filters, setFilters] = useState({
     fridge_id: "All",
@@ -16,6 +19,21 @@ export default function Page() {
     sortBy: "ID",
     search: "",
   });
+
+  const fetchData = async () => {
+    const capacity = await getStorageCapacity();
+    console.log("Fetched capacity inside fetchData:", capacity);
+    setCapacity(capacity);
+  };
+
+  useEffect(() => {
+    fetchData();
+    console.log("Fetched capacity:", capacity);
+  }, []);
+
+  let remainingPercent = (capacity?.Remaining || 0) * 100 / (capacity?.Capacity || 1);
+  let usedPercent = capacity ? 100 - remainingPercent : 0;
+
 
   // โหลดข้อมูลผ่าน React Query
   const { data: storagesRaw, isLoading, error } = useQuery(createStorageQueryOptions.all());
@@ -34,9 +52,9 @@ export default function Page() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">
-        <SummaryCard title="Sample Capacity" value="84%" color="bg-green-500" progress={84} />
-        <SummaryCard title="Temperature Alerts" value="0" color="bg-amber-400" progress={0} />
-        <SummaryCard title="Expiring Soon (10d)" value="1" color="bg-red-500" progress={10} />
+        <SummaryCard title="Sample Capacity" value={capacity?.PercentCapacity} color="bg-green-500" progress={capacity?.PercentCapacity} />
+        <SummaryCard title="Remaining" value={capacity?.Remaining} color="bg-amber-400" progress={remainingPercent} />
+        <SummaryCard title="In Use" value={capacity?.Item} color="bg-red-500" progress={usedPercent} />
       </div>
 
       {/* Tabs */}
