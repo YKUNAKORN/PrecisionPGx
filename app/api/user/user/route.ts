@@ -1,0 +1,64 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { ResponseModel } from '@/lib/model/Response'
+import { GetAllUsers } from '@/app/api/user/service/user_service'
+
+/**
+ * @swagger
+ * /api/user/user:
+ *   get:
+ *     summary: Read All users
+ *     description: Retrieve all users from the database
+ *     tags:
+ *       - User
+ *     responses:
+ *       200:
+ *         description: Query Successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "200"
+ *                 message:
+ *                   type: string
+ *                   example: Success
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       email:
+ *                         type: string
+ *                       position:
+ *                         type: string
+ *                       fullname:
+ *                         type: string
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ */
+
+export async function GET() {
+    try {
+        const users = await GetAllUsers();
+
+        (ResponseModel as any).status = '200';
+        (ResponseModel as any).message = 'Success';
+        (ResponseModel as any).data = users;
+
+        return NextResponse.json(ResponseModel, { status: 200 });
+    } catch (error: any) {
+        console.error('Error fetching users:', error);
+
+        (ResponseModel as any).status = '500';
+        (ResponseModel as any).message = 'Internal server error';
+        (ResponseModel as any).data = null;
+
+        return NextResponse.json(ResponseModel, { status: 500 });
+    }
+}
