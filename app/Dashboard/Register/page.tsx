@@ -173,14 +173,14 @@ export default function Page() {
 
     const handleContinue = () => {
         if (!selected) return;
-        setFridge(""); // reset fridge selection
-        setNotes(""); // reset notes
-        setContact(""); // reset contact
-        setSelectedPriority("Routine"); // reset priority
-        setSampleType("blood"); // reset sample type
-        setCollectedAt(toDatetimeLocal()); // reset collected at
-        setDoctor(""); // reset doctor selection
-        setWard(""); // reset ward selection
+        setFridge(""); 
+        setNotes(""); 
+        setContact("");
+        setSelectedPriority("Routine"); 
+        setSampleType("blood"); 
+        setCollectedAt(toDatetimeLocal()); 
+        setDoctor(""); 
+        setWard(""); 
 
         const url = new URL(window.location.href);
         url.searchParams.set("id", selected.id);
@@ -206,13 +206,10 @@ export default function Page() {
         const w = window.open("", "_blank");
         if (!w) return;
 
-        // ⭐️ [FIX 4] ตรวจสอบว่า barcodeSvg เป็น base64 image หรือไม่
         let printContent = "";
         if (barcodeSvg) {
-            // ถ้าใช่ ให้สร้างเป็น <img> tag
             printContent = `<img src="data:image/png;base64,${barcodeSvg}" alt="Barcode" />`;
         } else {
-            // ถ้าไม่ ให้ใช้ logic เดิม (บาร์โค้ดปลอม)
             printContent = makeBarcodeSVG(barcodeText || genId());
         }
 
@@ -259,17 +256,14 @@ export default function Page() {
         };
 
         try {
-            // ⭐️ [แก้ไข] เราจะรอผลลัพธ์ (newReportResult) จากการสร้าง
+
             const newReportResult = await createReport.mutateAsync(reportDTO);
 
-            // --- ⭐️ [เพิ่ม] โค้ดใหม่เพื่อจัดการบาร์โค้ด ---
-            // ดึง ID ที่แท้จริงจาก response ของ backend
-            // (เราเดาโครงสร้าง response จาก createPatientMutation)
+
             const raw = (newReportResult as any)?.data ?? newReportResult;
             const newReport = Array.isArray(raw) ? raw[0] : raw;
 
             if (!newReport || !newReport.id) {
-                // ถ้า backend ไม่ได้ส่ง id กลับมา
                 throw new Error("Report created, but no ID was returned from server.");
             }
 
@@ -434,7 +428,7 @@ export default function Page() {
                 <button
                     className={`step ${currentStep === "3" ? "active" : ""}`}
                     onClick={() => goTab(3)}
-                    disabled={!canGoStep3} // ⭐️ [FIX 5] ใช้ canGoStep3
+                    disabled={!canGoStep3} 
                 >
                     <span className="dot">3</span>
                     <span className="label">Patient data</span>
@@ -445,7 +439,7 @@ export default function Page() {
                 <button
                     className={`step ${currentStep === "4" ? "active" : ""}`}
                     onClick={() => goTab(4)}
-                    disabled={!canGoStep4} // ⭐️ [FIX 6] ใช้ canGoStep4
+                    disabled={!canGoStep4} 
                 >
                     <span className="dot">4</span>
                     <span className="label">Barcode &amp; Label</span>
@@ -653,8 +647,9 @@ export default function Page() {
             )}
 
             <div>
-                {/* ⭐️ [FIX 7] ตรวจสอบ currentStep === "3" ถูกต้องแล้ว */}
+                {/* STEP 3 */}
                 {currentStep === "3" && (
+                    <div className="p-6 border elevation-1 bg-white" style={{ borderColor: '#C8C8D2' }}>
                     <div className="grid grid-cols-2 gap-4 pb-4 border-b" style={{ borderColor: '#C8C8D2' }}>
                         <div>
                             <p className="text-sm mb-1" style={{ color: '#505050' }}>Patient Name</p>
@@ -691,6 +686,7 @@ export default function Page() {
                                 Continue to Barcode
                             </button>
                         </div>
+                    </div>
                     </div>
                 )}
             </div>
