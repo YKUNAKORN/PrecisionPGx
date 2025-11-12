@@ -80,7 +80,7 @@ const {
 // ✅ Card
 function Card({ title, value }) {
   return (
-    <div className="bg-[#F9F6FF] border border-[#000000] rounded-xl p-6 shadow-sm w-75 hover:shadow-md transition">
+    <div className="bg-transparent border border-[#CCC2DC] rounded-xl p-6 shadow-xl w-80 hover:shadow-xl transition">
       <h3 className="text-sm text-[#000000] font-medium">{title}</h3>
       {value && <p className="text-xl font-semibold text-[#4F378B] mt-2">{value}</p>}
     </div>
@@ -90,10 +90,10 @@ function Card({ title, value }) {
 // ✅ Chart
 function Chart({ title, value }) {
   return (
-    <div className="bg-[#F9F6FF] border border-[#000000] rounded-xl p-6 shadow-md w-full">
+    <div className="bg-transparent border border-[#CCC2DC] rounded-xl p-6 shadow-xl w-full">
       <h3 className="text-base font-bold text-[#000000]">{title}</h3>
       {value && <p className="text-sm text-[#938F99] mt-3 leading-relaxed">{value}</p>}
-      <div className="h-64 bg-[#D0BCFF1A] mt-5 rounded-lg flex items-center justify-center text-[#938F99] text-sm border border-[#CCC2DC]">
+      <div className="h-64 bg-transparent mt-5 rounded-lg flex items-center justify-center text-[#938F99] text-sm border border-[#CCC2DC]">
         Chart Area
       </div>
     </div>
@@ -130,13 +130,13 @@ function Alerts() {
   };
 
   return (
-    <div className="bg-[#F9F6FF] rounded-xl p-5 shadow-md w-full border border-[#000000]">
+    <div className="bg-transparent rounded-xl p-5 shadow-xl w-full border border-[#CCC2DC]">
       <h2 className="mb-4 text-lg font-semibold text-[#000000]">Alerts</h2>
       <div className="space-y-3">
         {alertsData.map((alert) => (
           <div
             key={alert.id}
-            className="flex items-start justify-between rounded-lg bg-[#D0BCFF1A] p-3 border border-[#CCC2DC]"
+            className="flex items-start justify-between rounded-lg bg-transparent p-3 border border-[#CCC2DC]"
           >
             <div className="flex items-start gap-3">
               {renderIcon(alert.type)}
@@ -167,7 +167,7 @@ function Inventory() {
   };
 
   return (
-    <div className="bg-[#F9F6FF] rounded-xl p-5 shadow-md w-full border border-[#000000]">
+    <div className="bg-transparent rounded-xl p-5 shadow-xl w-full border border-[#CCC2DC]">
       <h3 className="text-lg font-semibold mb-4 text-[#000000]">Control Inventory</h3>
       <table className="w-full text-sm text-left border-collapse">
         <thead>
@@ -182,7 +182,7 @@ function Inventory() {
           {inventoryData.map((item, idx) => (
             <tr
               key={idx}
-              className="border-b border-[#EAE4F5] last:border-0 hover:bg-[#D0BCFF1A] transition"
+              className="border-b border-[#CCC2DC] last:border-0 hover:bg-[#D0BCFF1A] transition"
             >
               <td className="py-2 text-[#4A4458]">{item.analyte}</td>
               <td className="py-2 text-[#4A4458]">{item.lot}</td>
@@ -199,7 +199,7 @@ function Inventory() {
 // ✅ Status
 function Status() {
   return (
-    <div className="bg-[#F9F6FF] border border-[#000000] rounded-lg p-4 shadow-sm w-full max-w-8xl mx-auto">
+    <div className="bg-transparent border border-[#CCC2DC] rounded-lg p-4 shadow-xl w-full max-w-8xl mx-auto">
       <p className="text-sm text-[#4A4458] flex flex-wrap items-center gap-2">
         <span className="font-medium">Status colors:</span>
 

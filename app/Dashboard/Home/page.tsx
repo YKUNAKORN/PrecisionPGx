@@ -42,24 +42,48 @@ export default function Home() {
       <div className='title-2'>At a glance overview of operations and performance.</div>
 
       <div className="card-c1-container">
-        <div className="card-c1">
+        <div className="card-c1"     
+      style={{
+      border: '1px solid #CCC2DC',
+      boxShadow: '0 8px 24px rgba(204,194,220,0.40), 0 2px 8px rgba(204,194,220,0.25)'
+    }}>
           <p className="card-label-c1">Samples Received</p>
           <p className="card-value-c1">{`${dashboard.sample_received}`}</p>
-          <div className="card-c1-progress">
+          <div className="card-c1-progress" 
+      style={{
+      border: '1px solid #CCC2DC',
+      boxShadow: '0 8px 24px rgba(204,194,220,0.40), 0 2px 8px rgba(204,194,220,0.25)'
+    }}>
             <div className="fill" style={{ width: "72%" }} />
           </div>
         </div>
-        <div className="card-c1">
+        <div className="card-c1"
+        style={{
+      border: '1px solid #CCC2DC',
+      boxShadow: '0 8px 24px rgba(204,194,220,0.40), 0 2px 8px rgba(204,194,220,0.25)'
+    }}>
           <p className="card-label-c1">Tests Completed</p>
           <p className="card-value-c1">{`${dashboard.tests_completed}`}</p>
-          <div className="card-c1-progress">
+          <div className="card-c1-progress"
+          style={{
+      border: '1px solid #CCC2DC',
+      boxShadow: '0 8px 24px rgba(204,194,220,0.40), 0 2px 8px rgba(204,194,220,0.25)'
+    }}>
             <div className="fill" style={{ width: "82%" }} />
           </div>
         </div>
-        <div className="card-c1">
+        <div className="card-c1"
+        style={{
+      border: '1px solid #CCC2DC',
+      boxShadow: '0 8px 24px rgba(204,194,220,0.40), 0 2px 8px rgba(204,194,220,0.25)'
+    }}>
           <p className="card-label-c1">Results Interpreted</p>
           <p className="card-value-c1">{`${dashboard.results_interpret}`}</p>
-          <div className="card-c1-progress">
+          <div className="card-c1-progress"
+          style={{
+      border: '1px solid #CCC2DC',
+      boxShadow: '0 8px 24px rgba(204,194,220,0.40), 0 2px 8px rgba(204,194,220,0.25)'
+    }}>
             <div className="fill" style={{ width: "92%" }} />
           </div>
         </div>
