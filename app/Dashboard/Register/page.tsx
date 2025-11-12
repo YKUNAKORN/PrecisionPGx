@@ -99,7 +99,8 @@ export default function Page() {
 
 
     const { data: BarcodeData, refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
-        ...createBarcodeQueryOptions(activePatient?.id || "")
+        ...createBarcodeQueryOptions(activePatient?.id || ""),
+        enabled: !!activePatient?.id && currentStep === "4",
     });
 
     const patientList: PatientWithId[] = useMemo(() => {
@@ -188,7 +189,6 @@ export default function Page() {
     };
 
     const handleGenerateLocal = () => {
-        // ⭐️ [แก้ไข] เพิ่มการตรวจสอบ
         if (!activePatient?.id) {
             alert("No report data available. Please go back to Step 2.");
             return;
@@ -405,6 +405,8 @@ export default function Page() {
     // ---- UI ----
     return (
         <div className="container">
+            <div className="title-1">Sample Registration</div>
+            <div className="title-2">Search patient, enter sample details, and generate barcode labels.</div>
 
             {/* Tabs */}
             <div className="tabs">
