@@ -50,7 +50,7 @@ export default function Page() {
     <div className="p-6 min-h-screen">
       {/* Header */}
       <h1 className="text-2xl font-bold">Sample Management</h1>
-      <h3 className="text-gray-300 mt-1">Inventory, storage, and status of existing samples</h3>
+      <h3 className="text-300 mt-1">Inventory, storage, and status of existing samples</h3>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">
