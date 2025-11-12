@@ -33,6 +33,8 @@ export default function Page() {
 
   let remainingPercent = (capacity?.Remaining || 0) * 100 / (capacity?.Capacity || 1);
   let usedPercent = capacity ? 100 - remainingPercent : 0;
+  let capacityPercent = capacity?.PercentCapacity || 0;
+  capacityPercent.toString();
 
 
   // โหลดข้อมูลผ่าน React Query
@@ -52,9 +54,9 @@ export default function Page() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">
-        <SummaryCard title="Sample Capacity" value={capacity?.PercentCapacity} color="bg-green-500" progress={capacity?.PercentCapacity} />
-        <SummaryCard title="Remaining" value={capacity?.Remaining} color="bg-amber-400" progress={remainingPercent} />
-        <SummaryCard title="In Use" value={capacity?.Item} color="bg-red-500" progress={usedPercent} />
+        <SummaryCard title="Sample Capacity" value={capacityPercent + " %"} color="bg-green-500" progress={capacity?.PercentCapacity} />
+        <SummaryCard title="Remaining Capacity" value={capacity?.Remaining + " items"} color="bg-amber-400" progress={remainingPercent} />
+        <SummaryCard title="In Use" value={capacity?.Item + " items"} color="bg-red-500" progress={usedPercent} />
       </div>
 
       {/* Tabs */}
