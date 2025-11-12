@@ -10,7 +10,7 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Precision-PGX",
+  title: "PrecisionPGX",
   description: "Precision Pharmacogenomics Laboratory Information Management System",
 };
 
@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased `} >
         <Providers>
           <LayoutWrapper>
-            <div className=" mx-auto w-full p-4 my-10 ">
+            <div className=" mx-auto w-full p-4 my-10">
               {children}
             </div>
 
