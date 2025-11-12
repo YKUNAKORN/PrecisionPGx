@@ -135,7 +135,7 @@ export default function Home() {
           <div className="card-value-c3-subt header">
             <span className="col-id">Sample ID</span>
             <span className="col-name">Patient Name</span>
-            <span className="col-type">Test Type</span>
+            <span className="col-type">Test Panel</span>
             <span className="col-status">Status</span>
           </div>
 
@@ -147,7 +147,7 @@ export default function Home() {
                 <div key={s.id} className="card-value-c3-subt snap-start">
                   <span className="col-id" title={s.id}>{s.id}</span>
                   <span className="col-name" title={s.Eng_name}>{s.Eng_name}</span>
-                  <span className="col-type">{s.specimen_name}</span>
+                  <span className="col-type">{`{$s.rule_name} ? {s.rule_name} : - `}</span>
                   <span className="col-status">
                     <span className={`status ${s.status}`}>
                       {s.status.replace(/^\w/, (c) => c.toUpperCase())}
