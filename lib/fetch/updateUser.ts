@@ -1,7 +1,8 @@
 export type UpdateUserPayload = {
   fullname?: string;
-  email?: string;
   position?: string;
+  phone?: string;
+  license_number?: string;
 };
 
 export async function updateUserById(id: string, payload: UpdateUserPayload) {

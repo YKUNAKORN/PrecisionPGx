@@ -105,6 +105,8 @@ function ProfilePanel() {
     fullname: "",
     email: "",
     position: "",
+    license_number: "",
+    phone: "",
   });
 
   // โหลดข้อมูลครั้งแรก
@@ -136,6 +138,8 @@ function ProfilePanel() {
       fullname: data.fullname ?? "",
       email: data.email ?? "",
       position: data.position ?? "",
+      license_number: data.license_number ?? "",
+      phone: data.phone ?? "",
     });
   }, [data]);
 
@@ -177,17 +181,19 @@ function ProfilePanel() {
     try {
       setSaving(true);
 
-      
+
       // ส่งเฉพาะฟิลด์ที่เปลี่ยนจริง ๆ
       const payload: Record<string, string> = {};
       if (form.fullname !== (data.fullname ?? "")) payload.fullname = form.fullname;
       if (form.email !== (data.email ?? "")) payload.email = form.email;
       if (form.position !== (data.position ?? "")) payload.position = form.position;
+      if (form.phone !== (data.phone ?? "")) payload.phone = form.phone;
+      if (form.license_number !== (data.license_number ?? "")) payload.license_number = form.license_number;
 
       // ถ้าไม่มีอะไรเปลี่ยนเลย
       if (Object.keys(payload).length === 0) {
         setEditing(false);
-        return; 
+        return;
       }
 
       // 🔧 เรียกอัปเดต (เดิมคุณไม่ได้ส่ง payload ทำให้ server ได้ body ว่าง → 500 ง่ายมาก)
@@ -197,7 +203,7 @@ function ProfilePanel() {
         setData(updated); // useEffect(data) จะ sync form ให้อัตโนมัติ
         alert("Profile updated successfully!");
         window.location.reload();
-        
+
       } else {
         alert("Failed to update profile.");
       }
@@ -256,14 +262,13 @@ function ProfilePanel() {
 
             <Field label="Email Address">
               <InputOrText
-                value={form.email}
-                onChange={(v) => setForm((f) => ({ ...f, email: v }))}
-                readOnly={!editing}
-              />
+                value={form.email} readOnly/>
             </Field>
 
             <Field label="Phone Number">
-              <InputOrText value={data.phone ?? ""} readOnly />
+              <InputOrText value={form.phone}
+                onChange={(v) => setForm((f) => ({ ...f, phone: v }))}
+                readOnly={!editing} />
             </Field>
 
             <Field label="Position">
