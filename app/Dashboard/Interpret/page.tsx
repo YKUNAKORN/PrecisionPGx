@@ -2072,7 +2072,7 @@ export function ResultInterpretation() {
     <div className="h-full w-full overflow-x-hidden" style={{ backgroundColor: '#F5F3FF' }}>
       <div className="flex items-center justify-between p-6 border-b" style={{ backgroundColor: '#F5F3FF', borderColor: '#DCDCE6' }}>
         <div>
-          <h1 style={{ color: '#1E1E1E' }}>Result Interpretation</h1>
+          <h3 style={{ color: '#1E1E1E' }}>Result Interpretation</h3>
           <p style={{ color: '#505050' }}>Review and interpret genetic test results</p>
         </div>
       </div>
