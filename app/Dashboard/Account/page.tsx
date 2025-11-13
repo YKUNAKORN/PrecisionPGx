@@ -274,8 +274,9 @@ function ProfilePanel() {
             <Field label="Position">
               <InputOrText
                 value={form.position}
-                onChange={(v) => setForm((f) => ({ ...f, position: v }))}
-                readOnly={!editing}
+                // onChange={(v) => setForm((f) => ({ ...f, position: v }))}
+                // readOnly={!editing}
+                readOnly
               />
             </Field>
 

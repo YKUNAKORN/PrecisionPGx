@@ -104,7 +104,7 @@ export default function Logo() {
   return (
     <div className="flex items-center justify-center pt-4">
       <Link
-        href="/"
+        href="/Dashboard/Home"
         aria-label="Homepage"
         className="grid place-items-center size-15  !rounded-3xl"
       >
