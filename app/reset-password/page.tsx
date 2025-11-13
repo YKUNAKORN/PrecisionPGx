@@ -2,12 +2,11 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-const logoSrc = "/LOGO-login-kongjing.png";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
+const logoSrc = "/LOGO-login-kongjing.png";
 const supabase = createClient();
-
 interface UpdatedPassword {
     password: string;
 }
@@ -71,7 +70,7 @@ export default function ResetPassword() {
                     <h1 className="text-xl font-semibold">Reset password</h1>
                 </div>
 
-                <div className="rounded-2xl border border-neutral-300 p-6 dark:border-neutral-700" style={{ boxShadow: '0 10px 30px rgba(185, 169, 217, 0.4)' }}>
+                <div className="rounded-2xl border border-[#B8A8D8] p-6 dark:border-neutral-700" style={{ boxShadow: '0 10px 30px rgba(185, 169, 217, 0.4)' }}>
                     <header className="space-y-1 mb-4">
                         <h2 className="text-lg font-semibold">Set new password</h2>
                         <p className="text-sm text-neutral-500">
@@ -91,7 +90,7 @@ export default function ResetPassword() {
                                     placeholder="Enter new password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full rounded-lg border border-neutral-300 px-3 py-2 pr-10 outline-none focus:border-neutral-400 dark:border-neutral-700 bg-white dark:bg-neutral-950"
+                                    className="w-full rounded-lg border border-[#B8A8D8] px-3 py-2 pr-10 outline-none focus:border-neutral-400 dark:border-neutral-700 bg-white dark:bg-neutral-950"
                                 />
                                 <button
                                     type="button"
@@ -123,7 +122,7 @@ export default function ResetPassword() {
                                     placeholder="Confirm new password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="w-full rounded-lg border border-neutral-300 px-3 py-2 pr-10 outline-none focus:border-neutral-400 dark:border-neutral-700 bg-white dark:bg-neutral-950"
+                                    className="w-full rounded-lg border border-[#B8A8D8] px-3 py-2 pr-10 outline-none focus:border-neutral-400 dark:border-neutral-700 bg-white dark:bg-neutral-950"
                                 />
                                 <button
                                     type="button"

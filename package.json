@@ -33,6 +33,7 @@
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "express": "^5.1.0",
+    "framer-motion": "^12.23.24",
     "jose": "^6.1.0",
     "jsbarcode": "^3.11.5",
     "lucide-react": "^0.543.0",
