@@ -43,7 +43,13 @@
   background:#cdb6ff;             
   color:#1f1c21;
   border-color:#cdb6ff;
-  box-shadow: 0 0 0 3px #6b4eff33;      
+  box-shadow: 0 0 0 3px #6b4eff33;    
+  transition: background .4s;
+}
+
+.step .dot:hover {
+  background: #574883;
+  color: white;
 }
 
 .step .label-2{
@@ -52,9 +58,9 @@
 }
 
 .step.active .dot{
-  background:#8b5cf6;           
-  color:#1f1c21;
-  border-color:#8b5cf6;
+  background:#574883;           
+  color:white;
+  border-color:#574883;
   box-shadow: 0 0 0 3px #6b4eff33; 
 }
 
@@ -83,21 +89,21 @@
   display: grid;
   grid-template-columns: 2.15fr 1fr;  /* ซ้ายใหญ่ ขวาเล็ก */
   gap: 24px;
-  padding: 0px 16px 0px 0px;
+  padding: 0;
+  width: 100%;
 }
 
 .topic-1-3-l{
   display: flex;
   flex-direction: column;
   gap: 12px;
-  border: 1px solid #444;         
-  border-radius: 12px;
+  border: 1.5px solid #B8A8D8;         
+  border-radius: 20px;
   margin-top:24px ;
   padding: 24px 24px 16px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  background: #EDE8FE;
   overflow: hidden;
+  box-shadow: 1px 1px 10px rgb(183, 169, 210);
 }
 
 .row-top{
@@ -112,15 +118,18 @@
 
 /* ปุ่ม Add */
 .add-btn{
-  border: 1px solid #444;
   font-weight: 500;
-  color: #1f1c21;
-  background: #cdb6ff;
+  color: white;
+  background: #574883;
   border-radius: 12px;
   padding: 8px 14px;
   font-size: 14px;
   cursor: pointer;
-  transition: background .2s;
+  transition: filter .4s;
+}
+
+.add-btn:hover {
+  filter: brightness(1.3);
 }
 
 .row-search{
@@ -132,10 +141,11 @@
 
 .search-input{
   height: 38px;
-  border: 1px solid #444;
+  border: 1.5px solid #B8A8D8;
   border-radius: 12px;
   padding: 0 12px 0 12px; 
   outline: none;
+  background: #fff;
 }
 
 .search-input::placeholder{ 
@@ -151,11 +161,15 @@
   font-weight: 500;
   height: 38px;
   padding: 0 14px;
-  color: #1f1c21;
-  background:#cdb6ff;       /* ม่วงโปร่ง */
-  border: 1px solid #444;
+  color: white;
+  background:#574883;
   border-radius: 12px;
   cursor: pointer;
+  transition: filter .2s;
+}
+
+.scan-btn:hover {
+  filter: brightness(1.3);
 }
 
 .help-text{
@@ -168,9 +182,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border: 1px solid #444; 
+  border: 1.5px solid #B8A8D8; 
   border-radius: 12px;
   padding: 14px 16px;
+  background: #f5f0ff;
   transition: background 0.2s, border 0.2s;
 }
 
@@ -193,7 +208,8 @@
 
 .select-btn {
   background: transparent;
-  border: 1px solid #444; 
+  border: 1.5px solid #B8A8D8; 
+  color: #B8A8D8;
   border-radius: 8px;
   padding: 5px 14px;
   font-size: 13px;
@@ -201,13 +217,20 @@
   transition: all 0.2s;
 }
 
+.select-btn:hover {
+  background: #B8A8D8;
+  color: #FFFFFF; /* เปลี่ยนสีตัวอักษรเป็นสีขาว */
+}
+
 .topic-1-3-r {
-  border: 1px solid #444;
-  border-radius: 12px;
+  border: 1.5px solid #B8A8D8;
+  border-radius: 20px;
   margin-top:24px ;
   padding: 16px 16px 16px 24px;
   font-size: 24px;
   height: 60%;
+  background: #EDE8FE;
+  box-shadow: 1px 1px 10px rgb(183, 169, 210);
 }
 .sel-title{
   font-size: 20px;
@@ -249,29 +272,31 @@
 .continue-btn{
   width: 100%;
   margin-top: 18px;
-  background: #cdb6ff;       /* ม่วงอ่อนแบบดีไซน์ */
-  color: #1f1c21;
+  background: #574883;      
+  color: white;
   border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  padding: 5px;
+  border-radius: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
   cursor: pointer;
-  transition: filter .2s;
-  font-size: 16px;
+  transition: filter .4s;
+  font-size: 14px;
 }
 .continue-btn:hover{ 
-  filter: brightness(0.65); 
+  filter: brightness(1.3); 
 }
 
 .Sample-Detail {
   display: grid;
   font-size: 14px;
   margin-top: 24px;
-  margin-right: 32px;
-  border-radius: 12px;
-  border: 1px solid #444;
+  margin-right: 0;
+  border-radius: 20px;
+  border: 1.5px solid #B8A8D8;
   padding: 24px 24px 16px 24px;
-  width: 65%;
+  width: 100%;
+  background: #EDE8FE;
+  box-shadow: 1px 1px 10px rgb(183, 169, 210);
 }
 
 .row {
@@ -300,12 +325,13 @@
   width: 100%;
   height: 40px;
   padding: 0 40px 0 12px;
-  border: 1px solid #444;
+  border: 1.5px solid #B8A8D8;
   border-radius: 12px;
   line-height: 38px;
   appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
+  background: #fff;
 }
 
 .select-type::after{
@@ -328,9 +354,10 @@
   width: 100%;
   height: 40px;
   padding: 0 40px 0 12px;  
-  border: 1px solid #444;
+  border: 1.5px solid #B8A8D8;
   border-radius: 12px;
   line-height: 44px;
+  background: #fff;
 }
 
 .date-trigger::-webkit-calendar-picker-indicator {
@@ -347,19 +374,24 @@
 
 .priority-btn {
   padding: 6px 12px;
+  margin-right: 15px;
   font-size: 14px;
   border-radius: 12px;
-  
+  border: 1.5px solid #574883;
+  background: #fff;
+  color: #574883;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 .priority-btn:hover {
-  background:#cac5c0;
+  background: #DEC8FF;
 }
 
 .priority-btn.active {
-  background: #cdb6ff;
-  color: #1a171c;
+  background: #574883;
+  color: #fff;
+  border-color: #574883;
 }
 
 .field {
@@ -373,9 +405,10 @@
   width: 100%;         
   margin-bottom: 2px;
   padding: 8px 8px 8px 12px;                 
-  border: 1px solid #444;
+  border: 1.5px solid #B8A8D8;
   border-radius: 12px;
-  outline: none; 
+  outline: none;
+  background: #fff;
 }
 
 .textarea-type {
@@ -388,9 +421,10 @@
   width: 100%;
   min-height: 100px;            
   padding: 8px 8px 8px 12px;                 
-  border: 1px solid #444;
+  border: 1px solid #B8A8D8;
   border-radius: 12px;
-  outline: none; 
+  outline: none;
+  background: #fff;
 }
 
 .sample-submit {
@@ -402,13 +436,17 @@
 
 .sample-submit button {
   font-weight: 500;
-  background: #cdb6ff;
-  color: #000000;
+  background: #574883;
+  color: white;
   padding: 10px 20px;
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: filter 0.4s;
+}
+
+.sample-submit button:hover {
+  filter: brightness(1.3);
 }
 
 .row{
@@ -502,35 +540,48 @@ html, body {
   display:grid;
   grid-template-columns: 2fr 1fr;
   gap:24px;
+  width: 100%;
 }
 
-.bc-left,
-.bc-right{
-  border:1px solid #444;
-  border-radius:12px;
+.bc-left {
+  border:1.5px solid #B8A8D8;
+  border-radius:20px;
   padding:24px;
+  background: #EDE8FE;
+  box-shadow: 1px 1px 10px rgb(183, 169, 210);
+}
+
+.bc-right{
+  border:1.5px solid #B8A8D8;
+  border-radius:20px;
+  padding:24px;
+  background: #EDE8FE;
+  box-shadow: 1px 1px 10px rgb(183, 169, 210);
+  display: flex;
+  flex-direction: column;
 }
 
 .bc-title{
   font-size:20px;
-  font-weight:700;
+  font-weight:500;
   margin-bottom:16px;
 }
 
 .bc-panel-title{
   font-size:20px;
-  font-weight:700;
+  font-weight:500;
   margin-bottom:50px;
 }
 
 .bc-canvas{
   height:300px;
-  border:1px solid #ffffff14;
+  border:1.5px solid #B8A8D8;
   border-radius:12px;
   display:flex;
   align-items:center;
   justify-content:center;
   padding:16px;
+  background: #fff;
 }
 .bc-svg svg{ width:200px; height:auto; }
 .bc-placeholder{ color:#c1c1c7; }
@@ -538,49 +589,162 @@ html, body {
 .bc-generate{
   display: block;
   margin: 16px auto 0;
-  margin-top:16px;
-  background:#cdb6ff;
-  color:#1f1c21;
-  border:none;
-  border-radius:8px;
-  font-weight:600;
-  padding: 8px 12px;
+  margin-top:25px;
+  margin-bottom: 15px;
+  background:#574883;
+  color:white;
+  border-radius:12px;
+  padding: 8px 25px;
   cursor:pointer;
-  transition:filter .2s;
+  transition:filter .4s;
 }
-.bc-generate:hover{ filter:brightness(.9); }
+.bc-generate:hover{ filter:brightness(1.3); }
 
 .bc-rows{ display:grid; gap:18px; margin-bottom:12px; }
 .bc-row{ display:flex; align-items:center; justify-content:space-between; }
 .bc-row b{ letter-spacing:.3px; font-size: 14px; font-weight: 400;}
 
-.bc-note{ font-size:12px; margin: 20px 0px 50px; }
+.bc-note{ font-size:12px; margin: 20px 0px 0px; }
 
-.bc-actions{ display:grid; gap:10px; }
-.bc-print{
-  background:#2a262c;
-  color:#ddd;
-  border:1px solid #3b3740;
-  border-radius:8px;
-  padding: 5px;
+.bc-actions{ display:grid; gap:10px; margin-top: auto; }
+
+.bc-print {
+  color:#574883;
+  border:1px solid #574883;
+  border-radius:10px;
+  padding: 8px;
   cursor:pointer;
-  font-weight: 500;
+  font-size: 14px;
+  transition: background 0.4s;
+}
+
+.bc-print:hover {
+  background: #574883;
+  color: white;
 }
 
 .bc-register{
-  
-  background:#cdb6ff;
-  color:#1f1c21;
+  background:#574883;
+  color:white;
   border:none;
-  border-radius:8px;
-  padding: 5px;
-  font-weight:500;
+  border-radius:10px;
+  padding: 8px;
+  font-size: 14px;
   cursor:pointer;
+  transition: filter 0.4s;
 }
-.bc-register:hover{ filter:brightness(.9); }
+
+.bc-register:hover {
+  filter: brightness(1.3);
+}
 
 @media (max-width: 1024px){
   .Barcodes{ grid-template-columns:1fr; }
+}
+
+/* ===== Step 3: Patient Data ===== */
+.Patient-Data {
+  margin-top: 24px;
+  width: 100%;
+}
+
+.patient-data-card {
+  border: 1.5px solid #B8A8D8;
+  border-radius: 20px;
+  padding: 24px;
+  background: #EDE8FE;
+  box-shadow: 1px 1px 10px rgb(183, 169, 210);
+}
+
+.patient-data-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.patient-data-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.patient-data-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.patient-data-label {
+  font-size: 14px;
+  color: #505050;
+  margin: 0;
+}
+
+.patient-data-value {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1E1E1E;
+  margin: 0;
+}
+
+.patient-data-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #B8A8D8;
+}
+
+.patient-data-link {
+  text-decoration: none;
+}
+
+.patient-data-btn-download {
+  background: #574883;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: filter 0.4s;
+}
+
+.patient-data-btn-download:hover {
+  filter: brightness(1.3);
+}
+
+.patient-data-btn-continue {
+  border: 1.5px solid #574883;
+  color: #574883;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-size: 14px;  
+  cursor: pointer;
+  transition: background 0.4s;
+}
+
+.patient-data-btn-continue:hover {
+  background: #574883;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .patient-data-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .patient-data-actions {
+    flex-direction: column;
+  }
+  
+  .patient-data-btn-download,
+  .patient-data-btn-continue {
+    width: 100%;
+  }
 }
 
 

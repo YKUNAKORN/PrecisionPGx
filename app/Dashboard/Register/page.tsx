@@ -8,7 +8,7 @@ import { createPatientQueryOptions } from "../../../lib/fetch/Patient";
 import { createWardQueryOptions } from "../../../lib/fetch/Ward";
 import { createDoctorQueryOptions } from "../../../lib/fetch/Position";
 import { createFridgeQueryOptions } from "../../../lib/fetch/Fridge";
-import { mutateReportQueryOptions, ReportsDTO } from "../../../lib/fetch/Report";
+import { mutateReportQueryOptions, ReportsDTO , createReportQueryOptions } from "../../../lib/fetch/Report";
 import createBarcodeQueryOptions from "../../../lib/fetch/Barcode"; // ถ้ามี
 import type { Fridge, Patient as PatientBase } from "../../../lib/fetch/type";
 
@@ -56,6 +56,8 @@ export default function Page() {
         enabled: !!currentId,
     });
 
+    
+
     const patientDetailEntity = useMemo(() => {
         const raw = patientDetail as any;
         return raw && typeof raw === "object" && "data" in raw
@@ -63,9 +65,9 @@ export default function Page() {
             : (raw as PatientWithId | null);
     }, [patientDetail]);
 
-    // local states
     const [q, setQ] = useState("");
     const [selected, setSelected] = useState<PatientWithId | null>(null);
+    const [currentReport, setcurrentReport] = useState<PatientWithId | null>(null);
 
     const [barcodeText, setBarcodeText] = useState<string>("");
     const [barcodeSvg, setBarcodeSvg] = useState<string>("");
@@ -88,18 +90,27 @@ export default function Page() {
     const [notes, setNotes] = useState("");
     const [contact, setContact] = useState("");
     const [fridge, setFridge] = useState("");
+    const [generatedReportId, setGeneratedReportId] = useState<string>("");
+
 
 
     const activePatient = (selected ?? patientDetailEntity) || null;
     const canGoStep2 = !!activePatient?.id;
     const canGoStep3 = detailsSaved;
+    const canGoStep4 = detailsSaved;
 
-    // barcode manual refetch (optional)
-    const barcodeQuery = createBarcodeQueryOptions(activePatient?.id || "");
-    const { refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
-        ...barcodeQuery,
-        enabled: false,
+
+    const { data: BarcodeData, refetch: refetchBarcode, isFetching: fetchingBarcode } = useQuery({
+        ...createBarcodeQueryOptions(activePatient?.id || ""),
+        enabled: !!activePatient?.id && currentStep === "4",
     });
+
+    const {
+    data: report,
+    isLoading: loadingReport,
+    error: errorReport,
+  } = useQuery({...createReportQueryOptions.detail(currentReport ?? ""),
+        enabled: !!currentReport,})
 
     const patientList: PatientWithId[] = useMemo(() => {
         const raw = patients as any;
@@ -128,6 +139,20 @@ export default function Page() {
     const goTab = (n: number) => {
         const url = new URL(window.location.href);
         if (n === 1) {
+            setQ("");
+            setSelected(null);
+            setSampleType("blood");
+            setCollectedAt(toDatetimeLocal());
+            setDoctor("");
+            setWard("");
+            setNotes("");
+            setContact("");
+            setFridge("");
+            setSelectedPriority("Routine");
+            setDetailsSaved(false);
+            setBarcodeText("");
+            setBarcodeSvg("");
+            setGeneratedReportId("");
             url.searchParams.delete("id");
             url.searchParams.delete("step");
             router.replace(url.pathname);
@@ -147,38 +172,71 @@ export default function Page() {
             router.push(`${url.pathname}?${url.searchParams.toString()}`);
             return;
         }
+        if (n === 4) {
+            if (!canGoStep4) return;
+            url.searchParams.set("id", activePatient!.id);
+            url.searchParams.set("step", "4");
+            router.push(`${url.pathname}?${url.searchParams.toString()}`);
+            return;
+        }
     };
 
     const handleContinue = () => {
         if (!selected) return;
+        setFridge("");
+        setNotes("");
+        setContact("");
+        setSelectedPriority("Routine");
+        setSampleType("blood");
+        setCollectedAt(toDatetimeLocal());
+        setDoctor("");
+        setWard("");
+
         const url = new URL(window.location.href);
         url.searchParams.set("id", selected.id);
         router.push(`${url.pathname}?${url.searchParams.toString()}`);
     };
 
     const handleGenerateLocal = () => {
-    // ⭐️ [แก้ไข] เพิ่มการตรวจสอบ
-    if (!activePatient?.id) {
-        alert("No report data available. Please go back to Step 2.");
-        return;
-    }
+        if (!activePatient?.id) {
+            alert("No report data available. Please go back to Step 2.");
+            return;
+        }
 
-    if (activePatient && activePatient?.id) {
-        const id: string = activePatient?.id;
-        setBarcodeText(id);
-        setBarcodeSvg(makeBarcodeSVG(id));
-    } else {
-        alert("Could not find Report ID in mutation data.");
-    }
-  };
+        if (BarcodeData && BarcodeData.data.base64) {
+            setBarcodeText(BarcodeData.data.patientId);
+            setBarcodeSvg(BarcodeData.data.base64);
+        } else {
+            alert("Could not find Report ID in mutation data.");
+        }
+    };
 
     const handlePrint = () => {
         const w = window.open("", "_blank");
         if (!w) return;
+
+        let printContent = "";
+        if (barcodeSvg) {
+            printContent = `<img src="data:image/png;base64,${barcodeSvg}" alt="Barcode" />`;
+        } else {
+            printContent = makeBarcodeSVG(barcodeText || genId());
+        }
+
         const html = `
-      <html><head><title>Print Label</title>
-      <style>@page { margin: 8mm; } body{ background:#fff; }</style>
-      </head><body>${barcodeSvg || makeBarcodeSVG(barcodeText || genId())}</body></html>`;
+        <html><head><title>Print Label</title>
+        <style>
+            @page { margin: 8mm; } 
+            body{ 
+                background:#fff; 
+                display:flex; 
+                justify-content:center; 
+                align-items:center; 
+                height: 100vh;
+            }
+            img { max-width: 100%; max-height: 100%; }
+        </style>
+        </head><body>${printContent}</body></html>`;
+
         w.document.write(html);
         w.document.close();
         w.focus();
@@ -190,61 +248,51 @@ export default function Page() {
     // Save Step 2 -> POST report -> Step 3
     // -----------------------------
     const handleSaveSample = async () => {
-    if (!activePatient?.id) return;
+        if (!activePatient?.id) return;
 
-    // ⭐️ [ลบ] เราจะลบส่วน "ensure barcode" ที่สับสนทิ้งไป
-    /* let lab = barcodeText;
-    if (!lab) {
-        // ... (โค้ดที่ถูกลบ) ...
-    }
-    */
 
-    const reportDTO: ReportsDTO = {
-      specimens: sampleType || "blood",
-      doctor_id: doctor || "", //doop
-      patient_id: activePatient.id || "",
-      priority: selectedPriority || "Routine",
-      ward_id: ward || "",
-      contact_number: contact || "",
-      collected_at: collectedAt || new Date().toISOString(),
-      fridge_id: fridge, //doop
-      medical_technician_id: "", //user id
-      note: notes,
+        const reportDTO: ReportsDTO = {
+            specimens: sampleType || "blood",
+            doctor_id: doctor || "", //doop
+            patient_id: activePatient.id || "",
+            priority: selectedPriority || "Routine",
+            ward_id: ward || "",
+            contact_number: contact || "",
+            collected_at: collectedAt || new Date().toISOString(),
+            fridge_id: fridge, //doop
+            medical_technician_id: "",
+            note: notes,
+        };
+
+        try {
+
+            const newReportResult = await createReport.mutateAsync(reportDTO);
+
+
+            const raw = (newReportResult as any)?.data ?? newReportResult;
+            const newReport = Array.isArray(raw) ? raw[0] : raw;
+
+            if (!newReport || !newReport.id) {
+                throw new Error("Report created, but no ID was returned from server.");
+            }
+
+            setGeneratedReportId(newReport.id);
+
+            // --- สิ้นสุดโค้ดใหม่ ---
+
+            setcurrentReport(newReport.id);
+            alert("Sample details saved successfully.");
+            // success -> go to step 3
+            setDetailsSaved(true);
+            const url = new URL(window.location.href);
+            url.searchParams.set("id", activePatient.id);
+            url.searchParams.set("step", "3");
+            url.searchParams.set("ok2", "1");
+            router.push(`${url.pathname}?${url.searchParams.toString()}`);
+        } catch (e) {
+            alert(`Cannot create report: ${(e as Error).message}`);
+        }
     };
-
-    try {
-      // ⭐️ [แก้ไข] เราจะรอผลลัพธ์ (newReportResult) จากการสร้าง
-      const newReportResult = await createReport.mutateAsync(reportDTO);
-
-      // --- ⭐️ [เพิ่ม] โค้ดใหม่เพื่อจัดการบาร์โค้ด ---
-      // ดึง ID ที่แท้จริงจาก response ของ backend
-      // (เราเดาโครงสร้าง response จาก createPatientMutation)
-      const raw = (newReportResult as any)?.data ?? newReportResult;
-      const newReport = Array.isArray(raw) ? raw[0] : raw;
-
-      if (!newReport || !newReport.id) {
-        // ถ้า backend ไม่ได้ส่ง id กลับมา
-        throw new Error("Report created, but no ID was returned from server.");
-      }
-
-      const reportId = newReport.id;
-
-      // ตั้งค่า state ของบาร์โค้ด (สำหรับใช้ใน Step 3 ทันที)
-      setBarcodeText(reportId);
-      setBarcodeSvg(makeBarcodeSVG(reportId));
-      // --- สิ้นสุดโค้ดใหม่ ---
-
-      // success -> go to step 3
-      setDetailsSaved(true);
-      const url = new URL(window.location.href);
-      url.searchParams.set("id", activePatient.id);
-      url.searchParams.set("step", "3");
-      url.searchParams.set("ok2", "1");
-      router.push(`${url.pathname}?${url.searchParams.toString()}`);
-    } catch (e) {
-      alert(`Cannot create report: ${(e as Error).message}`);
-    }
-  };
 
     const [openAdd, setOpenAdd] = useState(false);
 
@@ -287,26 +335,26 @@ export default function Page() {
             age--;
         }
         return age;
-    }; 
+    };
 
     const createPatientMutation = useMutation({
         mutationFn: async (body: any) => {
             const res = await fetch("/api/user/patient", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
             });
 
             if (!res.ok) {
-            const text = await res.text();
-            throw new Error(text || "Failed to create patient");
+                const text = await res.text();
+                throw new Error(text || "Failed to create patient");
             }
 
             return res.json();
         },
         onSuccess: async (res: any) => {
             await qc.invalidateQueries({
-            queryKey: createPatientQueryOptions.all().queryKey,
+                queryKey: createPatientQueryOptions.all().queryKey,
             });
 
             const raw = res?.data ?? res;
@@ -358,7 +406,7 @@ export default function Page() {
 
 
     const onBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) setOpenAdd(false);
+        if (e.target === e.currentTarget) setOpenAdd(false);
     };
     const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -373,13 +421,13 @@ export default function Page() {
             {/* Tabs */}
             <div className="tabs">
                 <button className={`step ${currentStep === "1" ? "active" : ""}`} onClick={() => goTab(1)}>
-                    <span className="dot">1</span><span className="label">Patient</span>
+                    <span className="dot">1</span><span className="label">seclect Patient</span>
                 </button>
 
                 <span className="sep" />
 
                 <button
-                    className={`step ${currentStep === "2" ? "active" : ""} ${!canGoStep2 ? "disabled" : ""}`}
+                    className={`step ${currentStep === "2" ? "active" : ""}`}
                     onClick={() => goTab(2)}
                     disabled={!canGoStep2}
                 >
@@ -390,11 +438,22 @@ export default function Page() {
                 <span className="sep" />
 
                 <button
-                    className={`step ${currentStep === "3" ? "active" : ""} ${!canGoStep3 ? "disabled" : ""}`}
+                    className={`step ${currentStep === "3" ? "active" : ""}`}
                     onClick={() => goTab(3)}
                     disabled={!canGoStep3}
                 >
                     <span className="dot">3</span>
+                    <span className="label">Patient data</span>
+                </button>
+
+                <span className="sep" />
+
+                <button
+                    className={`step ${currentStep === "4" ? "active" : ""}`}
+                    onClick={() => goTab(4)}
+                    disabled={!canGoStep4}
+                >
+                    <span className="dot">4</span>
                     <span className="label">Barcode &amp; Label</span>
                 </button>
             </div>
@@ -525,29 +584,29 @@ export default function Page() {
                     </div>
 
                     {/* ward / notes */}
-                        <div className="field">
-                            <div className="main-topic">Ward</div>
-                            <div className="textarea-type">
-                                <select
-                                    className="textarea-oneline"
-                                    value={ward}
-                                    onChange={(e) => setWard(e.target.value)}
-                                    disabled={loadingwards || !wards} // disable จนกว่าจะโหลดเสร็จ
-                                >
-                                    <option value="" disabled>
-                                        {loadingdoctors ? "Loading wards..." : "Select ward name"}
+                    <div className="field">
+                        <div className="main-topic">Ward</div>
+                        <div className="textarea-type">
+                            <select
+                                className="textarea-oneline"
+                                value={ward}
+                                onChange={(e) => setWard(e.target.value)}
+                                disabled={loadingwards || !wards} // disable จนกว่าจะโหลดเสร็จ
+                            >
+                                <option value="" disabled>
+                                    {loadingdoctors ? "Loading wards..." : "Select ward name"}
+                                </option>
+                                {wards?.map((ward: any, index: number) => (
+                                    <option key={index} value={ward.id}>
+                                        {ward.name}
                                     </option>
-                                    {wards?.map((ward: any, index: number) => (
-                                        <option key={index} value={ward.id}>
-                                            {ward.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                                ))}
+                            </select>
                         </div>
+                    </div>
 
                     <div className="row">
-                         <div className="field">
+                        <div className="field">
                             <div className="main-topic">Clinical Notes</div>
                             <div className="textarea-type">
                                 <textarea className="textarea-trigger" placeholder="Special handling, storage, or clinical indications" rows={1} value={notes} onChange={(e) => setNotes(e.target.value)} />
@@ -600,211 +659,267 @@ export default function Page() {
             )}
 
             {/* STEP 3 */}
-             <div>
-            {/* STEP 3 */}
             {currentStep === "3" && (
-                <div className="Barcodes">
-                <div className="bc-left">
-                    <div className="bc-title">Barcode Preview</div>
-                    <div className="bc-canvas">
-                    {barcodeSvg ? (
-                        <div
-                        className="bc-svg"
-                        // แสดง SVG ที่สร้างจาก JsBarcode
-                        dangerouslySetInnerHTML={{ __html: barcodeSvg }}
-                        />
-                    ) : (
-                        <div className="bc-placeholder">No barcode yet</div>
-                    )}
+                <div className="Patient-Data">
+                    <div className="patient-data-card">
+                        <div className="patient-data-title">Patient Data</div>
+                        <div className="patient-data-grid">
+                            <div className="patient-data-field">
+                                <p className="patient-data-label">Patient Name</p>
+                                <p className="patient-data-value">
+                                    {activePatient?.Eng_name || activePatient?.Thai_name || activePatient?.name || 'N/A'}
+                                </p>
+                            </div>
+                            <div className="patient-data-field">
+                                <p className="patient-data-label">Report ID</p>
+                                <p className="patient-data-value">
+                                    {generatedReportId || 'N/A'}
+                                </p>
+                            </div>
+                            <div className="patient-data-field">
+                                <p className="patient-data-label">Patient ID</p>
+                                <p className="patient-data-value">
+                                    {activePatient?.id || 'N/A'}
+                                </p>
+                            </div>
+                            <div className="patient-data-field">
+                                <p className="patient-data-label">Date of Birth</p>
+                                <p className="patient-data-value">
+                                    {activePatient?.dob
+                                        ? new Date(activePatient.dob).toLocaleDateString('en-US', {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric'
+                                        })
+                                        : 'N/A'}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="patient-data-actions">
+                            {activePatient?.id && currentReport && (
+                                <a
+                                    href={`/api/user/export/${currentReport}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="patient-data-link"
+                                >
+                                    <button className="patient-data-btn-download">
+                                        Download PDF
+                                    </button>
+                                </a>
+                            )}
+                            <button className="patient-data-btn-continue" onClick={() => goTab(4)}>
+                                Continue to Barcode
+                            </button>
+                        </div>
                     </div>
-                    <button className="bc-generate" onClick={handleGenerateLocal}>
-                    Generate Barcode (Local)
-                    </button>
                 </div>
-
-                <div className="bc-right">
-                    <div className="bc-panel-title">Label Details</div>
-                    <div className="bc-rows">
-                    <div className="bc-row">
-                        <span>Lab Number</span>
-                        <b>{barcodeText || "Pending"}</b>
-                    </div>
-                    <div className="bc-row">
-                        <span>Patient</span>
-                        <b>{activePatient?.Eng_name ?? "—"}</b>
-                    </div>
-                    <div className="bc-row">
-                        <span>Priority</span>
-                        <b>{selectedPriority.toUpperCase()}</b>
-                    </div>
-                    </div>
-                    <p className="bc-note">
-                    This is a visual preview and supports printing via the browser’s print dialog.
-                    </p>
-                    <div className="bc-actions">
-                    <button className="bc-print" onClick={handlePrint}>
-                        Print Label
-                    </button>
-                    <button
-                        className="bc-register"
-                        onClick={() =>
-                        alert(
-                            `Registered sample for ${
-                            activePatient?.Eng_name ?? "(unknown)"
-                            } with ${barcodeText || "(no barcode)"}`
-                        )
-                        }
-                    >
-                        Register Sample
-                    </button>
-                    </div>
-                </div>     
-            </div>
             )}
+
+            {/* STEP 4 (Barcode & Label) */}
+            <div>
+                {/* ⭐️ [FIX 9] เปลี่ยนเงื่อนไขเป็น currentStep === "4" */}
+                {currentStep === "4" && (
+                    <div className="Barcodes">
+                        <div className="bc-left">
+                            <div className="bc-title">Barcode Preview</div>
+                            <div className="bc-canvas">
+                                {barcodeSvg ? (
+                                    <img
+                                        src={`data:image/png;base64,${barcodeSvg}`} // สร้าง Data URL
+                                        alt="Generated Barcode"
+                                        className="bc-image" />)
+                                    : (
+                                        <div className="bc-placeholder">No barcode yet</div>
+                                    )}
+                            </div>
+                            <button className="bc-generate" onClick={handleGenerateLocal}>
+                                Generate Barcode (Local)
+                            </button>
+                        </div>
+                        <div className="bc-right">
+                            <div className="bc-panel-title">Label Details</div>
+                            <div className="bc-rows">
+                                <div className="bc-row">
+                                    <span>Lab Number</span>
+                                    <b>{barcodeText || "Pending"}</b>
+                                </div>
+                                <div className="bc-row">
+                                    <span>Patient</span>
+                                    <b>{activePatient?.Eng_name ?? "—"}</b>
+                                </div>
+                                <div className="bc-row">
+                                    <span>Priority</span>
+                                    <b>{selectedPriority.toUpperCase()}</b>
+                                </div>
+                            </div>
+                            <p className="bc-note">
+                                This is a visual preview and supports printing via the browser’s print dialog.
+                            </p>
+                            <div className="bc-actions">
+                                <button className="bc-print" onClick={handlePrint}>
+                                    Print Label
+                                </button>
+                                <button
+                                    className="bc-register"
+                                    onClick={() =>
+                                        alert(
+                                            `Registered sample for ${activePatient?.Eng_name ?? "(unknown)"
+                                            } with ${barcodeText || "(no barcode)"}`
+                                        )
+                                    }
+                                >
+                                    Register Sample
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
-        {openAdd && (
-            <div className="modal-backdrop" onMouseDown={onBackdropClick}>
-            <div
-            className="modal-sheet"
-            ref={dialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="add-title"
-            >
-            <div className="modal-header">
-                <div className="modal-title">
-                    <span className="i-user-plus">👤</span>
-                    <span id="add-title">Add New Patient</span>
+
+            {openAdd && (
+                <div className="modal-backdrop" onMouseDown={onBackdropClick}>
+                    <div
+                        className="modal-sheet"
+                        ref={dialogRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="add-title"
+                    >
+                        <div className="modal-header">
+                            <div className="modal-title">
+                                <span className="i-user-plus">👤</span>
+                                <span id="add-title">Add New Patient</span>
+                            </div>
+                            <button className="modal-close" onClick={() => setOpenAdd(false)}>
+                                ✕
+                            </button>
+                        </div>
+
+                        <p className="modal-desc">
+                            Register a new patient in the system. All required fields must be completed.
+                        </p>
+
+                        <div className="modal-body">
+                            <div className="modal-section-title">Patient Information</div>
+
+                            <div className="grid1">
+                                <label className="field">
+                                    <span className="label-2">Thai Name <b className="req">*</b></span>
+                                    <input
+                                        className="input-2"
+                                        value={newPatient.thaiName}
+                                        onChange={(e) => handleNewChange("thaiName", e.target.value)}
+                                        placeholder="ชื่อ-นามสกุล (ภาษาไทย)"
+                                    />
+                                </label>
+                                <label className="field">
+                                    <span className="label-2">English Name <b className="req">*</b></span>
+                                    <input
+                                        className="input-2"
+                                        value={newPatient.engName}
+                                        onChange={(e) => handleNewChange("engName", e.target.value)}
+                                        placeholder="First Last (English)"
+                                    />
+                                </label>
+                                <label className="field">
+                                    <span className="label-2">
+                                        Ethnicity <b className="req">*</b>
+                                    </span>
+                                    <input
+                                        className="input-2"
+                                        placeholder="e.g. Thai"
+                                        value={newPatient.ethnicity}
+                                        onChange={(e) => handleNewChange("ethnicity", e.target.value)}
+                                    />
+                                </label>
+                            </div>
+
+                            <div className="grid2">
+                                <label className="field">
+                                    <span className="label-2">Date of Birth <b className="req">*</b></span>
+                                    <input
+                                        className="input-2"
+                                        type="date"
+                                        value={newPatient.dob}
+                                        onChange={(e) => handleNewChange("dob", e.target.value)}
+                                    />
+                                </label>
+                                <label className="field">
+                                    <span className="label-2">Gender <b className="req">*</b></span>
+                                    <select
+                                        className="select-trigger-2"
+                                        value={newPatient.gender}
+                                        onChange={(e) => handleNewChange("gender", e.target.value)}
+                                    >
+                                        <option value="">Select gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </label>
+                            </div>
+
+                            <div className="modal-section-title">Contact Information</div>
+                            <div className="grid1">
+                                <label className="field">
+                                    <span className="label-2">Phone Number<b className="req"> *</b></span>
+                                    <input
+                                        className="input-2"
+                                        placeholder="089-123-4567"
+                                        value={newPatient.phone}
+                                        onChange={(e) => handleNewChange("phone", e.target.value)}
+                                    />
+                                </label>
+                                <label className="field">
+                                    <span className="label-2">Email Address<b className="req"> *</b></span>
+                                    <input
+                                        className="input-2"
+                                        type="email"
+                                        placeholder="patient@example.com"
+                                        value={newPatient.email}
+                                        onChange={(e) => handleNewChange("email", e.target.value)}
+                                    />
+                                </label>
+                                <label className="field" style={{ gridColumn: "1 / -1" }}>
+                                    <span className="label-2">Address<b className="req"> *</b></span>
+                                    <input
+                                        className="input-2"
+                                        placeholder="Enter full address"
+                                        value={newPatient.address}
+                                        onChange={(e) => handleNewChange("address", e.target.value)}
+                                    />
+                                </label>
+                                <p className="auto-id-hint">
+                                    Hospital Number (HN) and Registration Number (RN) will be generated automatically on the server.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="modal-footer">
+                            <button
+                                className="btn-ghost"
+                                onClick={() => {
+                                    resetNewPatient();
+                                    setOpenAdd(false);
+                                }}
+                                disabled={createPatientMutation.isPending}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="btn-primary"
+                                onClick={handleAddPatient}
+                                disabled={createPatientMutation.isPending}
+                            >
+                                {createPatientMutation.isPending ? "Saving..." : "Add Patient"}
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <button className="modal-close" onClick={() => setOpenAdd(false)}>
-                ✕
-                </button>
-            </div>
+            )}
 
-            <p className="modal-desc">
-                Register a new patient in the system. All required fields must be completed.
-            </p>
 
-            <div className="modal-body">
-                <div className="modal-section-title">Patient Information</div>
-
-                <div className="grid1">
-                    <label className="field">
-                        <span className="label-2">Thai Name <b className="req">*</b></span>
-                        <input
-                        className="input-2"
-                        value={newPatient.thaiName}
-                        onChange={(e) => handleNewChange("thaiName", e.target.value)}
-                        placeholder="ชื่อ-นามสกุล (ภาษาไทย)"
-                        />
-                    </label>
-                    <label className="field">
-                        <span className="label-2">English Name <b className="req">*</b></span>
-                        <input
-                        className="input-2"
-                        value={newPatient.engName}
-                        onChange={(e) => handleNewChange("engName", e.target.value)}
-                        placeholder="First Last (English)"
-                        />
-                    </label>
-                    <label className="field">
-                        <span className="label-2">
-                            Ethnicity <b className="req">*</b>
-                        </span>
-                        <input
-                            className="input-2"
-                            placeholder="e.g. Thai"
-                            value={newPatient.ethnicity}
-                            onChange={(e) => handleNewChange("ethnicity", e.target.value)}
-                        />
-                    </label>
-                </div>
-
-                <div className="grid2">
-                    <label className="field">
-                        <span className="label-2">Date of Birth <b className="req">*</b></span>
-                        <input
-                        className="input-2"
-                        type="date"
-                        value={newPatient.dob}
-                        onChange={(e) => handleNewChange("dob", e.target.value)}
-                        />
-                    </label>
-                    <label className="field">
-                        <span className="label-2">Gender <b className="req">*</b></span>
-                        <select
-                        className="select-trigger-2"
-                        value={newPatient.gender}
-                        onChange={(e) => handleNewChange("gender", e.target.value)}
-                        >
-                        <option value="">Select gender</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                        </select>
-                    </label>
-                </div>
-
-                <div className="modal-section-title">Contact Information</div>
-                <div className="grid1">
-                    <label className="field">
-                        <span className="label-2">Phone Number<b className="req"> *</b></span>
-                        <input
-                        className="input-2"
-                        placeholder="089-123-4567"
-                        value={newPatient.phone}
-                        onChange={(e) => handleNewChange("phone", e.target.value)}
-                        />
-                    </label>
-                    <label className="field">
-                        <span className="label-2">Email Address<b className="req"> *</b></span>
-                        <input
-                        className="input-2"
-                        type="email"
-                        placeholder="patient@example.com"
-                        value={newPatient.email}
-                        onChange={(e) => handleNewChange("email", e.target.value)}
-                        />
-                    </label>
-                    <label className="field" style={{ gridColumn: "1 / -1" }}>
-                        <span className="label-2">Address<b className="req"> *</b></span>
-                        <input
-                        className="input-2"
-                        placeholder="Enter full address"
-                        value={newPatient.address}
-                        onChange={(e) => handleNewChange("address", e.target.value)}
-                        />
-                    </label>
-                    <p className="auto-id-hint">
-                        Hospital Number (HN) and Registration Number (RN) will be generated automatically on the server.
-                    </p>
-                </div>
-            </div>
-
-           <div className="modal-footer">
-                <button
-                    className="btn-ghost"
-                    onClick={() => {
-                    resetNewPatient();
-                    setOpenAdd(false);
-                    }}
-                    disabled={createPatientMutation.isPending}
-                >
-                    Cancel
-                </button>
-                <button
-                    className="btn-primary"
-                    onClick={handleAddPatient}
-                    disabled={createPatientMutation.isPending}
-                >
-                    {createPatientMutation.isPending ? "Saving..." : "Add Patient"}
-                </button>
-            </div>
-            </div>
-            </div>
-        )}
-
-        
         </div>
     );
 }
