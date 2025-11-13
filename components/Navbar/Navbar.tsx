@@ -2,7 +2,7 @@
 "use client";
 
 import Account from "./Account";
-import { Darkmode } from "./Darkmode";
+// import { Darkmode } from "./Darkmode";
 import Home from "./Home";
 import Interpret from "./Interpret";
 import Logo from "./Logo";
@@ -27,7 +27,7 @@ export default function Navbar() {
         </nav>
 
         <nav aria-label="Utilities" className="mb-2 flex flex-col items-center gap-2  ">
-          <div className="size-10"><Darkmode /></div>
+          {/* <div className="size-10"><Darkmode /></div> */}
         </nav>
       </aside>
   );
