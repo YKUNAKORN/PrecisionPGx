@@ -658,33 +658,34 @@ export default function Page() {
                 </div>
             )}
 
-            <div>
-                {/* STEP 3 */}
-                {currentStep === "3" && (
-                    <div className="p-6 border elevation-1 bg-white" style={{ borderColor: '#C8C8D2' }}>
-                        <div className="grid grid-cols-2 gap-4 pb-4 border-b" style={{ borderColor: '#C8C8D2' }}>
-                            <div>
-                                <p className="text-sm mb-1" style={{ color: '#505050' }}>Patient Name</p>
-                                <p className="font-medium" style={{ color: '#1E1E1E' }}>
-                                    {activePatient.Eng_name || activePatient.name || 'N/A'}
+            {/* STEP 3 */}
+            {currentStep === "3" && (
+                <div className="Patient-Data">
+                    <div className="patient-data-card">
+                        <div className="patient-data-title">Patient Data</div>
+                        <div className="patient-data-grid">
+                            <div className="patient-data-field">
+                                <p className="patient-data-label">Patient Name</p>
+                                <p className="patient-data-value">
+                                    {activePatient?.Eng_name || activePatient?.Thai_name || activePatient?.name || 'N/A'}
                                 </p>
                             </div>
-                            <div>
-                                <p className="text-sm mb-1" style={{ color: '#505050' }}>Report ID</p>
-                                <p className="font-medium" style={{ color: '#1E1E1E' }}>
+                            <div className="patient-data-field">
+                                <p className="patient-data-label">Report ID</p>
+                                <p className="patient-data-value">
                                     {generatedReportId || 'N/A'}
                                 </p>
                             </div>
-                            <div>
-                                <p className="text-sm mb-1" style={{ color: '#505050' }}>Patient ID</p>
-                                <p className="font-medium" style={{ color: '#1E1E1E' }}>
-                                    {activePatient.id || 'N/A'}
+                            <div className="patient-data-field">
+                                <p className="patient-data-label">Patient ID</p>
+                                <p className="patient-data-value">
+                                    {activePatient?.id || 'N/A'}
                                 </p>
                             </div>
-                            <div>
-                                <p className="text-sm mb-1" style={{ color: '#505050' }}>Date of Birth</p>
-                                <p className="font-medium" style={{ color: '#1E1E1E' }}>
-                                    {activePatient.dob
+                            <div className="patient-data-field">
+                                <p className="patient-data-label">Date of Birth</p>
+                                <p className="patient-data-value">
+                                    {activePatient?.dob
                                         ? new Date(activePatient.dob).toLocaleDateString('en-US', {
                                             year: 'numeric',
                                             month: 'short',
@@ -693,29 +694,27 @@ export default function Page() {
                                         : 'N/A'}
                                 </p>
                             </div>
-                            <div className="sample-submit">
-                                {activePatient?.id && (
-                                    <a
-                                        href={`/api/user/export/${currentReport}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        <button
-                                            className="text-white cursor-pointer"
-                                            style={{ backgroundColor: '#7864B4' }}
-                                        >
-                                            Download PDF
-                                        </button>
-                                    </a>
-                                )}
-                                <button onClick={() => goTab(4)}>
-                                    Continue to Barcode
-                                </button>
-                            </div>
+                        </div>
+                        <div className="patient-data-actions">
+                            {activePatient?.id && currentReport && (
+                                <a
+                                    href={`/api/user/export/${currentReport}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="patient-data-link"
+                                >
+                                    <button className="patient-data-btn-download">
+                                        Download PDF
+                                    </button>
+                                </a>
+                            )}
+                            <button className="patient-data-btn-continue" onClick={() => goTab(4)}>
+                                Continue to Barcode
+                            </button>
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
 
             {/* STEP 4 (Barcode & Label) */}
             <div>
