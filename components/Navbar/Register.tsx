@@ -18,9 +18,8 @@ const Account = () => {
         variant="ghost"
         className={[
           "w-18 h-13   !rounded-3xl transition",
-          // ✅ ถ้า path ตรงกับหน้าปัจจุบัน ให้แสดงสไตล์ active
           isActive
-            ? "bg-primary text-white"
+            ? "bg-primary text-white hover:bg-[#8123FE]"
             : "hover:bg-primary hover:text-white",
         ].join(" ")}
       >
