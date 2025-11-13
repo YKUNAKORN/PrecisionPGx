@@ -32,16 +32,20 @@ export default function AuthPage() {
         <div
           role="tablist"
           aria-label="Auth tabs"
-          className="mb-4 relative rounded-full border border-neutral-300 p-1 dark:border-neutral-700 overflow-hidden"
-          style={{ boxShadow: '0 4px 12px rgba(139, 92, 246, 0.25)' }}
+          className="mb-4 relative rounded-full border border-[#B8A8D8] p-1 dark:border-neutral-700 overflow-hidden"
+          style={{ boxShadow: "0 4px 12px rgba(139, 92, 246, 0.25)" }}
           onMouseLeave={() => setHoveredTab(null)}
         >
           <span
             className="absolute top-1 h-9 w-[calc(50%-0.25rem)] bg-purple-500 rounded-full transition-all duration-500 ease-in-out pointer-events-none"
             style={{
-              left: hoveredTab 
-                ? (hoveredTab === "signin" ? "0.25rem" : "calc(49% + 0.25rem)")
-                : (tab === "signin" ? "0.25rem" : "calc(49% + 0.25rem)"),
+              left: hoveredTab
+                ? hoveredTab === "signin"
+                  ? "0.25rem"
+                  : "calc(49% + 0.25rem)"
+                : tab === "signin"
+                ? "0.25rem"
+                : "calc(49% + 0.25rem)",
             }}
           />
           <div className="relative grid grid-cols-2">
@@ -52,9 +56,9 @@ export default function AuthPage() {
               onMouseEnter={() => setHoveredTab("signin")}
               className={[
                 "h-9 rounded-full text-sm font-medium transition-colors duration-300 z-10 cursor-pointer",
-                (hoveredTab === "signin" || (tab === "signin" && !hoveredTab))
-                  ? "text-white" 
-                  : "text-neutral-700 dark:text-neutral-300"
+                hoveredTab === "signin" || (tab === "signin" && !hoveredTab)
+                  ? "text-white"
+                  : "text-neutral-700 dark:text-neutral-300",
               ].join(" ")}
             >
               Sign In
@@ -67,9 +71,9 @@ export default function AuthPage() {
               onMouseEnter={() => setHoveredTab("signup")}
               className={[
                 "h-9 rounded-full text-sm font-medium transition-colors duration-300 z-10 cursor-pointer",
-                (hoveredTab === "signup" || (tab === "signup" && !hoveredTab))
-                  ? "text-white" 
-                  : "text-neutral-700 dark:text-neutral-300"
+                hoveredTab === "signup" || (tab === "signup" && !hoveredTab)
+                  ? "text-white"
+                  : "text-neutral-700 dark:text-neutral-300",
               ].join(" ")}
             >
               Sign Up
@@ -78,7 +82,10 @@ export default function AuthPage() {
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl border border-neutral-300 p-6 dark:border-neutral-700" style={{ boxShadow: '0 10px 30px rgba(185, 169, 217, 0.4)' }}>
+        <div
+          className="rounded-2xl border border-[#B8A8D8] p-6"
+          style={{ boxShadow: "0 10px 30px rgba(185, 169, 217, 0.4)" }}
+        >
           {tab === "signin" ? <SignInForm /> : <SignUpForm />}
         </div>
       </div>
@@ -88,7 +95,6 @@ export default function AuthPage() {
 
 /* ----------------------------- Sub-components ----------------------------- */
 import { useRouter } from "next/navigation";
-
 
 function SignInForm() {
   const router = useRouter();
@@ -114,8 +120,7 @@ function SignInForm() {
       if (!res.ok) {
         setError(data?.message || "Email หรือ Password ไม่ถูกต้อง");
       } else {
-        // ✅ ได้ cookie แล้ว จาก API
-        router.push("/Dashboard/Home"); // ไปหน้า home หรือหน้าที่คุณต้องการ
+        router.push("/Dashboard/Home");
       }
     } catch (err) {
       setError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
@@ -156,8 +161,9 @@ function SignInForm() {
       {error ? <p className="text-sm text-red-500">{error}</p> : null}
       <div className="text-right">
         <span
-          onClick={() => router.push("/forgotpassword")} 
-          className="inline-block text-xs text-neutral-500 hover:text-purple-500 cursor-pointer transition-colors">
+          onClick={() => router.push("/forgotpassword")}
+          className="inline-block text-xs text-neutral-500 hover:text-purple-500 cursor-pointer transition-colors"
+        >
           forgot password?
         </span>
       </div>
@@ -189,7 +195,7 @@ function SignUpForm() {
     e.preventDefault();
     setError("");
     setSuccess("");
-    
+
     if (!fullName || !email || !password) {
       setError("กรอกข้อมูลให้ครบก่อน");
       return;
@@ -203,7 +209,6 @@ function SignUpForm() {
     setLoading(true);
 
     try {
-      // 👇 สมมติว่าในโปรเจ็กต์คุณมี route นี้อยู่แล้ว
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -211,8 +216,8 @@ function SignUpForm() {
           email: email,
           password: password,
           fullname: fullName,
-          position : position,
-          confirmPassword:confirmPassword, // เผื่อฝั่ง API คุณเช็กด้วย
+          position: position,
+          confirmPassword: confirmPassword,
         }),
       });
 
@@ -222,7 +227,6 @@ function SignUpForm() {
         setError(data?.message || "สมัครสมาชิกไม่สำเร็จ");
       } else {
         setSuccess("สร้างบัญชีสำเร็จแล้ว! ให้กลับไป Sign in ได้เลย");
-        // เคลียร์ฟอร์ม
         setFullName("");
         setEmail("");
         setPosition("");
@@ -264,7 +268,7 @@ function SignUpForm() {
           setEmail(e.target.value)
         }
       />
-      
+
       <label htmlFor="position" className="block space-y-1.5">
         <span className="text-sm font-medium">Position</span>
         <select
@@ -273,7 +277,7 @@ function SignUpForm() {
           value={position}
           onChange={(e) => setPosition(e.target.value)}
           className="
-                      w-full rounded-lg border border-neutral-300 px-3 pr-10 py-2 outline-none
+                      w-full rounded-lg border border-[#B8A8D8] px-3 pr-10 py-2 outline-none
                       ring-0 cursor-pointer transition-colors bg-white dark:bg-neutral-950
                       hover:border-neutral-400 focus:border-neutral-400 dark:border-neutral-700
                       appearance-none
@@ -325,7 +329,6 @@ function SignUpForm() {
   );
 }
 
-
 /* --------------------------------- UI Bits -------------------------------- */
 
 function TextField(props: {
@@ -347,7 +350,7 @@ function TextField(props: {
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        className="w-full rounded-lg border border-neutral-300 px-3 py-2 outline-none ring-0 placeholder:text-neutral-400 focus:border-neutral-400 dark:border-neutral-700 bg-white dark:bg-neutral-950"
+        className="w-full rounded-lg border border-[#B8A8D8] px-3 py-2 outline-none ring-0 placeholder:text-neutral-400 focus:border-neutral-400 dark:border-neutral-700 bg-white dark:bg-neutral-950"
       />
     </label>
   );
@@ -375,7 +378,7 @@ function PasswordField(props: {
           placeholder={placeholder}
           value={value}
           onChange={onChange}
-          className="w-full rounded-lg border border-neutral-300 px-3 py-2 pr-10 outline-none focus:border-neutral-400 dark:border-neutral-700 bg-white dark:bg-neutral-950"
+          className="w-full rounded-lg border border-[#B8A8D8] px-3 py-2 pr-10 outline-none focus:border-neutral-400 dark:border-neutral-700 bg-white dark:bg-neutral-950"
         />
         <button
           type="button"
@@ -383,13 +386,39 @@ function PasswordField(props: {
           className="absolute inset-y-0 right-0 px-3 text-sm text-neutral-500 hover:text-neutral-700 cursor-pointer transition-colors"
         >
           {show ? (
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
+              />
             </svg>
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
           )}
         </button>
@@ -397,7 +426,6 @@ function PasswordField(props: {
     </div>
   );
 }
-
 
 function Divider({ label }: { label: string }) {
   return (

@@ -49,7 +49,7 @@ export default function Forgotpassword() {
                     <h1 className="text-xl font-semibold">Forgot password</h1>
                 </div>
 
-                <div className="rounded-2xl border border-neutral-300 p-6 dark:border-neutral-700" style={{ boxShadow: '0 10px 30px rgba(185, 169, 217, 0.4)' }}>
+                <div className="rounded-2xl border border-[#B8A8D8] p-6 dark:border-neutral-700" style={{ boxShadow: '0 10px 30px rgba(185, 169, 217, 0.4)' }}>
                     <header className="space-y-1 mb-4">
                         <h2 className="text-lg font-semibold">Reset password</h2>
                         <p className="text-sm text-neutral-500">
@@ -66,7 +66,7 @@ export default function Forgotpassword() {
                                 placeholder="Enter your email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full rounded-lg border border-neutral-300 px-3 py-2 outline-none ring-0 placeholder:text-neutral-400 focus:border-neutral-400 dark:border-neutral-700 bg-white dark:bg-neutral-950"
+                                className="w-full rounded-lg border border-[#B8A8D8] px-3 py-2 outline-none ring-0 placeholder:text-neutral-400 focus:border-neutral-400 dark:border-neutral-700 bg-white dark:bg-neutral-950"
                             />
                         </label>
 

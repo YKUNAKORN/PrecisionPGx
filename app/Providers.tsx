@@ -5,7 +5,6 @@ import { ThemeProvider } from "./theme-provder";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 export default function Providers({ children }: { children: ReactNode }) {
-  // ✅ สร้าง QueryClient หนึ่งตัวต่อการ mount
   const [queryClient] = useState(() => new QueryClient());
 
   return (
@@ -22,4 +21,3 @@ export default function Providers({ children }: { children: ReactNode }) {
     </QueryClientProvider>
   );
 }
-
