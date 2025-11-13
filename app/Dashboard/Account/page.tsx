@@ -53,31 +53,39 @@ export default function AccountSettingsPage() {
           <p className="mt-1 text-sm">Manage your profile, preferences, and security settings</p>
         </header>
 
-        <div className="mb-6">
-          <nav aria-label="Tabs">
-            <ul className="flex w-full rounded-3xl border">
-              {TABS.map((t) => {
-                const active = t.key === tab;
-                return (
-                  <li key={t.key} className="flex-1">
-                    <button
-                      type="button"
-                      onClick={() => setTab(t.key)}
-                      className={[
-                        "w-full inline-flex items-center justify-center gap-2",
-                        "rounded-2xl px-4 py-2 text-sm font-medium transition-all",
-                        "outline-offset-2 focus-visible:outline",
-                        active ? "bg-primary shadow-sm" : "hover:bg-primary/60",
-                      ].join(" ")}
-                    >
-                      <span className="font-medium">{t.label}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-        </div>
+    <div className="mb-6">
+      <nav className="rounded-full" aria-label="Tabs">
+        <ul
+          className="bg-transparent flex w-full rounded-full p-1  border-[#CCC2DC] shadow-[4px_12px_16px_0px_rgba(79,55,139,0.3)] "
+          
+        >
+          {TABS.map((t) => {
+            const active = t.key === tab;
+            return (
+              <li key={t.key} className="flex-1">
+                <button
+                  type="button"
+                  onClick={() => setTab(t.key)}
+                  className={[
+                    "w-full h-full inline-flex items-center justify-center gap-2",
+                    "px-4 py-2.5 text-sm font-medium transition-all rounded-full",
+                    "outline-none",
+
+                    // 🌟 Active = กรอบม่วงมนๆ แต่ไม่เต็มกรอบ (เหมือนตัวอย่าง)
+                    active
+                      ? "bg-[#574883] text-[#FFFFFF] rounded-5xl border border-violet-600 "
+                      : "text-[#1D1D1D]"
+                  ].join(" ")}
+                >
+                  {t.label}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </div>
+
 
         {tab === "profile" && <ProfilePanel />}
         {tab === "security" && <SecurityPanel />}
@@ -223,72 +231,90 @@ function ProfilePanel() {
   if (!data) return <div className="p-6 text-red-600">Profile not found</div>;
 
   /* ================== Layout Page Account ================== */
-  return (
+  ;return (
     <section className="space-y-6">
       {/* ================== Personal / Summary + Form ================== */}
-      <div className="relative rounded-2xl border shadow-sm p-6 bg-panel">
-        <button
-          type="button"
-          onClick={handleEdit}
-          disabled={saving}
-          className="absolute top-2.5 right-5 p-0.5 border rounded-md text-sm bg-primary/60 "
-        >
-          {editing ? (saving ? "Saving..." : "Save") : "Edit"}
-        </button>
-
-        <div className="grid gap-6 md:grid-cols-[320px_1fr]">
-          {/* Summary card (left) */}
-          <div className="rounded-xl border shadow-sm p-5">
-            <div className="flex items-center gap-4">
-              <div className="grid place-items-center rounded-full border shadow-sm w-16 h-16 text-base font-semibold">
-                {initials}
-              </div>
-              <div>
-                <div className="text-base font-semibold">{data.fullname}</div>
-                <div className="text-sm">{data.position}</div>
-              </div>
-            </div>
+      <div className="grid gap-6 md:grid-cols-[minmax(300px,360px)_1fr]">
+      {/* Left: Profile summary card */}
+      <div className="bg-transparent border border-[#CCC2DC] rounded-xl p-6 shadow-[4px_12px_16px_0px_rgba(79,55,139,0.3)] transition">
+        <div className="flex flex-col items-center text-center gap-4">
+          {/* Avatar circle */}
+          <div className="grid place-items-center rounded-full bg-[#574883] text-white w-20 h-20 text-xl font-semibold">
+            {initials}
           </div>
 
-          {/* Form (right) — คุมค่าจาก form เสมอ */}
-          <form className="grid gap-4 md:grid-cols-2">
-            <Field label="Full Name">
-              <InputOrText
-                value={form.fullname}
-                onChange={(v) => setForm((f) => ({ ...f, fullname: v }))}
-                readOnly={!editing}
-              />
-            </Field>
+          {/* Name + position */}
+          <div>
+            <div className="text-base font-semibold">{data.fullname}</div>
+            <div className="text-sm opacity-80">{data.position}</div>
+          </div>
 
-            <Field label="Email Address">
-              <InputOrText
-                value={form.email} readOnly/>
-            </Field>
-
-            <Field label="Phone Number">
-              <InputOrText value={form.phone}
-                onChange={(v) => setForm((f) => ({ ...f, phone: v }))}
-                readOnly={!editing} />
-            </Field>
-
-            <Field label="Position">
-              <InputOrText
-                value={form.position}
-                onChange={(v) => setForm((f) => ({ ...f, position: v }))}
-                readOnly={!editing}
-              />
-            </Field>
-
-            <Field label="Department" full>
-              <InputOrText value={data.ward?.name ?? data.ward_id ?? ""} readOnly />
-            </Field>
-          </form>
+          {/* Department chip (ถ้ามี) */}
+          {data.ward?.name && (
+            <span className="inline-flex items-center rounded-full border px-3 py-1 text-xs opacity-90">
+              {data.ward.name}
+            </span>
+          )}
         </div>
       </div>
 
+      {/* Right: Personal information form card */}
+      <div className="relative rounded-2xl p-6 bg-panel border border-[#CCC2DC] shadow-[4px_12px_16px_0px_rgba(79,55,139,0.3)] ">
+        <button
+    type="button"
+    onClick={handleEdit}
+    disabled={saving}
+    className={[
+      "absolute top-4 right-4",
+      "px-4 py-2 text-sm font-semibold",
+      "rounded-md",
+      "bg-[#574883] text-white",
+      "hover:bg-violet-700 active:bg-violet-800",
+    ].join(" ")}
+  >
+    {editing ? (saving ? "Saving..." : "Save") : "Edit"}
+  </button>
+
+        <h3 className="text-xl font-semibold mb-4">Personal Information</h3>
+
+        <form className="grid gap-4 md:grid-cols-2">
+          <Field label="Full Name">
+            <InputOrText
+              value={form.fullname}
+              onChange={(v) => setForm((f) => ({ ...f, fullname: v }))}
+              readOnly={!editing}
+            />
+          </Field>
+
+          <Field label="Email Address">
+            <InputOrText value={form.email} readOnly />
+          </Field>
+
+          <Field label="Phone Number">
+            <InputOrText
+              value={form.phone}
+              onChange={(v) => setForm((f) => ({ ...f, phone: v }))}
+              readOnly={!editing}
+            />
+          </Field>
+
+          <Field label="Position">
+            <InputOrText value={form.position} readOnly />
+          </Field>
+
+          <Field label="Department" full>
+            <InputOrText
+              value={data.ward?.name ?? data.ward_id ?? ""}
+              readOnly
+            />
+          </Field>
+        </form>
+      </div>
+    </div>
+
       {/* ================== Laboratory info (ตัวอย่าง UI) ================== */}
-      <div className="rounded-2xl border shadow-sm p-6 bg-panel">
-        <h3 className="text-sm font-semibold">Laboratory Information</h3>
+      <div className="bg-transparent border border-[#CCC2DC] rounded-xl p-6 shadow-[4px_12px_16px_0px_rgba(79,55,139,0.3)] transition">
+        <h3 className="text-xl mb-8 font-semibold">Laboratory Information</h3>
         <div className="mt-4 grid gap-4 md:grid-cols-3">
           <Field label="Laboratory ID">
             <Input defaultValue="LAB-001" readOnly />
@@ -303,7 +329,7 @@ function ProfilePanel() {
       </div>
 
       {/* ================== Delete profile ================== */}
-      <div className="rounded-2xl border border-destructive shadow-sm p-6">
+      <div className="rounded-2xl border border-destructive shadow-sm p-6" >
         <h3 className="text-sm font-semibold text-destructive">Delete Profile</h3>
         <p className="mt-1 text-sm">Permanently delete your profile and all associated data.</p>
         <div className="mt-3">
@@ -317,7 +343,7 @@ function ProfilePanel() {
         </div>
       </div>
     </section>
-  );
+  )
 }
 
 /* ========================= Security ========================= */
@@ -325,14 +351,14 @@ function ProfilePanel() {
 function SecurityPanel() {
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border   p-5">
-        <h3 className="text-lg font-semibold mb-2">Password &amp; Security</h3>
+      <div className="bg-transparent border border-[#CCC2DC] rounded-xl p-6 shadow-[4px_12px_16px_0px_rgba(79,55,139,0.3)] transition">
+        <h3 className="text-xl font-semibold mb-2">Password &amp; Security</h3>
 
         <form className="grid gap-4 md:max-w-md">
           {/* Current Password */}
           <div className="space-y-1.5">
             <label className="text-sm font-medium ">Current Password</label>
-            <div className="relative">
+            <div className="relative bg-white rounded-xl ">
               <span className="pointer-events-none absolute inset-y-0 left-3 inline-flex items-center">
                 <KeyIcon className="size-5 " aria-hidden />
               </span>
@@ -351,7 +377,7 @@ function SecurityPanel() {
           {/* New Password */}
           <div className="space-y-1.5">
             <label className="text-sm font-medium ">New Password</label>
-            <div className="relative">
+            <div className="relative bg-white rounded-xl ">
               <input
                 name="newPassword"
                 type="password"
@@ -367,7 +393,7 @@ function SecurityPanel() {
           {/* Confirm New Password */}
           <div className="space-y-1.5">
             <label className="text-sm font-medium ">Confirm New Password</label>
-            <div className="relative">
+            <div className="relative  bg-white rounded-xl ">
               <input
                 name="confirmPassword"
                 type="password"
@@ -383,7 +409,7 @@ function SecurityPanel() {
           {/* Submit (UI only) */}
           <button
             type="submit"
-            className="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-violet-700 px-5 py-2.5 text-base font-medium text-white shadow hover:bg-violet-800 active:bg-violet-900"
+            className="mt-2 mb-6 inline-flex w-full items-center justify-center rounded-xl bg-[#574883] px-5 py-2.5 text-base font-medium text-white shadow hover:bg-violet-800 active:bg-violet-900"
           >
             Update Password
           </button>
@@ -409,17 +435,17 @@ function PreferencesPanel() {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border shadow-sm p-6">
-        <h2 className="text-lg font-semibold">Theme</h2>
+      <div className="bg-transparent border border-[#CCC2DC] rounded-xl p-6 shadow-[4px_12px_16px_0px_rgba(79,55,139,0.3)] transition" >
+        <h2 className="text-xl font-semibold">Theme</h2>
         <div className="mt-4 grid gap-4 md:max-w-md">
           <Field label="Theme Mode ">
             <select
               value={currentTheme}
               onChange={(e) => setTheme(e.target.value as ThemeMode)}
-              className={[
-                "w-full rounded-lg border px-3 py-2 text-sm shadow-sm",
+              className={[ 
+                "mt-2w-full rounded-lg border px-3 py-2 text-sm shadow-sm",
                 "bg-white text-neutral-900",
-                "dark:bg-neutral-900 dark:text-white dark:border-neutral-700",
+                
                 "focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-neutral-400/50 dark:focus:ring-neutral-500/40",
               ].join(" ")}
             >
