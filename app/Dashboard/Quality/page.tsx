@@ -144,7 +144,7 @@ function Chart({ title, value, q }) {
   };
 
   return (
-    <div className="bg-[#F9F6FF] border border-[#000000] rounded-xl p-6 shadow-md w-full">
+    <div className="bg-transparent border border-[#CCC2DC] rounded-xl p-6 shadow-[4px_12px_16px_0px_rgba(79,55,139,0.3)] w-full">
       <h3 className="text-base font-bold text-[#000000]">{title}</h3>
       {value && <p className="text-sm text-[#938F99] mt-3 leading-relaxed">{value}</p>}
 
