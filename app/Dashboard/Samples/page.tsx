@@ -1,5 +1,6 @@
 "use client";
-import { useMemo, useState } from "react";
+
+import { useEffect, useMemo, useState} from "react";
 import { useQuery } from "@tanstack/react-query";
 // ✅ ปรับ path ให้ตรงโปรเจ็กต์คุณ
 import { createStorageQueryOptions } from "../../../lib/fetch/Storage";
@@ -9,8 +10,11 @@ import type { Storage } from "../../../lib/fetch/type";
 const CUSTOM_MAIN_SHADOW = "shadow-[4px_12px_16px_0px_rgba(79,55,139,0.3)]";
 const CUSTOM_HOVER_SHADOW = "hover:shadow-[6px_16px_20px_0px_rgba(79,55,139,0.4)]";
 const CUSTOM_SMALL_SHADOW = "shadow-[2px_6px_8px_0px_rgba(79,55,139,0.2)]";
+import { StorageCapacity } from "@/lib/fetch/model/Storage";
+import { getStorageCapacity } from "@/lib/fetch/Storage";
 
 export default function Page() {
+  const [capacity, setCapacity] = useState<StorageCapacity | null>(null);
   const [activeTab, setActiveTab] = useState<"Inventory" | "Storage" | "Clinical Controls" | "Historical">("Inventory");
   const [filters, setFilters] = useState({
     fridge_id: "All",
@@ -19,6 +23,23 @@ export default function Page() {
     sortBy: "ID",
     search: "",
   });
+
+  const fetchData = async () => {
+    const capacity = await getStorageCapacity();
+    console.log("Fetched capacity inside fetchData:", capacity);
+    setCapacity(capacity);
+  };
+
+  useEffect(() => {
+    fetchData();
+    console.log("Fetched capacity:", capacity);
+  }, []);
+
+  let remainingPercent = (capacity?.Remaining || 0) * 100 / (capacity?.Capacity || 1);
+  let usedPercent = capacity ? 100 - remainingPercent : 0;
+  let capacityPercent = capacity?.PercentCapacity || 0;
+  capacityPercent.toString();
+
   // โหลดข้อมูลผ่าน React Query
   const { data: storagesRaw, isLoading, error } = useQuery(createStorageQueryOptions.all());
   // รองรับทั้งกรณี API คืนเป็น array ตรง ๆ หรือห่อด้วย { data: [...] }
@@ -34,12 +55,12 @@ export default function Page() {
       <h3 className="text-[#4A4458] mt-1">Inventory, storage, and status of existing samples</h3>
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">
-        <SummaryCard title="Sample Capacity" value="84%" color="bg-green-500" progress={84} />
-        <SummaryCard title="Temperature Alerts" value="0" color="bg-amber-400" progress={0} />
-        <SummaryCard title="Expiring Soon (10d)" value="1" color="bg-red-500" progress={10} />
+        <SummaryCard title="Sample Capacity" value={capacityPercent + " %"} color="bg-green-500" progress={capacity?.PercentCapacity} />
+        <SummaryCard title="Remaining Capacity" value={capacity?.Remaining + " items"} color="bg-amber-400" progress={remainingPercent} />
+        <SummaryCard title="In Use" value={capacity?.Item + " items"} color="bg-red-500" progress={usedPercent} />
       </div>
       {/* Tabs */}
-      <div className="w-full inline-flex items-center justify-center border border-[#CCC2DC] rounded-full mt-6 space-x-1">
+      <div className="w-full inline-flex items-center justify-center  border-[#CCC2DC] rounded-full mt-6 space-x-1">
         {(["Inventory", "Storage", "Clinical Controls", "Historical"] as const).map((tab) => (
           <button
             key={tab}
