@@ -238,6 +238,9 @@ export function ResultInterpretation() {
 
         setCurrentUser(userProfile);
         setUserPosition(userProfile?.position || null);
+        console.log(1000)
+        console.log(userProfile?.position)
+        console.log(1000)
 
         // pharmacy role check
         if (userProfile?.position) {
@@ -1367,7 +1370,7 @@ export function ResultInterpretation() {
         medical_technician_id: selectedPatientData.medical_technician_id || currentUser?.id || "",
         request_date: selectedPatientData.request_date || new Date().toISOString(),
         report_date: selectedPatientData.report_date || new Date().toISOString(),
-        quality_id: qualityId || selectedPatientData.quality_id || testerType,
+        // quality_id: qualityId || selectedPatientData.quality_id || testerType,
       };
 
       console.log('Updating report with data:', updateData);
@@ -1806,7 +1809,6 @@ export function ResultInterpretation() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              {/* ⭐️ ย้ายปุ่มเข้ามาไว้ข้างในลิงก์ ⭐️ */}
               <Button
                 className="text-white cursor-pointer"
                 style={{ backgroundColor: '#7864B4' }}
