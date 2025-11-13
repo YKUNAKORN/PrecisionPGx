@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { Storage } from "./type";
+import { StorageCapacity } from "./model/Storage";
 
 export type CreateStorageDTO = {
   patient_id: string;
@@ -91,3 +92,16 @@ export const mutateStorageQueryOptions = {
     }),
   post: () => ({ mutationFn: async (dto: CreateStorageDTO) => await postStorage(dto) }),
   };
+
+
+export async function getStorageCapacity(): Promise<StorageCapacity> {
+  try {
+    const res = await fetch(`/api/user/storage/calculate`);
+    if (!res.ok) throw new Error("Failed to fetch Storage Capacity");
+    const response = await res.json();
+    return response.data as StorageCapacity;
+  } catch (error) {
+    console.error("Error fetching storage capacity:", error);
+    throw error;
+  }
+}
