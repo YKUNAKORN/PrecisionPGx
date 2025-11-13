@@ -17,12 +17,6 @@ import { Pharm_verify } from "@/app/api/user/service/report_service";
  *           type: string
  *         required: true
  *         description: The ID of the report to be verified
- *       - in: query
- *         name: pharmacist_id
- *         schema:
- *           type: string
- *         required: true
- *         description: The ID of the pharmacist verifying the report
  *     responses:
  *       200:
  *         description: Report verified successfully
@@ -58,7 +52,7 @@ import { Pharm_verify } from "@/app/api/user/service/report_service";
 export async function PATCH(req) {
   const { searchParams } = new URL(req.url);
   const report_id = searchParams.get("report_id");
-  const pharmacist_id = searchParams.get("pharmacist_id");
+  const pharmacist_id = req.cookies._headers.get('x-user-id');
 
   try {
     const result = await Pharm_verify(report_id, pharmacist_id);

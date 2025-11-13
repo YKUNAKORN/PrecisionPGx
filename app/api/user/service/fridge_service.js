@@ -159,13 +159,13 @@ export async function CalculateFridge() {
     } catch (error) {
         return { data: null, error: error };
     }
-    let PercentRemaining = 0;
+    let PercentCapacity = 0;
     try {
-        PercentRemaining = (item / capacity) * 100;
+        PercentCapacity = item / capacity * 100;
     } catch (error) {
         return { data: null, error: error };
     }
-        ReportCapacity.PercentRemaining = PercentRemaining;
+        ReportCapacity.PercentCapacity = PercentCapacity.toFixed(2);
         ReportCapacity.Remaining = remaining;
         ReportCapacity.Item = item;
         ReportCapacity.Capacity = capacity;

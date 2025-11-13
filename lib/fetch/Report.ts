@@ -1,0 +1,151 @@
+import { Report } from "./type";
+import { queryOptions } from "@tanstack/react-query";
+
+export type ReportsDTO = {
+  specimens: string;
+  doctor_id: string;
+  patient_id: string;
+  priority: string;
+  ward_id: string;
+  contact_number: string;
+  collected_at: string;
+  fridge_id: string;
+  medical_technician_id: string;
+  note: string;
+};
+
+export async function getReports(): Promise<Report[]> {
+  const res = await fetch(`/api/user/report`);
+  if (!res.ok) throw new Error("Failed to fetch user");
+  const body = await res.json();
+  return body.data;
+}
+
+
+export async function getReport(id: string): Promise<Report> {
+  const res = await fetch(`/api/user/report/${id}`);
+  if (!res.ok) throw new Error("Failed to fetch user");
+  return res.json();
+}
+
+
+export async function deleteReport(id: string) {
+  const res = await fetch(`/api/user/report/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res.ok) throw new Error("Failed to delete Report");
+  return res.json();
+}
+
+export async function postReport(data: ReportsDTO) {
+  const res = await fetch(`/api/user/report`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to post Report");
+  const body = await res.json();
+  console.log('postReport response body:', body);
+  return body.data;
+}
+
+export async function putReport(id: string, data: any) {
+  console.log('putReport called with:', { id, data });
+  console.log('Validating data before sending...');
+  console.log('medtech_verify:', data.medtech_verify, 'truthy?', !!data.medtech_verify);
+  console.log('rule_id:', data.rule_id, 'truthy?', !!data.rule_id);
+  console.log('index_rule:', data.index_rule, 'truthy?', !!data.index_rule);
+  console.log('more_information:', data.more_information, 'truthy?', !!data.more_information);
+  console.log('medical_technician_id:', data.medical_technician_id, 'truthy?', !!data.medical_technician_id);
+  
+  const res = await fetch(`/api/user/report?id=${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+  
+  console.log('API Response status:', res.status);
+  console.log('API Response ok:', res.ok);
+  
+  if (!res.ok) {
+    let errorData;
+    try {
+      errorData = await res.json();
+    } catch (e) {
+      console.error('Failed to parse error response as JSON');
+      throw new Error(`Failed to update report: ${res.statusText} (Status: ${res.status})`);
+    }
+    console.error('API Error Response:', errorData);
+    throw new Error(`Failed to update report: ${errorData.message || res.statusText}`);
+  }
+  
+  const result = await res.json();
+  console.log('API Success Response:', result);
+  return result;
+}
+
+export async function putFinishReport(id: string, data: { status: string }) {
+  const res = await fetch(`/api/user/report/finish?id=${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+  
+  if (!res.ok) {
+    let errorData;
+    try {
+      errorData = await res.json();
+    } catch (e) {
+      console.error('Failed to parse error response as JSON');
+      throw new Error(`Failed to finish report: ${res.statusText} (Status: ${res.status})`);
+    }
+    console.error('API Error Response:', errorData);
+    throw new Error(`Failed to finish report: ${errorData.message || res.statusText}`);
+  }
+  
+  return res.json();
+}
+
+
+export const createReportQueryOptions = {
+  all: () =>
+    queryOptions({
+      queryKey: ["Reports"],
+      queryFn: getReports,
+    }),
+
+  detail: (id: string) =>
+    queryOptions({
+      queryKey: ["Report", id],
+      queryFn: () => getReport(id),
+      enabled: !!id,
+    }),
+};
+
+
+export const mutateReportQueryOptions = {
+  put: () => ({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => await putReport(id, data),
+  }),
+
+  delete: () => ({
+    mutationFn: async (id: string) => await deleteReport(id),
+  }),
+
+  post: ({
+    mutationFn: async (data: ReportsDTO) => await postReport(data),
+  }),
+
+  finish: () => ({
+    mutationFn: async ({ id, data }: { id: string; data: { status: string } }) => await putFinishReport(id, data),
+  }),
+};

@@ -1,8 +1,6 @@
-// components/Navbar/Navbar.tsx
 "use client";
 
 import Account from "./Account";
-import { Darkmode } from "./Darkmode";
 import Home from "./Home";
 import Interpret from "./Interpret";
 import Logo from "./Logo";
@@ -13,22 +11,18 @@ import Samples from "./Samples";
 export default function Navbar() {
   return (
       <aside
-        className="fixed top-0 left-0 h-dvh w-21 border-r
-                  flex flex-col justify-between items-center p-4 "
-      >
-        <nav aria-label="Primary" className="flex flex-col items-center gap-10  ">
+        className="fixed top-0 left-0 h-dvh w-21 border-r-[1px] flex flex-col justify-between items-center p-4 border-[#B8A8D8]" style={{ boxShadow: '0 0 5px rgba(74, 67, 89, 1)' }}>
+        <nav aria-label="Primary" className="flex flex-col items-center gap-5">
           <Logo />
           <Home />
           <Register />
           <Interpret />
           <Quality />
           <Samples />
+          <Account/>
         </nav>
 
-        <nav aria-label="Utilities" className="mb-2 flex flex-col items-center gap-2  ">
-          <div className="size-10"><Darkmode /></div>
-          <Account />
-        </nav>
+
       </aside>
   );
 }

@@ -83,19 +83,17 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 import * as React from "react";
 
-const LOGO_LIGHT = "/logo-light.png";
+const LOGO_LIGHT = "/LOGO-login-kongjing.png";
 const LOGO_DARK = "/logo-dark.png";
 
 export default function Logo() {
   const { theme, systemTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
-  // ให้รอจนกว่าจะ mount ก่อนค่อยใช้ค่าธีมจริง
   React.useEffect(() => {
     setMounted(true);
   }, []);
 
-  // ตอน SSR หรือยังไม่ mount → ให้ใช้รูป light ไปก่อน
   let logoSrc = LOGO_LIGHT;
 
   if (mounted) {
@@ -106,7 +104,7 @@ export default function Logo() {
   return (
     <div className="flex items-center justify-center pt-4">
       <Link
-        href="/"
+        href="/Dashboard/Home"
         aria-label="Homepage"
         className="grid place-items-center size-15  !rounded-3xl"
       >

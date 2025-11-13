@@ -7,7 +7,7 @@ import HomeIcon from "../Icon/Homeicon";
 
 const Account = () => {
   const pathname = usePathname();
-  const isActive = pathname === "/";
+  const isActive = pathname === "/Dashboard/Home";
 
   return (
     <div className="flex flex-col items-center gap-1">
@@ -17,13 +17,12 @@ const Account = () => {
         variant="ghost"
         className={[
           "w-18 h-13  !rounded-3xl  transition",
-          //✅ ถ้า path ตรงกับหน้าปัจจุบัน ให้แสดงสไตล์ active
           isActive
-            ? "bg-primary text-white"
-            : "hover:bg-primary hover:text-white",
+            ? "text-white bg-[#574883] hover:bg-[#574883]" 
+            : "hover:bg-[#574883] hover:text-white",
         ].join(" ")}
       >
-        <Link href="/" className="text-2xl">
+        <Link href="/Dashboard/Home" className="text-2xl">
           <HomeIcon />
         </Link>
       </Button>

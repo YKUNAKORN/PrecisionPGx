@@ -99,7 +99,7 @@
 .bar-fill{
   width: 70px;
   background: #d6c4ff;
-  border-radius: 2px;
+  border-radius: 6px;
   transition: height .4s ease;
 }
 
@@ -249,4 +249,35 @@
 .status.pending {
   background: #c1c1c720;
   color: #c1c1c7;
+}
+
+
+.col-id {
+  display: inline-block;
+  width: 120px; /* กำหนดความกว้างคงที่ */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.col-name {
+  display: inline-block;
+  width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 8px;
+}
+
+.col-type {
+  display: inline-block;
+  width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.col-status {
+  display: inline-block;
+  width: 100px;
 }

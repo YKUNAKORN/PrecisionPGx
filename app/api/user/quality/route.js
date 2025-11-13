@@ -1,4 +1,4 @@
-import { GetAllQualityMetrics, UpdateQualityMetrics, CreateQualityMetrics, DeleteQualityMetrics } from "@/app/api/user/service/quality_service";
+import { GetAllQualityMetrics, UpdateQualityMetrics, CreateQualityMetricsAndUpdateReport, DeleteQualityMetrics } from "@/app/api/user/service/quality_service";
 import { NextResponse } from "next/server";
 import { InsertQuality, UpdateQuality } from "@/lib/model/Quality";
 import { ResponseModel } from "@/lib/model/Response";
@@ -54,6 +54,14 @@ import { ResponseModel } from "@/lib/model/Response";
  *     summary: Create a new quality metric
  *     description: Add a new quality metric to the database
  *     tags: [Quality]
+ *     parameters:
+ *       - in: query
+ *         name: reportId
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Optional report ID associated with the quality metric
  *     requestBody:
  *       required: true
  *       content:
@@ -155,6 +163,13 @@ export async function PUT(request) {
 
 export async function POST(request) {
     const body = await request.json();
+    const { searchParams } = new URL(request.url);
+    const reportId = searchParams.get('reportId');
+    if (!reportId) {
+        ResponseModel.status = "400";
+        ResponseModel.message = "Report ID is required to create quality metrics";
+        return NextResponse.json(ResponseModel, { status: 400 });
+    }
     try {
         InsertQuality.tester_id = body.tester_id;
         InsertQuality.quality = body.quality;
@@ -163,7 +178,8 @@ export async function POST(request) {
         ResponseModel.message = "Invalid data format";
         return NextResponse.json(ResponseModel, { status: 400 });
     }
-    const { data, error } = await CreateQualityMetrics(InsertQuality);
+    console.log('InsertQuality:', InsertQuality);
+    const { data, error } = await CreateQualityMetricsAndUpdateReport(InsertQuality, reportId);
     if (error) {
         ResponseModel.status = "500";
         ResponseModel.message = error.message;

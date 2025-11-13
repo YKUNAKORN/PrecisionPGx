@@ -1,0 +1,341 @@
+"use client";
+
+import { useEffect, useMemo, useState} from "react";
+import { useQuery } from "@tanstack/react-query";
+// ✅ ปรับ path ให้ตรงโปรเจ็กต์คุณ
+import { createStorageQueryOptions } from "../../../lib/fetch/Storage";
+import type { Storage } from "../../../lib/fetch/type";
+
+// กำหนด Custom Shadow Classes เพื่อความง่ายในการจัดการและสอดคล้องกับหน้าอื่น
+const CUSTOM_MAIN_SHADOW = "shadow-[4px_12px_16px_0px_rgba(79,55,139,0.3)]";
+const CUSTOM_HOVER_SHADOW = "hover:shadow-[6px_16px_20px_0px_rgba(79,55,139,0.4)]";
+const CUSTOM_SMALL_SHADOW = "shadow-[2px_6px_8px_0px_rgba(79,55,139,0.2)]";
+import { StorageCapacity } from "@/lib/fetch/model/Storage";
+import { getStorageCapacity } from "@/lib/fetch/Storage";
+
+export default function Page() {
+  const [capacity, setCapacity] = useState<StorageCapacity | null>(null);
+  const [activeTab, setActiveTab] = useState<"Inventory" | "Storage" | "Clinical Controls" | "Historical">("Inventory");
+  const [filters, setFilters] = useState({
+    fridge_id: "All",
+    type: "All",
+    status: "All",
+    sortBy: "ID",
+    search: "",
+  });
+
+  const fetchData = async () => {
+    const capacity = await getStorageCapacity();
+    console.log("Fetched capacity inside fetchData:", capacity);
+    setCapacity(capacity);
+  };
+
+  useEffect(() => {
+    fetchData();
+    console.log("Fetched capacity:", capacity);
+  }, []);
+
+  let remainingPercent = (capacity?.Remaining || 0) * 100 / (capacity?.Capacity || 1);
+  let usedPercent = capacity ? 100 - remainingPercent : 0;
+  let capacityPercent = capacity?.PercentCapacity || 0;
+  capacityPercent.toString();
+
+  // โหลดข้อมูลผ่าน React Query
+  const { data: storagesRaw, isLoading, error } = useQuery(createStorageQueryOptions.all());
+  // รองรับทั้งกรณี API คืนเป็น array ตรง ๆ หรือห่อด้วย { data: [...] }
+  const storages: Storage[] = useMemo(() => {
+    const raw: any = storagesRaw;
+    return Array.isArray(raw) ? raw : (raw?.data ?? []);
+  }, [storagesRaw]);
+  return (
+    <div className="p-6 min-h-screen">
+      {/* Header */}
+      <h1 className="text-2xl font-bold">Sample Management</h1>
+      {/* เปลี่ยนสีข้อความรองเป็นสีที่สอดคล้องกัน */}
+      <h3 className="text-[#4A4458] mt-1">Inventory, storage, and status of existing samples</h3>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">
+        <SummaryCard title="Sample Capacity" value={capacityPercent + " %"} color="bg-green-500" progress={capacity?.PercentCapacity} />
+        <SummaryCard title="Remaining Capacity" value={capacity?.Remaining + " items"} color="bg-amber-400" progress={remainingPercent} />
+        <SummaryCard title="In Use" value={capacity?.Item + " items"} color="bg-red-500" progress={usedPercent} />
+      </div>
+      {/* Tabs */}
+      <div className="w-full inline-flex items-center justify-center  border-[#CCC2DC] rounded-full mt-6 space-x-1">
+        {(["Inventory", "Storage", "Clinical Controls", "Historical"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            // ปรับ shadow สำหรับปุ่มแท็บ และใช้ค่าสี Hex/RGBA โดยตรง
+            className={`w-full inline-flex items-center justify-center px-6 py-2 rounded-full font-medium transition ${CUSTOM_SMALL_SHADOW} ${
+              activeTab === tab ? "bg-[#4F378B] text-white" : "text-[#4A4458] hover:bg-[#D0BCFF33] focus:ring-2 focus:ring-[#4F378B]"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+      {/* Content */}
+      <div className="mt-6 transition-all duration-300">
+        {activeTab === "Inventory" ? (
+          <InventorySection
+            filters={filters}
+            setFilters={setFilters}
+            storages={storages}
+            loading={isLoading}
+            error={error as Error | null}
+          />
+        ) : (
+          <Placeholder title={activeTab} desc="Coming soon..." />
+        )}
+      </div>
+    </div>
+  );
+}
+/* ---------- Subcomponents ---------- */
+function Placeholder({ title, desc }: { title: string; desc: string }) {
+  return (
+    // อัปเดต shadow สำหรับ Placeholder
+    <div className={`border border-[#CCC2DC] rounded-xl p-10 ${CUSTOM_MAIN_SHADOW} text-center w-full min-h-[400px] flex flex-col justify-center items-center`}>
+      <h3 className="text-lg font-semibold">{title}</h3>
+      <p className="mt-2 text-[#4A4458]">{desc}</p> {/* ปรับสี text */}
+    </div>
+  );
+}
+function SummaryCard({ title, value, color, progress }: { title: string; value: string; color: string; progress: number }) {
+  return (
+    // อัปเดต shadow สำหรับ SummaryCard
+    <div className={`rounded-xl ${CUSTOM_MAIN_SHADOW} p-5 flex flex-col justify-between border border-[#CCC2DC]`}>
+      <h3 className="text-sm text-[#4A4458]">{title}</h3> {/* ปรับสี text */}
+      <p className="text-lg font-semibold mt-1">{value}</p>
+      <div className="w-full h-3 rounded-full mt-3 bg-gray-200">
+        <div className={`${color} h-3 rounded-full transition-all`} style={{ width: `${progress}%` }} />
+      </div>
+    </div>
+  );
+}
+function InventorySection({
+  filters,
+  setFilters,
+  storages,
+  loading,
+  error,
+}: {
+  filters: {
+    fridge_id: string;
+    type: string;
+    status: string;
+    sortBy: "ID" | "Date" | "Status" | "Type";
+    search: string;
+  };
+  setFilters: (updater: (prev: any) => any) => void;
+  storages: Storage[];
+  loading: boolean;
+  error: Error | null;
+}) {
+  const filtered = useMemo(() => {
+    const t = filters.search.trim().toLowerCase();
+    let list = [...storages];
+    if (filters.fridge_id !== "All") {
+      list = list.filter((s) => (s.fridge_id ?? "").toLowerCase().includes(filters.fridge_id.toLowerCase()));
+    }
+    if (filters.type !== "All") {
+      list = list.filter((s) => (s.specimen_type ?? "").toLowerCase().includes(filters.type.toLowerCase()));
+    }
+    if (filters.status !== "All") {
+      list = list.filter((s) => (s.status ?? "").toLowerCase().includes(filters.status.toLowerCase()));
+    }
+    if (t) {
+      list = list.filter((s) =>
+        `${s.id} ${s.fridge_id ?? ""} ${s.specimen_type ?? ""} ${s.status ?? ""}`.toLowerCase().includes(t)
+      );
+    }
+    switch (filters.sortBy) {
+      case "Date":
+        list.sort((a, b) => new Date(b.created_at as any).getTime() - new Date(a.created_at as any).getTime());
+        break;
+      case "Status":
+        list.sort((a, b) => (a.status ?? "").localeCompare(b.status ?? ""));
+        break;
+      case "Type":
+        list.sort((a, b) => (a.specimen_type ?? "").localeCompare(b.specimen_type ?? ""));
+        break;
+      default:
+        list.sort((a, b) => (a.id ?? "").localeCompare(b.id ?? ""));
+    }
+    return list;
+  }, [storages, filters]);
+  return (
+    // อัปเดต shadow สำหรับ InventorySection
+    <div className={`mt-4 border border-[#CCC2DC] rounded-xl p-6 ${CUSTOM_MAIN_SHADOW}`}>
+      {/* Search */}
+      <div className="mb-5">
+        <input
+          type="text"
+          placeholder="Search by ID, patient, or test"
+          value={filters.search}
+          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          // ปรับสีขอบและ focus ring ด้วยค่า Hex/RGBA โดยตรง
+          className="w-full placeholder-[#938F99] border border-[#CCC2DC] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#4F378B] bg-white text-[#000000]"
+        />
+      </div>
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-4 text-sm md:justify-start text-[#4A4458]">
+          <Filter
+            label="Fridge ID"
+            value={filters.fridge_id}
+            onChange={(v) => setFilters((f) => ({ ...f, fridge_id: v }))}
+            options={["All", "A", "B", "C"]}
+          />  
+          <Filter
+            label="Type"
+            value={filters.type}
+            onChange={(v) => setFilters((f) => ({ ...f, type: v }))}
+            options={["All", "Blood", "Saliva", "Tissue"]}
+          />
+          <Filter
+            label="Status"
+            value={filters.status}
+            onChange={(v) => setFilters((f) => ({ ...f, status: v }))}
+            options={["All", "Active", "Stored", "Warning"]}
+          />
+        </div>
+        <div className="flex items-center gap-3 text-sm md:ml-auto md:justify-end">
+          <Filter
+            label="Sort"
+            value={filters.sortBy}
+            onChange={(v) => setFilters((f) => ({ ...f, sortBy: v }))}
+            options={["ID", "Date", "Status", "Type"]}
+          />
+          <button className="border border-[#CCC2DC] px-4 py-1 rounded-md transition text-sm text-[#4A4458] hover:bg-[#D0BCFF33] focus:ring-2 focus:ring-[#4F378B]">
+            Advanced Filtering
+          </button>
+        </div>
+      </div>
+      {/* Content - HORIZONTAL SNAP (snap-x) */}
+      {loading ? (
+        <div className="mt-6 text-sm text-[#4A4458]">Loading storages…</div>
+      ) : error ? (
+        <div className="mt-6 text-sm text-red-500">Failed to load storages: {error.message}</div>
+      ) : (
+        // Container: overflow-x-auto + flex + snap-x
+        <div
+          className="mt-6 overflow-x-auto pb-4 snap-x snap-mandatory scroll-pt-4 -mx-2 px-2"
+          role="list"
+          tabIndex={0}
+          aria-label="Storage cards"
+        >
+          <div className="flex gap-5">
+            {filtered.map((s) => (
+              // each item must be snap-start and have fixed width
+              <div
+                key={s.id}
+                className="snap-start w-[280px] flex-shrink-0"
+                role="listitem"
+                aria-label={`Sample ${s.id}`}
+              >
+                <SampleCard
+                  data={{
+                    id: s.id,
+                    type: s.specimen_type ?? "—",
+                    fridge_id: s.fridge_id ?? "—",
+                    status: s.status ?? "—",
+                    date: formatDate(s.created_at as any),
+                    time: formatTime(s.created_at as any),
+                    test: s.specimen_type ?? "—",
+                  }}
+                />
+              </div>
+            ))}
+            {/* optional spacer to allow last card to snap nicely */}
+            <div className="w-4 flex-shrink-0" aria-hidden />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+function Filter({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: any) => void;
+  options: string[];
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <label className="text-[#4A4458]">{label}:</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        // เพิ่ม border และปรับ focus ring ด้วยค่า Hex/RGBA โดยตรง
+        className="rounded-md px-3 py-1 focus:outline-none border border-[#CCC2DC] bg-white text-[#000000] focus:ring-2 focus:ring-[#4F378B]"
+      >
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+function SampleCard({
+  data,
+}: {
+  data: {
+    id: string;
+    type: string;
+    fridge_id: string;
+    status: string;
+    date: string;
+    time: string;
+    test: string;
+  };
+}) {
+  const dotColor =
+    data.status === "Active"
+      ? "bg-green-500"
+      : data.status === "Warning"
+        ? "bg-amber-400"
+        : "bg-blue-400";
+  return (
+    // อัปเดต shadow สำหรับ SampleCard และ hover shadow
+    <div className={`border border-[#CCC2DC] rounded-xl p-4 ${CUSTOM_MAIN_SHADOW} ${CUSTOM_HOVER_SHADOW} transition w-full snap-start bg-white text-[#4A4458]`}>
+      <div className="flex justify-between items-start">
+        <h3 className="font-semibold text-sm md:text-base text-[#000000]">{data.id}</h3>
+        <span className="flex items-center gap-1 text-xs md:text-sm">
+          <span className={`w-3 h-3 rounded-full ${dotColor}`} />
+          {data.status}
+        </span>
+      </div>
+      <div className="mt-1 space-y-1 text-xs md:text-sm">
+        <p>Type: {data.type}</p>
+        <p>Fridge ID: {data.fridge_id}</p>
+        <p>Collected: {data.date}</p>
+        <p>Time: {data.time}</p>
+        <p>Test: {data.test}</p>
+      </div>
+      <div className="flex justify-between mt-3">
+        {["Status", "Transfer", "Log"].map((btn) => (
+          <button key={btn} className="border border-[#CCC2DC] px-2 py-1 rounded-lg text-xs transition text-[#4A4458] hover:bg-[#D0BCFF33] focus:ring-2 focus:ring-[#4F378B]">
+            {btn}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+/* ---------- utils ---------- */
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
+}
+function formatTime(iso: string) {
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? "—" : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}

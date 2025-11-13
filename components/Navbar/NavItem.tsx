@@ -1,4 +1,3 @@
-// components/NavItem.tsx
 "use client";
 
 import Link from "next/link";
@@ -7,13 +6,19 @@ import type { LucideIcon } from "lucide-react";
 
 type Props = {
   href: string;
-  icon: LucideIcon;      // ไอคอนจาก lucide-react
+  icon: LucideIcon;
   label: string;
-  size?: number;         // ขนาดไอคอน (px)
-  exact?: boolean;       // match แบบเป๊ะ ๆ หรือ prefix
+  size?: number;
+  exact?: boolean;
 };
 
-export default function NavItem({ href, icon: Icon, label, size = 28, exact = false }: Props) {
+export default function NavItem({
+  href,
+  icon: Icon,
+  label,
+  size = 28,
+  exact = false,
+}: Props) {
   const pathname = usePathname();
   const isActive = exact ? pathname === href : pathname.startsWith(href);
 
@@ -24,17 +29,12 @@ export default function NavItem({ href, icon: Icon, label, size = 28, exact = fa
         aria-current={isActive ? "page" : undefined}
         className="group flex flex-col items-center"
       >
-        {/* วนปกคลุมเฉพาะ 'ไอคอน' ให้มีพื้นหลังวงรีตอน active */}
         <span
           className={[
-            // ขนาดพื้นที่คลิกไอคอน
             "w-14 h-10 rounded-2xl flex items-center justify-center",
-            // hover นุ่ม ๆ
             "",
-            // สถานะ active = มีพื้นหลังแบบภาพแรก
             isActive ? "ring-1 ring-white/20" : "",
-            // transition
-            " "
+            " ",
           ].join(" ")}
         >
           <Icon size={size} className="" />

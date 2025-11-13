@@ -79,6 +79,12 @@ import { GetUserById, UpdateUser, DeleteUser } from '@/app/api/user/service/user
  *               fullname:
  *                 type: string
  *                 example: Jane Smith
+ *               license_number:
+ *                 type: string
+ *                 example: LIC654321
+ *               phone:
+ *                 type: string
+ *                 example: 123-456-7890
  *     responses:
  *       200:
  *         description: User updated successfully

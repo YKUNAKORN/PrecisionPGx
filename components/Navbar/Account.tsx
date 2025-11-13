@@ -17,10 +17,9 @@ const Account = () => {
         variant="ghost"
         className={[
           "w-18 h-13   !rounded-3xl transition",
-          // ✅ ถ้า path ตรงกับหน้าปัจจุบัน ให้แสดงสไตล์ active
           isActive
-            ? "bg-primary text-white"
-            : "hover:bg-primary hover:text-white",
+            ? "text-white bg-[#574883] hover:bg-[#574883]" 
+            : "hover:bg-[#574883] hover:text-white ",
         ].join(" ")}
       >
         <Link href="/Dashboard/Account" className="text-2xl">

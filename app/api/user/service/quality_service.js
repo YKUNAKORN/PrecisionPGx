@@ -86,6 +86,38 @@ export async function CreateQualityMetrics(row) {
     return { data: data, error: null };
 }
 
+export async function CreateQualityMetricsAndUpdateReport(row, reportId) {
+    const { data, error } = await Create(db, "quality", row);
+    if (error) {
+        return { data: null, error: error }; //for User
+    }
+    console.log('Created quality metric:', data);
+    try {
+        ResponseQuality.id = data[0].id;
+        ResponseQuality.tester_id = data[0].tester_id;
+        ResponseQuality.quality = data[0].quality;
+        ResponseQuality.updated_at = data[0].updated_at;
+        ResponseQuality.created_at = data[0].created_at;
+    } catch (err) {
+        return { data: null, error: err };
+    }
+    console.log(ResponseQuality.id)
+    let rowToUpdate = {
+        quality_id: ResponseQuality.id
+    };
+    console.log('Updating report with ID:', reportId, 'to set quality_id to:', rowToUpdate);
+    const reportResponse = await Update(db, "reports", reportId, rowToUpdate);
+    if (reportResponse.error) {
+        const { data: _, error: deleteError } = await Delete(db, "quality", data[0].id);
+        if (deleteError) {
+            console.error("Failed to rollback quality metric after report update failure:", deleteError);
+        }
+        return { data: null, error: reportResponse.error };
+    }
+
+    return { data: ResponseQuality, error: null };
+}
+
 export async function DeleteQualityMetrics(id) {
     const { data, error } = await Delete(db, "quality", id);
     if (error) {
@@ -115,7 +147,7 @@ export async function GetAllQualityMetricsPercent() {
 
             if (q === "pass") {
                 pass++;
-            } else if (q === "fail") {
+            } else if (q === "failed") {
                 fail++;
             } else if (q === "warning") {
                 warning++;
@@ -129,11 +161,17 @@ export async function GetAllQualityMetricsPercent() {
     }
     const total = pass + fail + warning;
     if (total === 0) {
-        return { data: { pass: 0, fail: 0, warning: 0, total: 0 }, error: null };
+        return { data: { pass: 0, failed: 0, warning: 0, total: 0 }, error: null };
     }
-    QualityCount.pass = (pass * 100) / total;
-    QualityCount.warning = (warning * 100) / total;
-    QualityCount.fail = (fail * 100) / total;
+    let percentpass = 0.0;
+    let percentfailed = 0.0;
+    let percentwarning = 0.0;
+    percentpass = (pass * 100) / total;
+    QualityCount.pass = percentpass.toFixed(2);
+    percentwarning = (warning * 100) / total;
+    QualityCount.warning = percentwarning.toFixed(2);
+    percentfailed = (fail * 100) / total;
+    QualityCount.failed = percentfailed.toFixed(2);
     QualityCount.total = total;
     return { data: QualityCount, error: null };
 }
