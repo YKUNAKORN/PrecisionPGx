@@ -19,8 +19,8 @@ const Account = () => {
         className={[
           "w-18 h-13   !rounded-3xl transition",
           isActive
-            ? "bg-primary text-white hover:bg-[#8123FE]"
-            : "hover:bg-primary hover:text-white",
+            ? "text-white bg-[#574883] hover:bg-[#574883]" 
+            : "hover:bg-[#574883] hover:text-white",
         ].join(" ")}
       >
         <Link href="/Dashboard/Register" className="text-2xl">

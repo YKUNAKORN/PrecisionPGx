@@ -32,11 +32,8 @@ export default function NavItem({
         <span
           className={[
             "w-14 h-10 rounded-2xl flex items-center justify-center",
-            // hover นุ่ม ๆ
             "",
-            // สถานะ active = มีพื้นหลังแบบภาพแรก
             isActive ? "ring-1 ring-white/20" : "",
-            // transition
             " ",
           ].join(" ")}
         >
