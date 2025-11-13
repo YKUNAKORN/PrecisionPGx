@@ -1,11 +1,14 @@
 "use client";
-
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-
 // ✅ ปรับ path ให้ตรงโปรเจ็กต์คุณ
 import { createStorageQueryOptions } from "../../../lib/fetch/Storage";
 import type { Storage } from "../../../lib/fetch/type";
+
+// กำหนด Custom Shadow Classes เพื่อความง่ายในการจัดการและสอดคล้องกับหน้าอื่น
+const CUSTOM_MAIN_SHADOW = "shadow-[4px_12px_16px_0px_rgba(79,55,139,0.3)]";
+const CUSTOM_HOVER_SHADOW = "hover:shadow-[6px_16px_20px_0px_rgba(79,55,139,0.4)]";
+const CUSTOM_SMALL_SHADOW = "shadow-[2px_6px_8px_0px_rgba(79,55,139,0.2)]";
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState<"Inventory" | "Storage" | "Clinical Controls" | "Historical">("Inventory");
@@ -16,44 +19,40 @@ export default function Page() {
     sortBy: "ID",
     search: "",
   });
-
   // โหลดข้อมูลผ่าน React Query
   const { data: storagesRaw, isLoading, error } = useQuery(createStorageQueryOptions.all());
-
   // รองรับทั้งกรณี API คืนเป็น array ตรง ๆ หรือห่อด้วย { data: [...] }
   const storages: Storage[] = useMemo(() => {
     const raw: any = storagesRaw;
     return Array.isArray(raw) ? raw : (raw?.data ?? []);
   }, [storagesRaw]);
-
   return (
     <div className="p-6 min-h-screen">
       {/* Header */}
       <h1 className="text-2xl font-bold">Sample Management</h1>
-      <h3 className="text-gray-300 mt-1">Inventory, storage, and status of existing samples</h3>
-
+      {/* เปลี่ยนสีข้อความรองเป็นสีที่สอดคล้องกัน */}
+      <h3 className="text-[#4A4458] mt-1">Inventory, storage, and status of existing samples</h3>
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">
         <SummaryCard title="Sample Capacity" value="84%" color="bg-green-500" progress={84} />
         <SummaryCard title="Temperature Alerts" value="0" color="bg-amber-400" progress={0} />
         <SummaryCard title="Expiring Soon (10d)" value="1" color="bg-red-500" progress={10} />
       </div>
-
       {/* Tabs */}
-      <div className="w-full inline-flex items-center justify-center border rounded-full mt-6 space-x-1">
+      <div className="w-full inline-flex items-center justify-center border border-[#CCC2DC] rounded-full mt-6 space-x-1">
         {(["Inventory", "Storage", "Clinical Controls", "Historical"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`w-full inline-flex items-center justify-center  px-6 py-2 rounded-full font-medium transition shadow-sm ${
-              activeTab === tab ? "bg-primary" : "hover:bg-primary/90"
+            // ปรับ shadow สำหรับปุ่มแท็บ และใช้ค่าสี Hex/RGBA โดยตรง
+            className={`w-full inline-flex items-center justify-center px-6 py-2 rounded-full font-medium transition ${CUSTOM_SMALL_SHADOW} ${
+              activeTab === tab ? "bg-[#4F378B] text-white" : "text-[#4A4458] hover:bg-[#D0BCFF33] focus:ring-2 focus:ring-[#4F378B]"
             }`}
           >
             {tab}
           </button>
         ))}
       </div>
-
       {/* Content */}
       <div className="mt-6 transition-all duration-300">
         {activeTab === "Inventory" ? (
@@ -71,30 +70,28 @@ export default function Page() {
     </div>
   );
 }
-
 /* ---------- Subcomponents ---------- */
-
 function Placeholder({ title, desc }: { title: string; desc: string }) {
   return (
-    <div className="border border-zinc-700 rounded-xl p-10 shadow-md text-center w-full min-h-[400px] flex flex-col justify-center items-center">
+    // อัปเดต shadow สำหรับ Placeholder
+    <div className={`border border-[#CCC2DC] rounded-xl p-10 ${CUSTOM_MAIN_SHADOW} text-center w-full min-h-[400px] flex flex-col justify-center items-center`}>
       <h3 className="text-lg font-semibold">{title}</h3>
-      <p className="mt-2">{desc}</p>
+      <p className="mt-2 text-[#4A4458]">{desc}</p> {/* ปรับสี text */}
     </div>
   );
 }
-
 function SummaryCard({ title, value, color, progress }: { title: string; value: string; color: string; progress: number }) {
   return (
-    <div className="rounded-xl shadow-md p-5 flex flex-col justify-between border border-zinc-700">
-      <h3 className="text-sm">{title}</h3>
+    // อัปเดต shadow สำหรับ SummaryCard
+    <div className={`rounded-xl ${CUSTOM_MAIN_SHADOW} p-5 flex flex-col justify-between border border-[#CCC2DC]`}>
+      <h3 className="text-sm text-[#4A4458]">{title}</h3> {/* ปรับสี text */}
       <p className="text-lg font-semibold mt-1">{value}</p>
-      <div className="w-full h-3 rounded-full mt-3">
+      <div className="w-full h-3 rounded-full mt-3 bg-gray-200">
         <div className={`${color} h-3 rounded-full transition-all`} style={{ width: `${progress}%` }} />
       </div>
     </div>
   );
 }
-
 function InventorySection({
   filters,
   setFilters,
@@ -117,7 +114,6 @@ function InventorySection({
   const filtered = useMemo(() => {
     const t = filters.search.trim().toLowerCase();
     let list = [...storages];
-
     if (filters.fridge_id !== "All") {
       list = list.filter((s) => (s.fridge_id ?? "").toLowerCase().includes(filters.fridge_id.toLowerCase()));
     }
@@ -132,7 +128,6 @@ function InventorySection({
         `${s.id} ${s.fridge_id ?? ""} ${s.specimen_type ?? ""} ${s.status ?? ""}`.toLowerCase().includes(t)
       );
     }
-
     switch (filters.sortBy) {
       case "Date":
         list.sort((a, b) => new Date(b.created_at as any).getTime() - new Date(a.created_at as any).getTime());
@@ -148,9 +143,9 @@ function InventorySection({
     }
     return list;
   }, [storages, filters]);
-
   return (
-    <div className="mt-4 border border-zinc-700 rounded-xl p-6 shadow-md">
+    // อัปเดต shadow สำหรับ InventorySection
+    <div className={`mt-4 border border-[#CCC2DC] rounded-xl p-6 ${CUSTOM_MAIN_SHADOW}`}>
       {/* Search */}
       <div className="mb-5">
         <input
@@ -158,19 +153,18 @@ function InventorySection({
           placeholder="Search by ID, patient, or test"
           value={filters.search}
           onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-          className="w-full placeholder-gray-500 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
+          // ปรับสีขอบและ focus ring ด้วยค่า Hex/RGBA โดยตรง
+          className="w-full placeholder-[#938F99] border border-[#CCC2DC] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#4F378B] bg-white text-[#000000]"
         />
       </div>
-
       {/* Filters */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-4 text-sm md:justify-start">
+        <div className="flex flex-wrap items-center gap-4 text-sm md:justify-start text-[#4A4458]">
           <Filter
             label="Fridge ID"
             value={filters.fridge_id}
             onChange={(v) => setFilters((f) => ({ ...f, fridge_id: v }))}
             options={["All", "A", "B", "C"]}
-            className="border border-zinc-700"
           />  
           <Filter
             label="Type"
@@ -192,22 +186,20 @@ function InventorySection({
             onChange={(v) => setFilters((f) => ({ ...f, sortBy: v }))}
             options={["ID", "Date", "Status", "Type"]}
           />
-          <button className="border border-zinc-700 px-4 py-1 rounded-md transition text-sm">
+          <button className="border border-[#CCC2DC] px-4 py-1 rounded-md transition text-sm text-[#4A4458] hover:bg-[#D0BCFF33] focus:ring-2 focus:ring-[#4F378B]">
             Advanced Filtering
           </button>
         </div>
       </div>
-
       {/* Content - HORIZONTAL SNAP (snap-x) */}
       {loading ? (
-        <div className="mt-6 text-sm">Loading storages…</div>
+        <div className="mt-6 text-sm text-[#4A4458]">Loading storages…</div>
       ) : error ? (
-        <div className="mt-6 text-sm text-red-400">Failed to load storages: {error.message}</div>
+        <div className="mt-6 text-sm text-red-500">Failed to load storages: {error.message}</div>
       ) : (
         // Container: overflow-x-auto + flex + snap-x
         <div
           className="mt-6 overflow-x-auto pb-4 snap-x snap-mandatory scroll-pt-4 -mx-2 px-2"
-          // accessibility: allow arrow key scrolling
           role="list"
           tabIndex={0}
           aria-label="Storage cards"
@@ -242,7 +234,6 @@ function InventorySection({
     </div>
   );
 }
-
 function Filter({
   label,
   value,
@@ -256,11 +247,12 @@ function Filter({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <label>{label}:</label>
+      <label className="text-[#4A4458]">{label}:</label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-md px-3 py-1 focus:outline-none"
+        // เพิ่ม border และปรับ focus ring ด้วยค่า Hex/RGBA โดยตรง
+        className="rounded-md px-3 py-1 focus:outline-none border border-[#CCC2DC] bg-white text-[#000000] focus:ring-2 focus:ring-[#4F378B]"
       >
         {options.map((opt) => (
           <option key={opt} value={opt}>
@@ -271,7 +263,6 @@ function Filter({
     </div>
   );
 }
-
 function SampleCard({
   data,
 }: {
@@ -292,15 +283,15 @@ function SampleCard({
         ? "bg-amber-400"
         : "bg-blue-400";
   return (
-    <div className="border border-zinc-700 rounded-xl p-4 shadow-md hover:shadow-lg transition w-full  snap-start">
+    // อัปเดต shadow สำหรับ SampleCard และ hover shadow
+    <div className={`border border-[#CCC2DC] rounded-xl p-4 ${CUSTOM_MAIN_SHADOW} ${CUSTOM_HOVER_SHADOW} transition w-full snap-start bg-white text-[#4A4458]`}>
       <div className="flex justify-between items-start">
-        <h3 className="font-semibold text-sm md:text-base">{data.id}</h3>
+        <h3 className="font-semibold text-sm md:text-base text-[#000000]">{data.id}</h3>
         <span className="flex items-center gap-1 text-xs md:text-sm">
           <span className={`w-3 h-3 rounded-full ${dotColor}`} />
           {data.status}
         </span>
       </div>
-
       <div className="mt-1 space-y-1 text-xs md:text-sm">
         <p>Type: {data.type}</p>
         <p>Fridge ID: {data.fridge_id}</p>
@@ -308,10 +299,9 @@ function SampleCard({
         <p>Time: {data.time}</p>
         <p>Test: {data.test}</p>
       </div>
-
       <div className="flex justify-between mt-3">
         {["Status", "Transfer", "Log"].map((btn) => (
-          <button key={btn} className="border border-zinc-700 rounded-lg px-2 py-1 text-xs transition">
+          <button key={btn} className="border border-[#CCC2DC] px-2 py-1 rounded-lg text-xs transition text-[#4A4458] hover:bg-[#D0BCFF33] focus:ring-2 focus:ring-[#4F378B]">
             {btn}
           </button>
         ))}
@@ -319,7 +309,6 @@ function SampleCard({
     </div>
   );
 }
-
 /* ---------- utils ---------- */
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -329,6 +318,3 @@ function formatTime(iso: string) {
   const d = new Date(iso);
   return isNaN(d.getTime()) ? "—" : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
-
-
-
